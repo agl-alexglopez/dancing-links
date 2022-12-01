@@ -101,6 +101,12 @@ Instead we can fit all of the logic for this algorithm into one array. Because t
 
 Here is a literal representation of the array and how it appears in memory.
 
+The lookup table that controls recursion and helps us collect supply location names is a separate array.
+
+![lookup-table-illustrated](/images/lookup-table-illustrated.png)
+
+The core logic of the algorithm takes place in this array where items exist in all of the sets they are connected to.
+
 ![matrix-array-illustrated](/images/matrix-array-illustrated.png)
 
 There are some leftovers from Knuth's logic that I am not sure what to do with in this problem and don't play a role to solve the supply problem. Compare this image to the illustration in Knuth's work and the table he produces of his array to see more differences.

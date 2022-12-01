@@ -598,13 +598,11 @@ STUDENT_TEST("Simple Ethene Network initialization.") {
         {"F", {"B"}},
     };
     Vector<DisasterLinks::cityHeader> networkHeaders = {
-        {"",  6, 1},
-        {"A", 0, 2},
-        {"B", 1, 3},
-        {"C", 2, 4},
-        {"D", 3, 5},
-        {"E", 4, 6},
-        {"F", 5, 0}
+
+
+        {"",  6, 1},  {"A", 0, 2},  {"B", 1, 3},  {"C", 2, 4},  {"D", 3, 5},  {"E", 4, 6},  {"F", 5, 0}
+
+
     };
     Vector<DisasterLinks::cityItem> dlxItems = {
         /* Network
