@@ -1,0 +1,37 @@
+Q1: Ensuring that everyone has a partner is a great strategy for scenarios where you want the most
+    people to improve. In educational settings, we often want everyone to have a partner so that strong
+    students bring others up and improving students to have a chance to interact with someone already
+    greatly improved themselves. This will usually, in broad strokes, result in improvement.
+
+
+
+
+Q2: In a business or product oriented industry a max weight matching can be productive. If someone
+    needs something to be completed at a high level or the maximum value produced in a short time
+    a max weight partnership can be productive. If you know that two people work together well you
+    can assign them to meaningful tasks while allowing those who wish to work alone, or who do not
+    work as well with others, can still be productive contributors.
+
+
+
+
+Q3: This question is similar to the previous so I will try to come up with a different scenario. If
+    you were tasked with optimizing important tasks on a shipping vessel you could use max weight
+    matching to keep the ship safe and profitable. You would have a measure of weight and integer
+    data points while fishing--the catch brought in--and could find teams that have high weight
+    matching to rotate to profitable positions, while lower level tasks are delegated to lower
+    weight partners.
+
+
+
+
+Q4: If your goal is for the betterment of the group and its members a distributed weighting can be
+    productive. If you were working at a smaller company like a startup or small business, you would
+    want to have as many productive members as possible. Matching up to the highest weight per pair
+    possible would have the best chance of moving the business forward while growing and
+    developing.
+
+
+
+
+
