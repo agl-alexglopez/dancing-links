@@ -1,4 +1,4 @@
-# Assignment 4
+# Original Problems
 
 ## Recursion to the Rescue
 
@@ -6,110 +6,7 @@
 
 *All course materials © Stanford University 2021.*
 
-## Part One: Debugging Practice
-
-When you encounter a bug in a program, your immediate instinct is probably to say something like
-
-> *"Why isn't my program doing what I want it to do?"*
-
-One of the best ways to answer that question is to instead answer this other one:
-
-> *"What is my program doing, and why is that different than what I intended?"*
-
-The debugger is powerful tool for answering questions like these. You explored the debugger in Assignment 0 (when you learned how to set breakpoints and use Step In, Step Over, and Step Out) and in Assignment 1 (when you learned how to walk up and down the call stack). This part of the assignment is designed to refresh your skills in those areas and to give you practice working the debugger in more elaborate recursive problems.
-
-### Milestone 1: Explore the Towers of Hanoi
-
-The Towers of Hanoi problem is a classic puzzle that has a beautiful recursive solution. If you haven't yet done so, take a few minutes to read Chapter 8.1 of the textbook, which explores this problem in depth.
-
-We've provided you with a `TowersOfHanoi.cpp` file, which includes a correct, working solution to the Towers of Hanoi problem. Take a minute to run the "Towers of Hanoi" demo from the main program. Choose the "Go!" button to begin the animation, and marvel at how that tiny recursive function is capable of doing so much. Isn't that amazing?
-
-With that said, let's dive into the meat of what you'll be doing. We're going to ask you to use the debugger and its features to get a better sense for how the code works.
-
-Open the `TowersOfHanoi.cpp` file, then set a breakpoint on the first line of the `solveTowersOfHanoi` function. Run the program in debug mode, choose the "Towers of Hanoi" option from the menu at the top of the program, but don't click the "Go!" button yet. When the debugger engages, it halts execution of the running program so that you can inspect what's going on. This means that the graphics window might not be operational -- you might find that you can't drag it around, or resize it, or move it, etc. Therefore, we recommend that before you hit the "Go!" button to bring up the debugger, you resize the demo app window and the Qt Creator window so that they're both fully visible.
-
-Once you're ready, hit the "Go!" button. This will trigger the breakpoint. You'll see a yellow arrow pointing at the line containing the breakpoint, and the local variables window will have popped up.
-
-First, investigate the pane in the debugger that shows local variables and their values. Because totalMoves has not yet been initialized, its value is unspecified; it might be 0, or it might be a random garbage value. The function's parameters, though, should be clearly visible at this point.
-
-You should now be able to answer the following questions. To do so, edit the file `DebuggingAnswers.txt` with your answers:
-
-#### Question 1
-
-What are the values of all the parameters to the `solveTowersOfHanoi` function?
-
-#### Question 2
-
-Some function in our starter code called `solveTowersOfHanoi`. What file was that function defined in, and what was the name of that function? (Hint: use the call stack!)
-
-Once you've answered these questions, go back to the `TowersOfHanoi.cpp` file, and make sure you see a yellow arrow pointing at the line containing your breakpoint. Let's now single-step through the program. Use the "Step Over" button to advance past the call to the function `initHanoiDisplay`, which configures the graphics window. If you've done this correctly, you should see the disks and spindles.
-
-Now, keeping clicking "Step Over" to advance through the other lines in the function. When you step over the line containing the call to moveTower, you should see the disks move to solve the Towers of Hanoi. Doesn't get old, does it? 😃 You should now be ready to answer the following question in `DebuggingAnswers.txt`.
-
-#### Question 3
-
-How many total moves were required to solve this instance of Towers of Hanoi?
-
-At this point, hit the "Continue" button to let the program keep running as usual. Click the "Go!" button again to trigger your breakpoint a second time.
-
-This time, instead of using Step Over, we're going to use Step Into. Rather than stepping over function calls, Step Into goes inside the function being called so you can step through each of its statements. (If the current line is not a function call, Step Into and Step Over do the same thing.)
-
-Use Step Into to enter the call to `initHanoiDisplay`. The editor pane will switch to show the contents of the `src/Demos/TowersOfHanoiGUI.cpp` file and the yellow arrow will point to the first line of the `initHanoiDisplay` function. This code is unfamiliar, you didn't write it, and you didn't intend to start tracing it. Step Out is your escape hatch. This "giant step" executes the rest of the current function up to where it returns. Use Step Out to return to `solveTowersOfHanoi`.
-
-The next line of code in `solveTowersOfHanoi` is the pause function, another library function you don't want to trace through. You could step in and back out, but it's simpler to just Step Over.
-
-You are interested in tracing through the `moveTower` function, so use Step Into to go inside. Once inside, single-step through the code until the program is just about to execute the first recursive call to `moveTower`. Now, press Step Over to execute it. The GUI window will show the left tower, except for the bottom disc, moving from the left peg to the middle peg, leaving the bottom disk uncovered. This should also cause the value of `totalMoves` to count all moves made by that recursive call. Now, answer the following question:
-
-#### Question 4
-
-What is the value of the `totalMoves` variable inside the first `moveTower` call after stepping over its first recursive sub-call? (In other words, just after stepping over the first recursive sub-call to `moveTower` inside the `if` statement in the recursive function.)
-
-The next Step Over moves the bottom disk. The final Step Over moves the smaller tower on top. Use Continue to resume normal execution and finish the demo.
-
-Press the "Go!" button a third time. This time, do your own tracing and exploration to solidify your understanding of recursion and its mechanics. Watch the animated disks and consider how this relates to the sequence of recursive calls. Observe how stack frames are added and removed from the debugger call stack. Select different levels on the call stack to see the value of the parameters and the nesting of recursive calls. Here are some suggestions for how stepping can help:
-
-- Stepping over a recursive call can be helpful when thinking holistically. A recursive call is simply a "magic" black box that completely handles the smaller subproblem.
-- Stepping into a recursive call allows you to trace the nitty-gritty details of moving from an outer recursive call to the inner call.
-- Stepping out of a recursive call allows you to follow along with the action when backtracking from an inner recursive call to the outer one.
-
-### Milestone 2: Debug a Broken Permutations Function
-
-Your next task is to use the debugger to do what it's designed for -- to debug a program!
-
-In `Permutations.cpp`, we have provided you an incorrect implementation of a function to generate permutations recursively. The `permutationsRec` function contains a small but significant error. It's not that far from working correctly -- in fact, *there is a one-character mistake in that function* -- but what difference a single character can make! Your task is to use the debugger to figure out the following:
-
-- What is the one-character mistake in the program?
-- With the one-character mistake in the program, what does the program actually do? And why is that not what we want it to do?
-
-Choose "Permutations" from the top menu and you'll be able to type in strings, call the broken `permutationsOf` function, and see the output that's produced. Try various inputs and observe the difference between what's produced and what's supposed to be produced. (How can you see what's supposed to happen? You could always run the lecture code from Monday when we wrote a correct recursive permutations function!) It can be difficult to tease out the impact of the bug when you are tracing through a deep sequence of recursive calls. Try a variety of simple inputs to find the *smallest possible input* for which you can observe an error and use that as your test case. Specifically, you're aiming to find an input where
-
-- the output produced is wrong, and
-- no shorter input produces the wrong answer.
-
-Using your minimized test case, trace the operation of `permutationsRec` to observe what's going on internally. Diagram the decision tree that is being traversed and match the tree to what you see in the debugger as you step in/out/over. Select different stack frames in the call stack to see the state being maintained in each of the outer frames.
-
-Eventually, you should find the bug. Once you have, answer the following questions by editing the `DebuggingAnswers.txt` file.
-
-#### Question 5
-
-What is the smallest possible input that triggers the bug?
-
-#### Question 6
-
-What is the one-character error in the program?
-
-#### Question 7
-
-Explain why that one-character bug causes the function to return the exact output you see when you feed in the input you provided in Q5. You should be able to specifically account for where things go wrong and how the place where the error occurs causes the result to change from "completely correct" to "terribly wrong."
-
-As a hint on this problem: you might have noticed that we didn't pass the parameters in by `const` reference. If you've tried hunting the bug for fifteen minutes and haven't found it yet, try changing the parameters to use pass-by-const-reference and see if you notice anything. That might help you *find* the bug, but to *understand* the bug you'll need to do some more exploration in the debugger.
-
-We've asked you to answer these questions because this sort of bug-hunting is useful for understanding recursive functions and what makes them break. In particular, keep the following in mind:
-
-- When trying to debug a recursive function, look for the simplest case where the recursion gives the wrong answer. Having a small test case makes it easy to reproduce the error and to trace through what's happening in the debugger.
-- Using Step In, Step Over, and Step Out, it's possible to watch recursion work at different levels of detail. Step In lets you see what's going on at each point in time. Step Over lets you see what a recursive function does in its entirety. Step Out lets you run the current stack frame to completion to see how the code behaves as a whole.
-
-## Part Two: Matchmaker
+## Matchmaker
 
 ### Background: Perfect Matchings
 
