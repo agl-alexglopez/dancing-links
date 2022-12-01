@@ -94,7 +94,8 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
  *                          - We must cover this city so select an adjacent city with the
  *                            most connections and try that first.
  *                          - If that fails we try the next adjacent city with most connections.
- *                          - Finally, try to supply the actual city in question, not neighbors.
+ *                          - Finally, if all other neighbors fail, try to supply the actual city 
+ *                            in question, not neighbors.
  * @return              the index of the city we are selecting to attempt to cover.
  */
 int DisasterLinks::chooseOption() {
