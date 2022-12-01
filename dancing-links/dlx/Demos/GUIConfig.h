@@ -1,9 +1,7 @@
-WINDOW_TITLE("Recursion to the Rescue!")
+WINDOW_TITLE("Dancing Links!")
 
 RUN_TESTS_MENU_OPTION()
-MENU_ORDER("TowersOfHanoiGUI.cpp",
-           "PermutationGUI.cpp",
-           "MatchmakerGUI.cpp",
+MENU_ORDER("MatchmakerGUI.cpp",
            "DisasterGUI.cpp")
            
 TEST_ORDER("Matchmaker.cpp",
