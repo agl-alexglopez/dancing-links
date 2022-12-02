@@ -120,7 +120,7 @@ int DisasterLinks::chooseOption() {
 std::string DisasterLinks::coverCity(int index) {
     int startIndex = dlx.grid[index].down;
 
-    // To cover a city, we supply the city option we found it in.
+    // Hide the column of the city we want to cover first. It will be last one we uncover.
     hideItemCol(dlx.grid[startIndex]);
 
     DisasterLinks::cityItem start = dlx.grid[startIndex];
@@ -183,6 +183,7 @@ void DisasterLinks::uncoverCity(int index) {
         index = cur.left;
         cur = dlx.grid[index];
     }
+    // Unhide the city's column last because it was the first one we hid.
     DisasterLinks::unhideItemCol(start, index);
 }
 
@@ -228,7 +229,57 @@ void DisasterLinks::unhideItemCol(DisasterLinks::cityItem& start, int index) {
  * @param roadNetwork    the transportation grid passed in via map form.
  */
 DisasterLinks::DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwork) {
-    initializeNetwork(roadNetwork);
+    dlx.numItemsAndOptions = 0;
+    // We will set this up for a reverse build of column links for a given item.
+    HashMap<std::string,int> columnBuilder = {};
+    std::vector<std::pair<std::string,int>> connectionSizes = {};
+
+    // We need to start preparing items in the grid immediately after the headers.
+    initializeHeaders(roadNetwork, connectionSizes, columnBuilder);
+
+    /* The second pass will fill in the columns and keep the headers and all elements appropriately
+     * updated. We can hang on to helpful index info. Important to keep this O(m + n).
+     */
+    initializeItems(roadNetwork, connectionSizes, columnBuilder);
+}
+
+/**
+ * @brief initializeItems  builds the structure needed to perform the dancing links algorithm.
+ *                         This focusses on setting up the grid in the dancing Network struct
+ *                         so that all item columns are tallied correctly and the option rows
+ *                         represent all the cities that a supply city can cover, self included.
+ * @param roadNetwork      we need to look back at the original map to grab sets to build.
+ * @param connectionSizes  we organize rows in descending order top to bottom as a heuristic.
+ * @param columnBuilder    the map we use to help build an accurate column for each city item.
+ * @param index            we are passed in a starting index to begin building
+ */
+void DisasterLinks::initializeItems(const Map<std::string, Set<std::string>>& roadNetwork,
+                                    const std::vector<std::pair<std::string,int>>& connectionSizes,
+                                    HashMap<std::string,int>& columnBuilder) {
+    int previousSetSize = dlx.grid.size();
+    int index = dlx.grid.size();
+
+    for (const auto& [city, connectionSize] : connectionSizes) {
+        // This algorithm includes a city in its own set of connections.
+        Set<std::string> connections = roadNetwork[city];
+        connections.add(city);
+
+        /* We will know which supplying city option an item is in by the spacerTitle.
+         * lookupTable[abs(-hederIndexMap[city])] will give us the name of the option of that row.
+         * That is the city we are supplying and the connections it covers, self included.
+         */
+        dlx.grid.add({-dlx.headerIndexMap[city],     // Negative index of city as option.
+                      index - previousSetSize,       // First item in previous option
+                      index + connections.size(),    // Last item in current option
+                      index,
+                      index + 1});
+
+        // Manage column pointers for items connected across options. Update index.
+        index = initializeColumns(connections, columnBuilder, index);
+
+        previousSetSize = connections.size();
+    }
+    dlx.grid.add({NOT_PROCESSED, index - previousSetSize, 0, index - 1, NOT_PROCESSED});
 }
 
 /**
@@ -326,69 +377,6 @@ int DisasterLinks::initializeColumns(const Set<std::string>& connections,
     dlx.grid[index].right = spacerIndex;
     dlx.grid[spacerIndex].left = index;
     return ++index;
-}
-
-/**
- * @brief initializeItems  builds the structure needed to perform the dancing links algorithm.
- *                         This focusses on setting up the grid in the dancing Network struct
- *                         so that all item columns are tallied correctly and the option rows
- *                         represent all the cities that a supply city can cover, self included.
- * @param roadNetwork      we need to look back at the original map to grab sets to build.
- * @param connectionSizes  we organize rows in descending order top to bottom as a heuristic.
- * @param columnBuilder    the map we use to help build an accurate column for each city item.
- * @param index            we are passed in a starting index to begin building
- */
-void DisasterLinks::initializeItems(const Map<std::string, Set<std::string>>& roadNetwork,
-                                    const std::vector<std::pair<std::string,int>>& connectionSizes,
-                                    HashMap<std::string,int>& columnBuilder) {
-    int previousSetSize = dlx.grid.size();
-    int index = dlx.grid.size();
-
-    for (const auto& [city, connectionSize] : connectionSizes) {
-        // This algorithm includes a city in its own set of connections.
-        Set<std::string> connections = roadNetwork[city];
-        connections.add(city);
-
-        /* We will know which supplying city option an item is in by the spacerTitle.
-         * lookupTable[abs(-hederIndexMap[city])] will give us the name of the option of that row.
-         * That is the city we are supplying and the connections it covers, self included.
-         */
-        dlx.grid.add({-dlx.headerIndexMap[city],     // Negative index of city as option.
-                      index - previousSetSize,       // First item in previous option
-                      index + connections.size(),    // Last item in current option
-                      index,
-                      index + 1});
-
-        // Manage column pointers for items connected across options. Update index.
-        index = initializeColumns(connections, columnBuilder, index);
-
-        previousSetSize = connections.size();
-    }
-    dlx.grid.add({NOT_PROCESSED, index - previousSetSize, 0, index - 1, NOT_PROCESSED});
-}
-
-/**
- * @brief initializeNetwork  creates a compact representation of a transportation grid in a
- *                           vector with cityItems. This is set up in order to complete the
- *                           dancing links exact cover implementation. We also create a lookup
- *                           table of the city names that help us find their names as items
- *                           or options.
- * @param roadNetwork        the input map we transform to an array of doubly linked cityItems.
- */
-void DisasterLinks::initializeNetwork(const Map<std::string, Set<std::string>>& roadNetwork) {
-
-    dlx.numItemsAndOptions = 0;
-    // We will set this up for a reverse build of column links for a given item.
-    HashMap<std::string,int> columnBuilder = {};
-    std::vector<std::pair<std::string,int>> connectionSizes = {};
-
-    // We need to start preparing items in the grid immediately after the headers.
-    initializeHeaders(roadNetwork, connectionSizes, columnBuilder);
-
-    /* The second pass will fill in the columns and keep the headers and all elements appropriately
-     * updated. We can hang on to helpful index info. Important to keep this O(m + n).
-     */
-    initializeItems(roadNetwork, connectionSizes, columnBuilder);
 }
 
 

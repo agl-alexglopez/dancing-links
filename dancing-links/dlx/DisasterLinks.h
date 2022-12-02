@@ -268,16 +268,6 @@ private:
 
 
     /**
-     * @brief initializeNetwork  creates a compact representation of a transportation grid in a
-     *                           vector with cityItems. This is set up in order to complete the
-     *                           dancing links exact cover implementation. We also create a lookup
-     *                           table of the city names that help us find their names as items
-     *                           or options.
-     * @param roadNetwork        the input map we transform to an array of doubly linked cityItems.
-     */
-    void initializeNetwork(const Map<std::string, Set<std::string>>& roadNetwork);
-
-    /**
      * @brief initializeHeaders  creates the lookup table of city names and the first row of headers
      *                           that are in the dancing links array. This is the first pass on the
      *                           input map. We will perform a second, much longer pass to build the
