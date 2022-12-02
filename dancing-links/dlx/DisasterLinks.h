@@ -34,7 +34,7 @@
  *         F     1           1
  *
  * Notice that a city covers itself. This is important in the case of island cities that are
- * connected to no cities, islands. I have also organized the rows so that the cities with the
+ * connected to no cities. I have also organized the rows so that the cities with the
  * most connections are at the top and will be explored first. However, do not mistake this for
  * a greedy approach. We will now discuss the selection process.
  *
@@ -77,11 +77,11 @@
  *
  * If you wish to see how significantly this varies from Knuth's original implementation please read
  *
- *      The Art of Computer Programming:
- *      Volume 4B:
- *      Combinatorial Algorithms Part 2:
- *      Sec. 7.2.2.1.
- *      Pg.65-70
+ *      The Art of Computer Programming,
+ *      Volume 4B,
+ *      Combinatorial Algorithms, Part 2,
+ *      Sec. 7.2.2.1,
+ *      Pg.65-70,
  *      Knuth
  *
  */
@@ -138,7 +138,9 @@ public:
         Vector<cityHeader> lookupTable;
         Vector<cityItem> grid;
         HashMap<std::string,int> headerIndexMap;
-        // In this application, all networks are NxN, or perfect sqaures for row/col length.
+        /* In this application, the number of colums equals the number of rows. Cities are both
+         * items that need to be covered and cities that can receive supplies.
+         */
         int numItemsAndOptions;
     }Network;
 
@@ -188,6 +190,11 @@ public:
 
 private:
 
+    /* An instance of this class will produce a Network item that helps us solve the problem. It
+     * will stay in place until the instance is destructed. So you could, for example, run a loop
+     * with decreasing supply amounts to test against this network and it will always restore
+     * itself between tests.
+     */
     Network dlx;
 
 
@@ -236,27 +243,8 @@ private:
      *                     network. Uncovers the same option that was selected for coverage if given
      *                     the same index.
      * @param index        the index of the item we covered with the option below the index.
-     * @return             the string name of the option we selected that was not a good choice.
      */
     void uncoverCity(int index);
-
-    /**
-     * @brief hideOption  hides all cities within an option. This means that all of the cities
-     *                    covered by the option will be cut from the item list, making them safe.
-     *                    However, all cities in this option, except the option itself, may be
-     *                    selected as a supply option later. This is important.
-     * @param index       the index of a city we found in a certain option. Used to hide option.
-     * @return            the string of the city supplying the city we are trying to cover.
-     */
-    std::string hideOption(int index);
-
-    /**
-     * @brief unhideOption  unhides all cities within an option. This means that all the cities in
-     *                      that option are placed back into the network as uncovered.
-     * @param index         the index of the city we have found in a certain option.
-     * @return              the string of the city supplying the city we try to cover. It failed.
-     */
-    void unhideOption(int index);
 
     /**
      * @brief hideItemCol  when we supply an option it covers itself and connected cities. We must
@@ -299,8 +287,8 @@ private:
      * @param columnBuilder      the hash map we will use to connect newly added items to a column.
      */
     void initializeHeaders(const Map<std::string, Set<std::string>>& roadNetwork,
-                          std::vector<std::pair<std::string,int>>& connectionSizes,
-                          HashMap<std::string,int>& columnBuilder);
+                           std::vector<std::pair<std::string,int>>& connectionSizes,
+                           HashMap<std::string,int>& columnBuilder);
 
     /**
      * @brief initializeItems  builds the structure needed to perform the dancing links algorithm.

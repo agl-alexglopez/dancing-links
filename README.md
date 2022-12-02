@@ -79,7 +79,7 @@ There is no need to adjust the dancing links algorithm to achieve this. Instead 
 
 As an exercise, trace through the same selection process to shrink this world and see if you notice any differences in how quickly it solves the problem.
 
-As a final note for this section, I am seeking further optimizations. Currently, this implementation can solve all maps except the U.S. grid instantly. My algorithm can confirm that the optimal number of cities to supply lies between 30 and 17. We cannot cover the U.S. with less than 17 supplies and we can cover the U.S. with 30 or more supplies. However, finding the optimal number within this range has proven too much for my implementation. Finding the solution takes too much time.
+As a final note for this section, I am seeking further optimizations. Currently, this implementation can solve all maps except the U.S. grid instantly. My algorithm can confirm that the optimal number of cities to supply lies between 20 and 30. We cannot cover the U.S. with less than 20 supplies and we can cover the U.S. with 30 or more supplies. However, finding the optimal number within this range has proven too much for my implementation. Finding the solution takes too much time.
 
 ### Implementation
 
