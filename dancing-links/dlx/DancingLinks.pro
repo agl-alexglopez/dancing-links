@@ -70,9 +70,11 @@ DEFINES     +=  main=qMain qMain=studentMain
 # Afterward we glob-add files to SOURCES ourselves. Operator *= will unique
 # entries, so no worries about duplicates
 SOURCES         *=  "" \
-    DisasterLinks.cpp
+    DisasterLinks.cpp \
+    PerfectLinks.cpp
 HEADERS         *=  "" \
-    DisasterLinks.h
+    DisasterLinks.h \
+    PerfectLinks.h
 
 # Gather any .cpp or .h files within the project folder (student/starter code).
 # Second argument true makes search recursive

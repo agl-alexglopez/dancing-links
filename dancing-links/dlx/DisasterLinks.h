@@ -85,6 +85,7 @@
  *      Knuth
  *
  */
+#pragma once
 #ifndef DISASTERLINKS_H
 #define DISASTERLINKS_H
 #include <limits.h>
