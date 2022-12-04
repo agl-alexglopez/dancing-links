@@ -261,8 +261,7 @@ void DisasterLinks::initializeItems(const Map<std::string, Set<std::string>>& ro
 
     for (const auto& [city, connectionSize] : connectionSizes) {
         // This algorithm includes a city in its own set of connections.
-        Set<std::string> connections = roadNetwork[city];
-        connections.add(city);
+        Set<std::string> connections = roadNetwork[city] + city;
 
         /* We will know which supplying city option an item is in by the spacerTitle.
          * lookupTable[abs(-hederIndexMap[city])] will give us the name of the option of that row.
