@@ -1,6 +1,7 @@
 #pragma once
 #ifndef PERFECTLINKS_H
 #define PERFECTLINKS_H
+#include <limits.h>
 #include <string>
 #include "Matchmaker.h"
 #include "GUI/SimpleTest.h"
@@ -58,6 +59,9 @@ public:
 private:
 
     Network dlx;
+
+    Pair coverPerson(int index);
+    Pair hidePairing(int start);
 
     ALLOW_TEST_ACCESS();
 };

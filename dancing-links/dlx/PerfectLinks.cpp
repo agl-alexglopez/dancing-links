@@ -1,5 +1,44 @@
 #include "PerfectLinks.h"
 
+
+/* * * * * * * * * * * * * * *    Algorithm X via Dancing Links     * * * * * * * * * * * * * * * */
+
+
+Pair PerfectLinks::coverPerson(int index) {
+    PerfectLinks::personLink start = dlx.links[index];
+    PerfectLinks::personLink cur = start;
+
+    index = cur.down;
+    Pair curPair = {};
+    while ((cur = dlx.links[cur.down]) != start) {
+        Pair found = hidePairing(index);
+        index = cur.down;
+    }
+}
+
+Pair PerfectLinks::hidePairing(int start) {
+    int cur = start++;
+    Pair pairing = {};
+    while (cur != start) {
+        int top = dlx.links[cur].topOrLen;
+        int up = dlx.links[cur].up;
+        int down = dlx.links[cur].down;
+        if (top <= 0) {
+            cur = dlx.links[cur].up;
+        } else {
+            dlx.links[up].down = down;
+            dlx.links[down].up = up;
+            dlx.links[top].topOrLen--;
+        }
+        cur++;
+    }
+}
+
+
+
+/* * * * * * * * * * * * * * *   Constructor to Build the Network   * * * * * * * * * * * * * * * */
+
+
 PerfectLinks::PerfectLinks(const Map<std::string, Set<std::string>>& possibleLinks) {
 
     dlx.numPairings = 0;
