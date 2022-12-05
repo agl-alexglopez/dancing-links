@@ -2,8 +2,10 @@
 #ifndef PERFECTLINKS_H
 #define PERFECTLINKS_H
 #include <string>
+#include "Matchmaker.h"
 #include "GUI/SimpleTest.h"
 #include "vector.h"
+#include "hashmap.h"
 #include "map.h"
 #include "set.h"
 
@@ -27,6 +29,10 @@ public:
     typedef struct Network {
         Vector<personName> lookupTable;
         Vector<personLink> links;
+        HashMap<std::string,int> headerIndexMap;
+        int numPeople;
+        int numPairings;
+        bool hasSingleton;
     }Network;
 
     PerfectLinks(const Map<std::string, Set<std::string>>& possibleLinks);
@@ -46,6 +52,8 @@ public:
     friend std::ostream& operator<<(std::ostream&os, const Vector<personLink>& links);
 
     friend std::ostream& operator<<(std::ostream&os, const PerfectLinks& links);
+
+    bool hasPerfectLinks(Set<Pair>& pairs);
 
 private:
 

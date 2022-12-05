@@ -176,11 +176,11 @@ Set<Pair> maxWeightRec(const Map<string, Map<string, int>> &possibleLinks,
             Set<Pair> include = maxWeightRec(possibleLinks,
                                              toMatch - p1 - p2,
                                              maxWeight + match);
-            int totalWeight   = sumWeights(possibleLinks, include);
+            int totalWeight = sumWeights(possibleLinks, include);
 
             if (totalWeight > includeWeight) {
                 includeWeight = totalWeight;
-                bestInclude   = include;
+                bestInclude = include;
             }
         }
     }
