@@ -60,8 +60,13 @@ private:
 
     Network dlx;
 
+    bool isPerfectMatching(Set<Pair>& pairs);
+    int choosePerson();
+
     Pair coverPerson(int index);
+    void uncoverPerson(int index);
     void hidePairings(personLink& start, int index);
+    void unhidePairings(personLink&start, int index);
 
     ALLOW_TEST_ACCESS();
 };
