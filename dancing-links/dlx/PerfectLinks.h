@@ -61,7 +61,7 @@ private:
     Network dlx;
 
     Pair coverPerson(int index);
-    void hidePairing(int start);
+    void hidePairings(personLink& start, int index);
 
     ALLOW_TEST_ACCESS();
 };
