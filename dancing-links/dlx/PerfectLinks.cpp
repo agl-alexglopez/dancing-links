@@ -24,23 +24,27 @@ Pair PerfectLinks::coverPerson(int index) {
     // p1 needs to dissapear from all other pairings.
     hidePairings(start, index);
 
+    if (dlx.links[++index].topOrLen < 0) {
+        index = dlx.links[index].up;
+    }
+
 
     // We will not use any intelligent or greedy approaches so next partner will always be to right.
-    personName p2 = dlx.lookupTable[dlx.links[index + 1].topOrLen];
+    personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
     dlx.lookupTable[p2.right].left = p2.left;
     dlx.lookupTable[p2.left].right = p2.right;
 
     // p2 needs to dissapear from all other pairings.
-    hidePairings(dlx.links[index + 1], index + 1);
+    hidePairings(dlx.links[index], index);
 
     // This is reported as an output parameter for the pairings we chose.
     return {p1.name, p2.name};
 }
 
 void PerfectLinks::hidePairings(personLink& start, int index) {
-    personLink nextAppearance = start;
+    personLink nextPairing = start;
     index = start.down;
-    while ((nextAppearance = dlx.links[nextAppearance.down]) != start) {
+    while ((nextPairing = dlx.links[nextPairing.down]) != start) {
         // We may need this guard to prevent splicing while on a column header.
         if (index > dlx.lookupTable.size()) {
             // We should only ever have to hide the other person in the pair. No loop needed.
@@ -50,10 +54,9 @@ void PerfectLinks::hidePairings(personLink& start, int index) {
             dlx.links[cur.down].up = cur.up;
             dlx.links[cur.topOrLen].topOrLen--;
         }
-        index = nextAppearance.down;
+        index = nextPairing.down;
     }
 }
-
 
 
 /* * * * * * * * * * * * * * *   Constructor to Build the Network   * * * * * * * * * * * * * * * */
@@ -180,7 +183,7 @@ std::ostream& operator<<(std::ostream& os, const PerfectLinks::personName& name)
 std::ostream& operator<<(std::ostream&os, const Vector<PerfectLinks::personLink>& links) {
     os << "DLX ARRAY" << std::endl;
     for (const auto& item : links) {
-        if (item.topOrLen <= 0) {
+        if (item.topOrLen < 0) {
             os << std::endl;
         }
         os << "{" << item.topOrLen << "," << item.up << "," << item.down << "}";
@@ -336,7 +339,6 @@ STUDENT_TEST("Initialize a world that will have matching.") {
          *   6           1  1
          */
 
-
         //       0          1A       2B       3C         4D       5E        6F
         /*0*/ {0,0,0},   {2,11,8},{2,17,14},{2,20,15},{2,23,9},{2,24,21},{2,18,12},
         //       7          8A                           9D
@@ -479,6 +481,229 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A.") {
         /*4*/ {-3,9,13},          {2,7,2},            {4,4,16},
         //       14                           15C        16D
         /*5*/ {-4,12,16},                   {3,3,3},  {4,4,4},
+        //       17
+              {INT_MIN,15,INT_MIN},
+    };
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
+}
+
+STUDENT_TEST("There are no perfect pairings, any matching will fail.") {
+    /* Here's the world:
+     *
+     *               A --- B
+     *                \   /
+     *                 \ /
+     *                  C
+     *
+     * There is no perfect matching here, unfortunately.
+     */
+    const Map<std::string, Set<std::string>> provided = {
+        { "A", {"B"} },
+        { "B", {"C"} },
+        { "C", {"A"} }
+    };
+    Vector<PerfectLinks::personName> lookup {
+        {"",3,1},{"A",0,2},{"B",1,3},{"C",2,0},
+    };
+    Vector<PerfectLinks::personLink> dlxItems {
+        /*
+         *      A  B  C
+         *   1  1  1
+         *   2     1  1
+         *   3  1     1
+         */
+
+
+        //       0         1A       2B      3C
+        /*0*/ {0,0,0},   {2,11,5},{2,8,6},{2,12,9},
+        //       4         5A       6B
+        /*1*/ {-1,2,6},  {1,1,11},{2,2,8},
+        //       7                  8B      9C
+        /*2*/ {-2,5,9},           {2,6,2},{3,3,12},
+        //       10        11A              12C
+        /*3*/ {-3,8,12}, {1,5,1},         {3,9,3},
+        //       13
+        /*4*/ {INT_MIN,11,INT_MIN},
+    };
+    PerfectLinks matches(provided);
+    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(matches.dlx.links, dlxItems);
+
+    Pair match = matches.coverPerson(1);
+    EXPECT_EQUAL(match, {"A", "B"});
+    Vector<PerfectLinks::personName> lookupA {
+        {"",3,3},{"A",0,2},{"B",0,3},{"C",0,0},
+    };
+    Vector<PerfectLinks::personLink> dlxCoverA {
+        /*
+         * C is left but there are no available options for C.
+         *
+         *      C
+         *    0
+         */
+
+
+        //       0         1A       2B      3C
+        /*0*/ {0,0,0},   {2,11,5},{2,8,6},{0,3,3},
+        //       4         5A       6B
+        /*1*/ {-1,2,6},  {1,1,11},{2,2,8},
+        //       7                  8B      9C
+        /*2*/ {-2,5,9},           {2,6,2},{3,3,3},
+        //       10        11A              12C
+        /*3*/ {-3,8,12}, {1,5,1},         {3,9,3},
+        //       13
+        /*4*/ {INT_MIN,11,INT_MIN},
+    };
+    EXPECT_EQUAL(lookupA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
+}
+
+STUDENT_TEST("We will quickly learn that A-B is a bad pairing that leaves C out.") {
+    /* Here's the world:
+     *
+     *               A --- B---C
+     *                \   /
+     *                 \ /
+     *                  D
+     *
+     * There is no perfect matching here, unfortunately.
+     */
+    const Map<std::string, Set<std::string>> provided = {
+        { "A", {"B", "D"} },
+        { "B", {"A","C","D"} },
+        { "C", {"B"} },
+        { "D", {"A","B"}},
+    };
+    Vector<PerfectLinks::personName> lookup {
+        {"",4,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,0}
+    };
+    Vector<PerfectLinks::personLink> dlxItems {
+        /*
+         *      A  B  C  D
+         *   1  1  1
+         *   2  1        1
+         *   3     1  1
+         *   4     1     1
+         *
+         */
+
+        //       0         1A       2B        3C       4D
+        /*0*/ {0,0,0},   {2,9,6}, {3,15,7},{1,13,13},{2,16,10},
+        //       5         6A       7B
+        /*1*/ {-1,3,7},  {1,1,9}, {2,2,12},
+        //       8         9A                          10D
+        /*2*/ {-2,6,10}, {1,6,1},                    {4,4,16},
+        //       11                 12B       13C
+        /*3*/ {-3,9,13},          {2,7,15},{3,3,3},
+        //       14                 15B                16D
+        /*4*/ {-4,12,16},         {2,12,2},          {4,10,4},
+        //       17
+              {INT_MIN,15,INT_MIN},
+    };
+    PerfectLinks matches(provided);
+    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(matches.dlx.links, dlxItems);
+
+    Pair match = matches.coverPerson(1);
+    EXPECT_EQUAL(match, {"A", "B"});
+    Vector<PerfectLinks::personName> lookupCoverA {
+        {"",4,3},{"A",0,2},{"B",0,3},{"C",0,4},{"D",3,0}
+    };
+    Vector<PerfectLinks::personLink> dlxCoverA {
+        /*
+         * We cannot reach C and D if we pair A and B.
+         *
+         *      C  D
+         *   0
+         *
+         */
+
+        //       0         1A       2B        3C       4D
+        /*0*/ {0,0,0},   {2,9,6}, {3,15,7},{0,3,3}, {0,4,4},
+        //       5         6A       7B
+        /*1*/ {-1,3,7},  {1,1,9}, {2,2,12},
+        //       8         9A                          10D
+        /*2*/ {-2,6,10}, {1,6,1},                   {4,4,16},
+        //       11                 12B       13C
+        /*3*/ {-3,9,13},          {2,7,15},{3,3,3},
+        //       14                 15B                16D
+        /*4*/ {-4,12,16},         {2,12,2},         {4,4,4},
+        //       17
+              {INT_MIN,15,INT_MIN},
+    };
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
+}
+
+STUDENT_TEST("A-D is a good pairing.") {
+    /* Here's the world:
+     *
+     *               A --- B---C
+     *                \   /
+     *                 \ /
+     *                  D
+     *
+     * There is no perfect matching here, unfortunately.
+     */
+    const Map<std::string, Set<std::string>> provided = {
+        { "A", {"B", "D"} },
+        { "B", {"A","C","D"} },
+        { "C", {"B"} },
+        { "D", {"A","B"}},
+    };
+    Vector<PerfectLinks::personName> lookup {
+        {"",4,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,0}
+    };
+    Vector<PerfectLinks::personLink> dlxItems {
+        /*
+         *      A  B  C  D
+         *   1  1  1
+         *   2  1        1
+         *   3     1  1
+         *   4     1     1
+         *
+         */
+
+        //       0         1A       2B        3C       4D
+        /*0*/ {0,0,0},   {2,9,6}, {3,15,7},{1,13,13},{2,16,10},
+        //       5         6A       7B
+        /*1*/ {-1,3,7},  {1,1,9}, {2,2,12},
+        //       8         9A                          10D
+        /*2*/ {-2,6,10}, {1,6,1},                    {4,4,16},
+        //       11                 12B       13C
+        /*3*/ {-3,9,13},          {2,7,15},{3,3,3},
+        //       14                 15B                16D
+        /*4*/ {-4,12,16},         {2,12,2},          {4,10,4},
+        //       17
+              {INT_MIN,15,INT_MIN},
+    };
+    PerfectLinks matches(provided);
+    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(matches.dlx.links, dlxItems);
+
+    Pair match = matches.coverPerson(6);
+    EXPECT_EQUAL(match, {"A", "D"});
+    Vector<PerfectLinks::personName> lookupCoverA {
+        {"",4,1},{"A",0,2},{"B",0,3},{"C",2,0},{"D",3,0}
+    };
+    Vector<PerfectLinks::personLink> dlxCoverA {
+        /*
+         *      B  C
+         *   3  1  1
+         *
+         */
+
+        //       0         1A       2B        3C       4D
+        /*0*/ {0,0,0},   {2,9,6}, {3,15,7},{1,13,13},{2,16,10},
+        //       5         6A       7B
+        /*1*/ {-1,3,7},  {1,1,9}, {2,2,2},
+        //       8         9A                          10D
+        /*2*/ {-2,6,10}, {1,6,1},                    {4,4,16},
+        //       11                 12B       13C
+        /*3*/ {-3,9,13},          {2,7,2}, {3,3,3},
+        //       14                 15B                16D
+        /*4*/ {-4,12,16},         {2,12,2},          {4,10,4},
         //       17
               {INT_MIN,15,INT_MIN},
     };
