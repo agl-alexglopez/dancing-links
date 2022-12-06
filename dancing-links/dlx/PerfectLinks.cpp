@@ -24,10 +24,10 @@ Pair PerfectLinks::coverPerson(int index) {
     // p1 needs to dissapear from all other pairings.
     hidePairings(start, index);
 
+    // In case the other partner is to the left, just decrement index to get to the left.
     if (dlx.links[++index].topOrLen < 0) {
-        index = dlx.links[index].up;
+        index -= 2;
     }
-
 
     // We will not use any intelligent or greedy approaches so next partner will always be to right.
     personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
@@ -47,8 +47,12 @@ void PerfectLinks::hidePairings(personLink& start, int index) {
     while ((nextPairing = dlx.links[nextPairing.down]) != start) {
         // We may need this guard to prevent splicing while on a column header.
         if (index > dlx.lookupTable.size()) {
-            // We should only ever have to hide the other person in the pair. No loop needed.
-            personLink cur = dlx.links[index + 1];
+
+            // In case the other partner is to the left, just decrement index to go left.
+            if (dlx.links[++index].topOrLen < 0) {
+                index -= 2;
+            }
+            personLink cur = dlx.links[index];
 
             dlx.links[cur.up].down = cur.down;
             dlx.links[cur.down].up = cur.up;
@@ -685,7 +689,7 @@ STUDENT_TEST("A-D is a good pairing.") {
     Pair match = matches.coverPerson(6);
     EXPECT_EQUAL(match, {"A", "D"});
     Vector<PerfectLinks::personName> lookupCoverA {
-        {"",4,1},{"A",0,2},{"B",0,3},{"C",2,0},{"D",3,0}
+        {"",3,2},{"A",0,2},{"B",0,3},{"C",2,0},{"D",3,0}
     };
     Vector<PerfectLinks::personLink> dlxCoverA {
         /*
@@ -695,15 +699,15 @@ STUDENT_TEST("A-D is a good pairing.") {
          */
 
         //       0         1A       2B        3C       4D
-        /*0*/ {0,0,0},   {2,9,6}, {3,15,7},{1,13,13},{2,16,10},
+        /*0*/ {0,0,0},   {2,9,6}, {1,12,12},{1,13,13},{2,16,10},
         //       5         6A       7B
-        /*1*/ {-1,3,7},  {1,1,9}, {2,2,2},
+        /*1*/ {-1,3,7},  {1,1,9}, {2,2,12},
         //       8         9A                          10D
-        /*2*/ {-2,6,10}, {1,6,1},                    {4,4,16},
+        /*2*/ {-2,6,10}, {1,6,1},                     {4,4,16},
         //       11                 12B       13C
-        /*3*/ {-3,9,13},          {2,7,2}, {3,3,3},
+        /*3*/ {-3,9,13},          {2,2,2},  {3,3,3},
         //       14                 15B                16D
-        /*4*/ {-4,12,16},         {2,12,2},          {4,10,4},
+        /*4*/ {-4,12,16},         {2,12,2},           {4,10,4},
         //       17
               {INT_MIN,15,INT_MIN},
     };
