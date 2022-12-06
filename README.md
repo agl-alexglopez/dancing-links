@@ -168,7 +168,7 @@ Unfortunately, I cannot take advantage of the implicit left right nature of arra
 
 I chose to implement the solution to this problem as a class that can be found in the **[`DisasterLinks.h`](/dancing-links/dlx/DisasterLinks.h)**, and **[`DisasterLinks.cpp`](/dancing-links/dlx/DisasterLinks.cpp)** files. There are tests at the bottom of the **[`DisasterLinks.cpp`](/dancing-links/dlx/DisasterLinks.cpp)** file that make the internals of the dancing links data structure more understandable.
 
-I then included this implementation in the **[`DisasterGUI.cpp`](/dancing-links/dlx/Demos/DisasterGUI.cpp)** file as the solver for the maps included in this repository. If you want  To see how this implementation solves the provided maps use the following steps.
+I then included this implementation in the **[`DisasterGUI.cpp`](/dancing-links/dlx/Demos/DisasterGUI.cpp)** file as the solver for the maps included in this repository. If you want to see how this implementation solves the provided maps use the following steps.
 
 1. Open the project in Qt Creator with the correct Stanford C++ library installed. (See the [Build Note](#build-note)).
 2. Build and run the project.
