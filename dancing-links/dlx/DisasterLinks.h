@@ -138,7 +138,6 @@ public:
     typedef struct Network {
         Vector<cityHeader> lookupTable;
         Vector<cityItem> grid;
-        HashMap<std::string,int> headerIndexMap;
         /* In this application, the number of colums equals the number of rows. Cities are both
          * items that need to be covered and cities that can receive supplies.
          */

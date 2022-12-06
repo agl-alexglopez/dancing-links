@@ -233,6 +233,7 @@ DisasterLinks::DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwo
     // We will set this up for a reverse build of column links for a given item.
     HashMap<std::string,int> columnBuilder = {};
     std::vector<std::pair<std::string,int>> connectionSizes = {};
+    HashMap<std::string,int> headerIndexMap = {};
 
     // We need to start preparing items in the grid immediately after the headers.
     initializeHeaders(roadNetwork, connectionSizes, columnBuilder);
@@ -272,7 +273,6 @@ void DisasterLinks::initializeHeaders(const Map<std::string, Set<std::string>>& 
         dlx.grid[0].left++;
         // Add the first headers for the item vector. They need count up and down.
         dlx.grid.add({0, index, index, index - 1, index + 1});
-        dlx.headerIndexMap[city] = index;
         dlx.numItemsAndOptions++;
         index++;
     }
@@ -310,12 +310,12 @@ void DisasterLinks::initializeItems(const Map<std::string, Set<std::string>>& ro
         Set<std::string> connections = roadNetwork[city] + city;
 
         /* We will know which supplying city option an item is in by the spacerTitle.
-         * lookupTable[abs(-hederIndexMap[city])] will give us the name of the option of that row.
-         * That is the city we are supplying and the connections it covers, self included.
+         * lookupTable[abs(-dlx.grid[columnBuilder[city]].down)] will give us the name of the option
+         * of that row. This accesses the last city in a column's down field to get the header.
          */
-        dlx.grid.add({-dlx.headerIndexMap[city],     // Negative index of city as option.
-                      index - previousSetSize,       // First item in previous option
-                      index + connections.size(),    // Last item in current option
+        dlx.grid.add({-dlx.grid[columnBuilder[city]].down,  // Negative index of city as option.
+                      index - previousSetSize,              // First item in previous option
+                      index + connections.size(),           // Last item in current option
                       index,
                       index + 1});
 
@@ -342,11 +342,12 @@ int DisasterLinks::initializeColumns(const Set<std::string>& connections,
                                      int index) {
     int spacerIndex = index;
     for (const auto& c : connections) {
-        dlx.grid[dlx.headerIndexMap[c]].topOrLen++;
+        // Circular lists give us access to header with down field of last city in a column.
+        dlx.grid[dlx.grid[columnBuilder[c]].down].topOrLen++;
         index++;
 
         // A single item in a circular doubly linked list points to itself.
-        dlx.grid.add({dlx.headerIndexMap[c], index, index, index - 1, index + 1});
+        dlx.grid.add({dlx.grid[columnBuilder[c]].down, index, index, index - 1, index + 1});
 
         /* Now we need to handle building the up and down pointers for a column of items.
          * We also must make sure to keep the most recent element pointing down to the

@@ -118,6 +118,28 @@ Instead we can fit all of the logic for this algorithm into one array. Because t
 - Instead of pointers to other nodes, these directional fields store indices to other locations in the array.
 - Recursion occurs with the data structure remaining in place. No copies are necessary.
 
+Here is the struct for the type we place in the lookup table.
+
+```c++
+typedef struct cityHeader {
+    std::string name;
+    int left;
+    int right;
+}cityHeader;
+```
+
+This the struct that is placed in the dancing links grid. It is similar to a normal node with pointers, we just point to indices in the array.
+
+```c++
+typedef struct cityItem {
+    int topOrLen;
+    int up;
+    int down;
+    int left;
+    int right;
+}cityItem;
+```
+
 Here is a literal representation of the array and how it appears in memory.
 
 The lookup table that controls recursion and helps us collect supply location names is a separate array.
