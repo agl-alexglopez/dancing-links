@@ -57,7 +57,7 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
     }
 
     // Choose the city that appears the least across all sets because that will be hard to cover.
-    int chosenIndex = chooseOption();
+    int chosenIndex = chooseCity();
 
     /* Try to cover this city by first supplying the most connected city nearby. Try cities with
      * successively fewer connections then if all else fails supply the isolated city itself.
@@ -87,18 +87,18 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
 }
 
 /**
- * @brief chooseOption  selects a city we are trying to cover either by giving it supplies or
- *                      covering an adjacent neighbor. The selection uses the following
- *                      heuristic:
- *                          - Select the most isolated city so far.
- *                          - We must cover this city so select an adjacent city with the
- *                            most connections and try that first.
- *                          - If that fails we try the next adjacent city with most connections.
- *                          - Finally, if all other neighbors fail, try to supply the actual city 
- *                            in question, not neighbors.
- * @return              the index of the city we are selecting to attempt to cover.
+ * @brief chooseCity  selects a city we are trying to cover either by giving it supplies or
+ *                    covering an adjacent neighbor. The selection uses the following
+ *                    heuristic:
+ *                        - Select the most isolated city so far.
+ *                        - We must cover this city so select an adjacent city with the
+ *                          most connections and try that first.
+ *                        - If that fails we try the next adjacent city with most connections.
+ *                        - Finally, if all other neighbors fail, try to supply the actual city
+ *                          in question, not neighbors.
+ * @return            the index of the city we are selecting to attempt to cover.
  */
-int DisasterLinks::chooseOption() {
+int DisasterLinks::chooseCity() {
     int min = INT_MAX;
     int chosenIndex = 0;
     int head = 0;
@@ -189,7 +189,7 @@ void DisasterLinks::uncoverCity(int index) {
 }
 
 /**
- * @brief hideItemCol  when we supply an option it covers itself and connected cities. We must
+ * @brief hideCityCol  when we supply an option it covers itself and connected cities. We must
  *                     remove these cities from any other sets that contain them to make them
  *                     disappear from the world as uncovered cities. However, we keep them as
  *                     available cities to supply.
@@ -204,7 +204,7 @@ void DisasterLinks::hideCityCol(DisasterLinks::cityItem& start) {
 }
 
 /**
- * @brief unhideItemCol  when an option fails, we must put the cities it covers back into all
+ * @brief unhideCityCol  when an option fails, we must put the cities it covers back into all
  *                       the sets to which they belong. This puts the cities back in network.
  * @param start          the city in the option we start at. We traverse upward to unhide.
  * @param index          the index we need cities to point to in order to restore network.
