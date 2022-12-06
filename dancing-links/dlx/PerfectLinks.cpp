@@ -8,7 +8,6 @@ Pair PerfectLinks::coverPerson(int index) {
 
     // We always start at the index of the header for that column.
     personLink start = dlx.links[dlx.links[index].down];
-
     // Now step into the first option for that item.
     index = dlx.links[index].down;
 
@@ -22,7 +21,7 @@ Pair PerfectLinks::coverPerson(int index) {
     dlx.lookupTable[p1.right].left = p1.left;
     dlx.lookupTable[p1.left].right = p1.right;
 
-    // Decompose this to the hidePairing function. Repeated logic twice.
+    // p1 needs to dissapear from all other pairings.
     hidePairings(start, index);
 
 
@@ -31,11 +30,11 @@ Pair PerfectLinks::coverPerson(int index) {
     dlx.lookupTable[p2.right].left = p2.left;
     dlx.lookupTable[p2.left].right = p2.right;
 
+    // p2 needs to dissapear from all other pairings.
     hidePairings(dlx.links[index + 1], index + 1);
 
-    Pair curPair = {p1.name, p2.name};
-
-    return curPair;
+    // This is reported as an output parameter for the pairings we chose.
+    return {p1.name, p2.name};
 }
 
 void PerfectLinks::hidePairings(personLink& start, int index) {
