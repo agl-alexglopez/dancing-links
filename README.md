@@ -11,6 +11,14 @@
 	- Dancing Links Implementation (WIP)
 	- Traditional Set Implementation **([`Matchmaker.cpp`](/dancing-links/dlx/Matchmaker.cpp))** 
 
+## Build Note
+
+In order to build this project, you will need a copy of the CS106 C++ library from the Winter of 2022. To the best of my knowledge, newer libraries from Stanford's class websites have some graphics conflicts that prevent this assignment from building. I have included a copy of this library as a `.zip` file in the `/packages/` folder. Unzip the folder in a separate location on your computer because it will need to built as its own Qt project. You can then follow the same instructions to build this library that Stanford normally provides on their course websites [HERE](https://web.stanford.edu/dept/cs_edu/resources/qt/). 
+
+Instead of building their new libraries, however, you will just build this older version. It will install all the necessary Stanford specific libraries on your system for use with Qt.
+
+## Overview
+
 In October of 2022, Donald Knuth released *The Art of Computer Programming: Volume 4b: Combinatorial Algorithms, Part 2*. In this work he revised his previous implementation of his Algorithm X via Dancing Links. His revision included changing the doubly linked links that solved backtracking problems to an array of nodes. This is an interesting optimization. It provides good locality, ease of debugging, and memory safety if you use an array that does not need to be managed like a C++ vector. One of the points Knuth makes clear through his section on Dancing Links is that he wants to give people the tools they need to expand and try his backtracking strategies on many problems. If you want the original Algorithm, please read Knuth's work. Below, I will discuss how I applied or modified his strategies to the problems in this repository.
 
 
@@ -123,6 +131,18 @@ The core logic of the algorithm takes place in this array where items exist in a
 There are some leftovers from Knuth's logic that I am not sure what to do with in this problem and don't play a role to solve the supply problem. Compare this image to the illustration in Knuth's work and the table he produces of his array to see more differences.
 
 Unfortunately, I cannot take advantage of the implicit left right nature of array elements next to one another in this implementation. I need explicit `left` `right` fields because I remove cities from all other options that they appear in without eliminating the other options for future supply possibilities. This means I must splice them out of a doubly linked list.
+
+### Usage Instructions
+
+I chose to implement the solution to this problem as a class that can be found in the **[`DisasterLinks.h`](/dancing-links/dlx/DisasterLinks.h)**, and **[`DisasterLinks.cpp`](/dancing-links/dlx/DisasterLinks.cpp)** files. There are tests at the bottom of the **[`DisasterLinks.cpp`](/dancing-links/dlx/DisasterLinks.cpp)** file that make the internals of the dancing links data structure more understandable.
+
+I then included this implementation in the **[`DisasterGUI.cpp`](/dancing-links/dlx/Demos/DisasterGUI.cpp)** file as the solver for the maps included in this repository. If you want  To see how this implementation solves the provided maps use the following steps.
+
+1. Open the project in Qt Creator with the correct Stanford C++ library installed. (See the [Build Note](#build-note)).
+2. Build and run the project.
+3. Select the `Disaster Planning` option from the top menu.
+4. Select any map from the drop down menu at the bottom of the window.
+5. Press `Solve` to view the fewest number of cities that can cover the map.
 
 ## Dancing Partners
 

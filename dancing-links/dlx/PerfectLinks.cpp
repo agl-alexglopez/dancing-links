@@ -5,32 +5,61 @@
 
 
 Pair PerfectLinks::coverPerson(int index) {
+
+    // We always start at the index of the header for that column.
     PerfectLinks::personLink start = dlx.links[index];
     PerfectLinks::personLink cur = start;
 
+    // Now step into the first option for that item.
     index = cur.down;
-    Pair curPair = {};
-    while ((cur = dlx.links[cur.down]) != start) {
-        Pair found = hidePairing(index);
-        index = cur.down;
-    }
+    Pair curPair = {"",""};
+
+    /* We now must cover the two people in this option in the lookup table. Then go through all
+     * other options and eliminate the other pairings in which each appears because they are paired
+     * off and therefore no longer accessible to other people that want to pair with them.
+     */
+
+    int i = index;
+    do {
+        int top = dlx.links[i].topOrLen;
+        if (top <= 0) {
+            i = dlx.links[i].up;
+        } else {
+            // Record the partnership and make sure table thinks they are covered.
+            PerfectLinks::personName partner = dlx.lookupTable[top];
+            curPair.add(partner.name);
+            dlx.lookupTable[partner.left].right = partner.right;
+            dlx.lookupTable[partner.right].left = partner.left;
+
+            // Now go eliminate all options that have this person.
+            start = dlx.links[top];
+            cur = start;
+            while ((cur = dlx.links[(i = cur.down)]) != start) {
+                hidePairing(i);
+            }
+            i = start.down + 1;
+        }
+    } while (i != index);
+
+    return curPair;
 }
 
-Pair PerfectLinks::hidePairing(int start) {
-    int cur = start++;
-    Pair pairing = {};
+void PerfectLinks::hidePairing(int start) {
+    int cur = start + 1;
+
     while (cur != start) {
         int top = dlx.links[cur].topOrLen;
         int up = dlx.links[cur].up;
         int down = dlx.links[cur].down;
+
         if (top <= 0) {
             cur = dlx.links[cur].up;
         } else {
             dlx.links[up].down = down;
             dlx.links[down].up = up;
             dlx.links[top].topOrLen--;
+            cur++;
         }
-        cur++;
     }
 }
 
@@ -102,11 +131,10 @@ PerfectLinks::PerfectLinks(const Map<std::string, Set<std::string>>& possibleLin
                 // Similar to a previous/current coding pattern but in an above/below column.
                 columnBuilder[sortedFirst] = index;
 
+                // Repeat the process. We only ever have two items in an option.
                 index++;
-
                 std::string sortedSecond = newPair.second();
                 dlx.links.add({dlx.headerIndexMap[sortedSecond], index, index});
-
                 dlx.links[dlx.headerIndexMap[sortedSecond]].topOrLen++;
                 dlx.links[dlx.links[columnBuilder[sortedSecond]].down].up = index;
                 dlx.links[index].up = columnBuilder[sortedSecond];
@@ -114,6 +142,7 @@ PerfectLinks::PerfectLinks(const Map<std::string, Set<std::string>>& possibleLin
                 dlx.links[columnBuilder[sortedSecond]].down = index;
                 columnBuilder[sortedSecond] = index;
 
+                // Because all pairings are bidirectional, they should only apear once as options.
                 seenPairs.add(newPair);
                 index++;
                 spacerTitle--;
@@ -188,6 +217,9 @@ std::ostream& operator<<(std::ostream&os, const PerfectLinks& links) {
 
 
 /* * * * * * * * * * * * * * * *      Test Cases Below this Point       * * * * * * * * * * * * * */
+
+
+/* * * * * * * * * * * * * * * *             Initialization             * * * * * * * * * * * * * */
 
 
 STUDENT_TEST("Line of six but tricky due to natural order.") {
@@ -355,3 +387,83 @@ STUDENT_TEST("Setup works on a disconnected hexagon of people and reportes singl
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 }
+
+
+/* * * * * * * * * * * * * * * *              Cover Logic               * * * * * * * * * * * * * */
+
+
+//STUDENT_TEST("Simple square any valid partners will work. Cover A.") {
+//    /* Here's the world:
+//     *
+//     *               A-----B
+//     *               |     |
+//     *               |     |
+//     *               C-----D
+//     *
+//     * There is no perfect matching here, unfortunately.
+//     */
+//    const Map<std::string, Set<std::string>> provided = {
+//        { "A",{"B","C"}},
+//        { "B",{"A","D"}},
+//        { "C",{"A","D"}},
+//        { "D",{"C","B"}},
+//    };
+//    Vector<PerfectLinks::personName> lookup {
+//        {"",4,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,0},
+//    };
+//    Vector<PerfectLinks::personLink> dlxItems {
+//        /*
+//         *      A  B  C  D
+//         *   1  1  1
+//         *   2  1     1
+//         *   3     1     1
+//         *   4        1  1
+//         */
+//        //       0         1A      2B        3C        4D
+//        /*0*/ {0,0,0},   {2,9,6}, {2,12,7}, {2,15,10},{2,16,13},
+//        //       5         6A      7B
+//        /*1*/ {-1,3,7},  {1,1,9}, {2,2,12},
+//        //       8         9A                10C
+//        /*2*/ {-2,6,10}, {1,6,1},          {3,3,15},
+//        //       11                12B                 13D
+//        /*3*/ {-3,9,13},          {2,7,2},            {4,4,16},
+//        //       14                          15C       16D
+//        /*4*/ {-4,12,16},                  {3,10,3}, {4,13,4},
+//        //       17
+//              {INT_MIN,15,INT_MIN},
+//    };
+//    PerfectLinks matches(provided);
+//    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+//    EXPECT_EQUAL(matches.dlx.links, dlxItems);
+
+//    // Cover A, this will select option 2, partners are AB.
+//    Pair match = matches.coverPerson(1);
+//    EXPECT_EQUAL(match, {"A","B"});
+
+//    Vector<PerfectLinks::personName> lookupCoverA {
+//        {"",4,3},{"A",0,2},{"B",0,3},{"C",0,4},{"D",3,0},
+//    };
+//    Vector<PerfectLinks::personLink> dlxCoverA {
+//        /* Smaller links with A covered via option 1.
+//         *      C  D
+//         *   4  1  1
+//         */
+
+//        //       0         1A      2B        3C        4D
+//        /*1*/ {0,0,0},   {2,9,6}, {2,12,7}, {2,15,10},{2,16,13},
+//        //       5         6A      7B
+//        /*2*/ {-1,3,7},  {1,1,9}, {2,2,12},
+//        //       8         9A                10C
+//        /*3*/ {-2,6,10}, {1,6,1},          {3,3,15},
+//        //       11                12B                 13D
+//        /*4*/ {-3,9,13},          {2,7,2},            {4,4,16},
+//        //       14                          15C       16D
+//        /*5*/ {-4,12,16},                  {3,10,3},  {4,13,4},
+//        //       17
+//              {INT_MIN,15,INT_MIN},
+
+//    };
+//    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+//    EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
+//}
+

@@ -35,8 +35,8 @@
  *
  * Notice that a city covers itself. This is important in the case of island cities that are
  * connected to no cities. I have also organized the rows so that the cities with the
- * most connections are at the top and will be explored first. However, do not mistake this for
- * a greedy approach. We will now discuss the selection process.
+ * most connections are at the top and will be explored first. We will now discuss the selection
+ * process.
  *
  * We must distribute two supplies. Select the city to cover that is the most isolated in the
  * network. It will have the lowest number of appearances across all sets. The (*) marks our
@@ -105,7 +105,7 @@ public:
      * set up in order for the links to "dance" as we recurse and leave the data structure in place.
      */
     typedef struct cityItem {
-        /* If this item is a column header, this is the number of items in a colum.
+        /* If this item is a column header, this is the number of items in a column.
          * If this item is in the grid, this is the index of the header for an item.
          */
         int topOrLen;
@@ -157,7 +157,7 @@ public:
      * @brief isDisasterReady  performs a recursive search to determine if a transportation grid
      *                         can be covered with the specified number of emergency supplies. It
      *                         will also place the found cities in the output parameter if there
-     *                         exists a solution. A city is covered or safe it has supplies or
+     *                         exists a solution. A city is covered or safe if it has supplies or
      *                         is adjacent to a city with supplies. The solution may not use all
      *                         of the provided supplies.
      * @param numSupplies      the limiting number of supplies we must distribute.
@@ -210,11 +210,11 @@ private:
      *                        be supplied again. However, if a city is safely covered by an adjacent
      *                        city with supplies, this safe city may still receive supplies to cover
      *                        other cities. With infinite supplies this algorithm will find a good
-     *                        solution. For the optimal solution challenge it with decreasing supply
+     *                        solution. For the optimal solution, challenge decrease supply
      *                        counts until it confirms a network cannot be covered with that amount.
      * @param numSupplies     the number of supplies that we have to distribute over the network.
      * @param suppliedCities  the output parameter showing the cities we have chosen to supply.
-     * @return                true if all cities are safe, false if not.
+     * @return                true if all cities are safe with given supplies, false if not.
      */
     bool isCovered(int numSupplies, Set<std::string>& suppliedCities);
 
@@ -248,21 +248,21 @@ private:
     void uncoverCity(int index);
 
     /**
-     * @brief hideItemCol  when we supply an option it covers itself and connected cities. We must
+     * @brief hideCityCol  when we supply an option it covers itself and connected cities. We must
      *                     remove these cities from any other sets that contain them to make them
      *                     disappear from the world as uncovered cities. However, we keep them as
      *                     available cities to supply.
      * @param start        the city we start at in a row. We traverse downward to snip city out.
      */
-    void hideItemCol(DisasterLinks::cityItem& start);
+    void hideCityCol(DisasterLinks::cityItem& start);
 
     /**
-     * @brief unhideItemCol  when an option fails, we must put the cities it covers back into all
+     * @brief unhideCityCol  when an option fails, we must put the cities it covers back into all
      *                       the sets to which they belong. This puts the cities back in network.
      * @param start          the city in the option we start at. We traverse upward to unhide.
      * @param index          the index we need cities to point to in order to restore network.
      */
-    void unhideItemCol(DisasterLinks::cityItem& start, int index);
+    void unhideCityCol(DisasterLinks::cityItem& start, int index);
 
 
     /* * * * * * * * * * * * * *    Logic to Build the Dancing Links Structure    * * * * * * * * */

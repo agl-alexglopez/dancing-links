@@ -28,12 +28,35 @@ public:
         return two_;
     }
 
+    // Helper to fill a Pair type during dancing links. It does nothing if the pair is complete.
+    void add(const std::string& add) {
+        if (one_ == "") {
+            if (add < two_) {
+                one_ = add;
+            } else {
+                one_ = two_;
+                two_ = add;
+            }
+        } else if (two_ == "") {
+            if (add < one_) {
+                two_ = one_;
+                one_ = add;
+            } else {
+                two_ = add;
+            }
+        }
+    }
+
     bool operator< (const Pair& rhs) const {
         /* Compare first components. */
         auto comp = first().compare(rhs.first());
         if (comp != 0) return comp < 0;
 
         return second() < rhs.second();
+    }
+
+    explicit operator bool() const {
+        return this->first() != "" || this->second() != "";
     }
 
     bool operator== (const Pair& rhs) const {
