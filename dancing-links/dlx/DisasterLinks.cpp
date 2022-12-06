@@ -70,17 +70,16 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
          * critical for the output parameter, the set of cities we covered in a successful solution.
          */
         std::string supplyLocation = coverCity(cur);
-        suppliedCities.add(supplyLocation);
 
         if (isCovered(numSupplies - 1, suppliedCities)) {
-            // This algorithm may run on successively decreasing supplies so we must cleanup.
+            // Only add to the output if successful and be sure to cleanup in case it runs again.
+            suppliedCities.add(supplyLocation);
             uncoverCity(cur);
             return true;
         }
 
         // This cleanup is in case of failed choices. Try another starting supply location.
         uncoverCity(cur);
-        suppliedCities.remove(supplyLocation);
     }
 
     return false;
