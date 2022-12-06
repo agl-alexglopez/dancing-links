@@ -280,6 +280,14 @@ STUDENT_TEST("We will allow setup of worlds that are impossible to match.") {
         {"",3,1},{"A",0,2},{"B",1,3},{"C",2,0},
     };
     Vector<PerfectLinks::personLink> dlxItems {
+        /*
+         *      A  B  C
+         *   1  1  1
+         *   2     1  1
+         *   3  1     1
+         */
+
+
         //       0         1A       2B      3C
         /*0*/ {0,0,0},   {2,11,5},{2,8,6},{2,12,9},
         //       4         5A       6B
@@ -318,6 +326,17 @@ STUDENT_TEST("Initialize a world that will have matching.") {
         {"",6,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,0},
     };
     Vector<PerfectLinks::personLink> dlxItems {
+        /*
+         *      A  B  C  D  E  F
+         *   1  1        1
+         *   2  1              1
+         *   3     1  1
+         *   4     1           1
+         *   5        1     1
+         *   6           1  1
+         */
+
+
         //       0          1A       2B       3C         4D       5E        6F
         /*0*/ {0,0,0},   {2,11,8},{2,17,14},{2,20,15},{2,23,9},{2,24,21},{2,18,12},
         //       7          8A                           9D
@@ -364,12 +383,22 @@ STUDENT_TEST("Setup works on a disconnected hexagon of people and reportes singl
         {"",6,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,0},
     };
     Vector<PerfectLinks::personLink> dlxItems {
+        /*
+         * None-v
+         *      A  B  C  D  E  F
+         *   1     1  1
+         *   2     1           1
+         *   3        1     1
+         *   4           1  1
+         */
+
+
         //      NO MATCHES--v
         //       0          1A       2B       3C       4D        5E        6F
         /*0*/ {0,0,0},   {0,1,1}, {2,11,8},{2,14,9},{1,17,17},{2,18,15},{1,12,12},
         /*1*/ {-1,5,9},           {2,2,11},{3,3,14},
         /*2*/ {-2,8,12},          {2,8,2},                              {6,6,6},
-        /*3*/ {-3,11,15},         {3,9,3},                    {5,5,18},
+        /*3*/ {-3,11,15},                  {3,9,3},           {5,5,18},
         /*4*/ {-4,14,18},                           {4,4,4},  {5,15,5},
         /*6*/ {INT_MIN,17,INT_MIN},
     };
