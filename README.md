@@ -106,7 +106,7 @@ I will briefly go over the new data structure that Knuth recommends for these ty
 
 It might appear from the previous section that we use a traditional `NxN` grid to solve these problems. The issue with that is that for any non trivial network, the grid would be quite sparse and waste space.
 
-Instead we can fit all of the logic for this algorithm into one array. Because this is implemented in `C++`, I use a `vector` to organize this data. Here how I organized what I needed to solve this problem.
+Instead we can fit all of the logic for this algorithm into one array. Because this is implemented in `C++`, I use a `vector` to organize this data. Here is how I organized what I needed to solve this problem.
 
 - Create a lookup table of city names so that we can collect the names of cities that we supply as an output parameter during recursion.
 - Create the actual grid array. This array will contain item nodes.
@@ -128,7 +128,7 @@ typedef struct cityHeader {
 }cityHeader;
 ```
 
-This the struct that is placed in the dancing links grid. It is similar to a normal node with pointers, we just point to indices in the array.
+This is the struct I place in the dancing links grid. It is similar to a normal node with pointers, we just point to indices in the array.
 
 ```c++
 typedef struct cityItem {
@@ -140,7 +140,7 @@ typedef struct cityItem {
 }cityItem;
 ```
 
-I then pack these data structures into a struct. The `numItemsAndOptions` is just the number of cities we must cover. There an equivalent number of cities as items to cover and cities as supply options.
+I then pack these data structures into a struct. The `numItemsAndOptions` is just the number of cities we must cover. There is an equivalent number of cities as items to cover and cities as supply options.
 
 ```c++
 typedef struct Network {
