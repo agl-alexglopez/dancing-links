@@ -140,7 +140,17 @@ typedef struct cityItem {
 }cityItem;
 ```
 
-Here is a literal representation of the array and how it appears in memory.
+I then pack these data structures into a struct. The `numItemsAndOptions` is just the number of cities we must cover. There an equivalent number of cities as items to cover and cities as supply options.
+
+```c++
+typedef struct Network {
+    Vector<cityHeader> lookupTable;
+    Vector<cityItem> grid;
+    int numItemsAndOptions;
+}Network;
+```
+
+Here is a literal representation of the array and how it appears in memory for the example I previously illustrated.
 
 The lookup table that controls recursion and helps us collect supply location names is a separate array.
 
