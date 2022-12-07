@@ -6,7 +6,7 @@
 	- Dancing Links Class **([`DisasterLinks.h`](/dancing-links/dlx/DisasterLinks.h))**
 	- Dancing Links Implementation **([`DisasterLinks.cpp`](dancing-links/dlx/DisasterLinks.cpp))**
 	- Traditional Set Implementation **([`DisasterPlanning.cpp`](/dancing-links/dlx/DisasterPlanning.cpp))** 
-- Matchmaker (Work In Progress)
+- Matchmaker
 	- Dancing Links Class **([`PartnerLinks.h`](/dancing-links/dlx/PartnerLinks.h))**
 	- Dancing Links Implementation **([`PartnerLinks.cpp`](/dancing-links/dlx/PartnerLinks.cpp))**
 	- Traditional Set Implementation **([`Matchmaker.cpp`](/dancing-links/dlx/Matchmaker.cpp))** 
