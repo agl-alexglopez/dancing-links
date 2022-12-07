@@ -13,6 +13,7 @@
 
 /* * * * * * * * * * * * *  Perfect Matching Algorithm X via Dancing Links  * * * * * * * * * * * */
 
+
 /**
  * @brief hasPerfectLinks  determines if an instance of a PartnerLinks matrix can solve the
  *                         Perfect Match problem. A perfect matching is when every person is
@@ -21,6 +22,7 @@
  * @return                 true if there is a perfect matching false if not.
  */
 bool PartnerLinks::hasPerfectLinks(Set<Pair>& pairs) {
+    // Mathematically impossible perfect links no work necessary.
     if (dlx.hasSingleton || dlx.numPeople % 2 != 0) {
         return false;
     }
@@ -48,11 +50,12 @@ bool PartnerLinks::isPerfectMatching(Set<Pair>& pairs) {
         Pair match = coverPairing(cur);
 
         if (isPerfectMatching(pairs)) {
+            // Cleanup the data structure in case we are asked again. Maybe uneccessary.
             pairs.add(match);
             uncoverPairing(cur);
             return true;
         }
-
+        // Selecting to partner chosenPerson with this option did not work out. Retry other option.
         uncoverPairing(cur);
     }
     return false;
@@ -88,7 +91,7 @@ int PartnerLinks::choosePerson() {
  */
 Pair PartnerLinks::coverPairing(int index) {
 
-    // Now step into the first option for that item.
+    // We could start on a header so always step down.
     index = dlx.links[index].down;
 
 
@@ -204,6 +207,7 @@ void PartnerLinks::unhidePersonPairings(personLink& start, int index) {
  * @param index        the index we take by reference to advance.
  */
 inline void PartnerLinks::toPairIndex(int& index) {
+    // There are only ever two people in an option so this is a safe increment/decrement.
     if (dlx.links[++index].topOrLen <= 0) {
         index -= 2;
     }
@@ -225,6 +229,10 @@ Set<Pair> PartnerLinks::getMaxWeightMatching() {
               "For weighted graphs provide a Map<string,Map<string,int>> representing a person\n"
               "and the weights of their preferred connections to the constructor.");
     }
+    /* In the spirit of "no copy" recursion by Knuth, we can just fill and remove from one set and
+     * record the best snapshot of pairings in the winner set. Have to profile to see if this faster
+     * than normal recursion with copies of sets.
+     */
     std::pair<int,Set<Pair>> soFar = {};
     std::pair<int,Set<Pair>> winner = {};
     fillWeights(soFar, winner);
@@ -248,21 +256,28 @@ void PartnerLinks::fillWeights(std::pair<int,Set<Pair>>& soFar, std::pair<int,Se
     if (chosen == -1) {
         return;
     }
+    // Explore every possibility without this person to see if a heavier matching exists without.
     coverPerson(chosen);
     fillWeights(soFar, winner);
     uncoverPerson(chosen);
 
+    // Now loop through every possible option for every combination of people available.
     for (int cur = chosen; dlx.links[cur].down != chosen; cur = dlx.links[cur].down) {
 
+        // Our cover operation is able to pick up the weight and names of pair in a O(1) operation.
         std::pair<int,Pair> match = coverWeightedPair(cur);
         soFar.first += match.first;
         soFar.second += match.second;
+
+        // Go explore every weight that taking this pair produces
         fillWeights(soFar, winner);
 
+        // The winner pair will copy in the weight and Set if its the best so far.
         if (soFar.first > winner.first) {
             winner = soFar;
         }
 
+        // Prepare to explore the next options. Cleanup links and remove previous choice from pair.
         uncoverPairing(cur);
         soFar.first -= match.first;
         soFar.second -= match.second;
@@ -280,11 +295,12 @@ void PartnerLinks::fillWeights(std::pair<int,Set<Pair>>& soFar, std::pair<int,Se
 int PartnerLinks::chooseWeightedPerson() {
     int head = 0;
     for (int cur = dlx.lookupTable[0].right; cur != head; cur = dlx.lookupTable[cur].right) {
-        // Take the first available person who is still available.
+        // Take the first available person.
         if (dlx.links[cur].topOrLen != 0) {
             return cur;
         }
     }
+    // Every person is alone so no more weights to explore in this recursive branch.
     return -1;
 }
 
@@ -299,26 +315,21 @@ int PartnerLinks::chooseWeightedPerson() {
  * @param index        the index of the person we cover. Chooses option below this index.
  */
 void PartnerLinks::coverPerson(int index) {
-    // Now step into the first option for that item.
     index = dlx.links[index].down;
-
-
 
     personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
     dlx.lookupTable[p1.right].left = p1.left;
     dlx.lookupTable[p1.left].right = p1.right;
 
-    // p1 needs to dissapear from all other pairings.
+    // Only hide pairings for this person.
     hidePersonPairings(dlx.links[index], index);
 
     toPairIndex(index);
-
+    // Partner will only disapear in this instance of the pairing, not all other instances.
     personLink cur = dlx.links[index];
-
     dlx.links[cur.up].down = cur.down;
     dlx.links[cur.down].up = cur.up;
     dlx.links[cur.topOrLen].topOrLen--;
-
 }
 
 /**
@@ -328,26 +339,19 @@ void PartnerLinks::coverPerson(int index) {
  * @param index          the index of the person to uncover. Chooses option below this index.
  */
 void PartnerLinks::uncoverPerson(int index) {
-    // Now step into the first option for that item.
     index = dlx.links[index].down;
-
-
 
     personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
     dlx.lookupTable[p1.left].right = dlx.links[index].topOrLen;
     dlx.lookupTable[p1.right].left = dlx.links[index].topOrLen;
 
-    // p1 needs to dissapear from all other pairings.
     unhidePersonPairings(dlx.links[index], index);
 
     toPairIndex(index);
-
     personLink cur = dlx.links[index];
-
     dlx.links[cur.up].down = index;
     dlx.links[cur.down].up = index;
     dlx.links[cur.topOrLen].topOrLen++;
-
 }
 
 /**
@@ -360,14 +364,7 @@ void PartnerLinks::uncoverPerson(int index) {
  * @return                   an std::pair of the weight of the pair and their names.
  */
 std::pair<int,Pair> PartnerLinks::coverWeightedPair(int index) {
-    // Now step into the first option for that item.
     index = dlx.links[index].down;
-
-
-    /* We now must cover the two people in this option in the lookup table. Then go through all
-     * other options and eliminate the other pairings in which each appears because they are paired
-     * off and therefore no longer accessible to other people that want to pair with them.
-     */
 
     personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
     dlx.lookupTable[p1.right].left = p1.left;
@@ -377,6 +374,7 @@ std::pair<int,Pair> PartnerLinks::coverWeightedPair(int index) {
     hidePersonPairings(dlx.links[index], index);
 
 
+    // We can pick up the weight for this pairing in a O(1) sweep to report back.
     std::pair<int,Pair> result = {};
     if (dlx.links[index + 1].topOrLen < 0) {
         result.first = std::abs(dlx.links[index - 2].topOrLen);
@@ -412,6 +410,7 @@ PartnerLinks::PartnerLinks(const Map<std::string, Set<std::string>>& possibleLin
     dlx.numPairings = 0;
     dlx.numPeople = 0;
     dlx.hasSingleton = false;
+    dlx.isWeighted = false;
 
     HashMap<std::string, int> columnBuilder = {};
 
@@ -444,7 +443,6 @@ PartnerLinks::PartnerLinks(const Map<std::string, Set<std::string>>& possibleLin
  * @param possibleLinks  the map of people and map of partners and weights.
  */
 PartnerLinks::PartnerLinks(const Map<std::string, Map<std::string, int>>& possibleLinks) {
-    dlx.numPairings = 0;
     dlx.numPairings = 0;
     dlx.numPeople = 0;
     dlx.hasSingleton = false;
@@ -541,48 +539,47 @@ void PartnerLinks::setPerfectPairs(const std::string& person,
                                    Set<Pair>& seenPairs,
                                    int& index,
                                    int& spacerTitle) {
-        for (const auto& pref : preferences) {
-            Pair newPair = {person, pref};
+    for (const auto& pref : preferences) {
+        Pair newPair = {person, pref};
 
-            if (!seenPairs.contains(newPair)) {
-                dlx.numPairings++;
-                // Update the count for this column.
-                dlx.links.add({spacerTitle,     // Negative to mark spacer.
-                               index - 2,       // First item in previous option
-                               index + 2});     // Last item in current option
-                index++;
-                std::string sortedFirst = newPair.first();
-                dlx.links.add({dlx.links[columnBuilder[sortedFirst]].down,index, index});
+        if (!seenPairs.contains(newPair)) {
+            dlx.numPairings++;
+            // Update the count for this column.
+            dlx.links.add({spacerTitle,     // Negative to mark spacer.
+                           index - 2,       // First item in previous option
+                           index + 2});     // Last item in current option
+            index++;
+            std::string sortedFirst = newPair.first();
+            dlx.links.add({dlx.links[columnBuilder[sortedFirst]].down,index, index});
 
+            // We can always access the column header with down field of last item.
+            dlx.links[dlx.links[columnBuilder[sortedFirst]].down].topOrLen++;
+            dlx.links[dlx.links[columnBuilder[sortedFirst]].down].up = index;
+            // The current node is the new tail in a vertical circular linked list for an item.
+            dlx.links[index].up = columnBuilder[sortedFirst];
+            dlx.links[index].down = dlx.links[columnBuilder[sortedFirst]].down;
+            // Update the old tail to reflect the new addition of an item in its option.
+            dlx.links[columnBuilder[sortedFirst]].down = index;
+            // Similar to a previous/current coding pattern but in an above/below column.
+            columnBuilder[sortedFirst] = index;
 
-                dlx.links[dlx.links[columnBuilder[sortedFirst]].down].topOrLen++;
-                // This is the necessary adjustment to the column header's up field for a given item.
-                dlx.links[dlx.links[columnBuilder[sortedFirst]].down].up = index;
-                // The current node is now the new tail in a vertical circular linked list for an item.
-                dlx.links[index].up = columnBuilder[sortedFirst];
-                dlx.links[index].down = dlx.links[columnBuilder[sortedFirst]].down;
-                // Update the old tail to reflect the new addition of an item in its option.
-                dlx.links[columnBuilder[sortedFirst]].down = index;
-                // Similar to a previous/current coding pattern but in an above/below column.
-                columnBuilder[sortedFirst] = index;
+            // Repeat the process. We only ever have two items in an option.
+            index++;
+            std::string sortedSecond = newPair.second();
+            dlx.links.add({dlx.links[columnBuilder[sortedSecond]].down, index, index});
+            dlx.links[dlx.links[columnBuilder[sortedSecond]].down].topOrLen++;
+            dlx.links[dlx.links[columnBuilder[sortedSecond]].down].up = index;
+            dlx.links[index].up = columnBuilder[sortedSecond];
+            dlx.links[index].down = dlx.links[columnBuilder[sortedSecond]].down;
+            dlx.links[columnBuilder[sortedSecond]].down = index;
+            columnBuilder[sortedSecond] = index;
 
-                // Repeat the process. We only ever have two items in an option.
-                index++;
-                std::string sortedSecond = newPair.second();
-                dlx.links.add({dlx.links[columnBuilder[sortedSecond]].down, index, index});
-                dlx.links[dlx.links[columnBuilder[sortedSecond]].down].topOrLen++;
-                dlx.links[dlx.links[columnBuilder[sortedSecond]].down].up = index;
-                dlx.links[index].up = columnBuilder[sortedSecond];
-                dlx.links[index].down = dlx.links[columnBuilder[sortedSecond]].down;
-                dlx.links[columnBuilder[sortedSecond]].down = index;
-                columnBuilder[sortedSecond] = index;
-
-                // Because all pairings are bidirectional, they should only apear once as options.
-                seenPairs.add(newPair);
-                index++;
-                spacerTitle--;
-            }
+            // Pairings are bidirectional but might appear multiple times in Map. Track here.
+            seenPairs.add(newPair);
+            index++;
+            spacerTitle--;
         }
+    }
 }
 
 /**
@@ -602,47 +599,46 @@ void PartnerLinks::setWeightedPairs(const std::string& person,
                                     HashMap<std::string,int>& columnBuilder,
                                     Set<Pair>& seenPairs,
                                     int& index) {
-        for (const auto& pref : preferences) {
-            Pair newPair = {person, pref};
+    for (const auto& pref : preferences) {
+        Pair newPair = {person, pref};
 
-            if (!seenPairs.contains(newPair) && preferences[pref] >= 0) {
-                dlx.numPairings++;
-                // Update the count for this column.
-                dlx.links.add({-preferences[pref],     // Negative weight of the partnership
-                               index - 2,              // First item in previous option
-                               index + 2});            // Last item in current option
-                index++;
-                std::string sortedFirst = newPair.first();
-                dlx.links.add({dlx.links[columnBuilder[sortedFirst]].down,index, index});
+        if (!seenPairs.contains(newPair) && preferences[pref] >= 0) {
+            dlx.numPairings++;
+            // Weight is negative so we know we are on a spacer tile when found.
+            dlx.links.add({-preferences[pref],     // Negative weight of the partnership
+                           index - 2,              // First item in previous option
+                           index + 2});            // Last item in current option
+            index++;
+            std::string sortedFirst = newPair.first();
+            dlx.links.add({dlx.links[columnBuilder[sortedFirst]].down,index, index});
 
+            // We can always access the column header with down field of last item.
+            dlx.links[dlx.links[columnBuilder[sortedFirst]].down].topOrLen++;
+            dlx.links[dlx.links[columnBuilder[sortedFirst]].down].up = index;
+            // The current node is new tail in a vertical circular linked list for an item.
+            dlx.links[index].up = columnBuilder[sortedFirst];
+            dlx.links[index].down = dlx.links[columnBuilder[sortedFirst]].down;
+            // Update the old tail to reflect the new addition of an item in its option.
+            dlx.links[columnBuilder[sortedFirst]].down = index;
+            // Similar to a previous/current coding pattern but in an above/below column.
+            columnBuilder[sortedFirst] = index;
 
-                dlx.links[dlx.links[columnBuilder[sortedFirst]].down].topOrLen++;
-                // This is the necessary adjustment to the column header's up field for a given item.
-                dlx.links[dlx.links[columnBuilder[sortedFirst]].down].up = index;
-                // The current node is now the new tail in a vertical circular linked list for an item.
-                dlx.links[index].up = columnBuilder[sortedFirst];
-                dlx.links[index].down = dlx.links[columnBuilder[sortedFirst]].down;
-                // Update the old tail to reflect the new addition of an item in its option.
-                dlx.links[columnBuilder[sortedFirst]].down = index;
-                // Similar to a previous/current coding pattern but in an above/below column.
-                columnBuilder[sortedFirst] = index;
+            // Repeat the process. We only ever have two items in an option.
+            index++;
+            std::string sortedSecond = newPair.second();
+            dlx.links.add({dlx.links[columnBuilder[sortedSecond]].down, index, index});
+            dlx.links[dlx.links[columnBuilder[sortedSecond]].down].topOrLen++;
+            dlx.links[dlx.links[columnBuilder[sortedSecond]].down].up = index;
+            dlx.links[index].up = columnBuilder[sortedSecond];
+            dlx.links[index].down = dlx.links[columnBuilder[sortedSecond]].down;
+            dlx.links[columnBuilder[sortedSecond]].down = index;
+            columnBuilder[sortedSecond] = index;
 
-                // Repeat the process. We only ever have two items in an option.
-                index++;
-                std::string sortedSecond = newPair.second();
-                dlx.links.add({dlx.links[columnBuilder[sortedSecond]].down, index, index});
-                dlx.links[dlx.links[columnBuilder[sortedSecond]].down].topOrLen++;
-                dlx.links[dlx.links[columnBuilder[sortedSecond]].down].up = index;
-                dlx.links[index].up = columnBuilder[sortedSecond];
-                dlx.links[index].down = dlx.links[columnBuilder[sortedSecond]].down;
-                dlx.links[columnBuilder[sortedSecond]].down = index;
-                columnBuilder[sortedSecond] = index;
-
-                // Because all pairings are bidirectional, they should only apear once as options.
-                seenPairs.add(newPair);
-                index++;
-            }
+            // Because all pairings are bidirectional, they should only apear once as options.
+            seenPairs.add(newPair);
+            index++;
         }
+    }
 }
 
 
