@@ -6,9 +6,9 @@
 	- Dancing Links Class **([`DisasterLinks.h`](/dancing-links/dlx/DisasterLinks.h))**
 	- Dancing Links Implementation **([`DisasterLinks.cpp`](dancing-links/dlx/DisasterLinks.cpp))**
 	- Traditional Set Implementation **([`DisasterPlanning.cpp`](/dancing-links/dlx/DisasterPlanning.cpp))** 
-- Matchmaker (WIP)
-	- Dancing Links Class (WIP)
-	- Dancing Links Implementation (WIP)
+- Matchmaker (Work In Progress)
+	- Dancing Links Class **([`PartnerLinks.h`](/dancing-links/dlx/PartnerLinks.h))**
+	- Dancing Links Implementation **([`PartnerLinks.cpp`](/dancing-links/dlx/PartnerLinks.cpp))**
 	- Traditional Set Implementation **([`Matchmaker.cpp`](/dancing-links/dlx/Matchmaker.cpp))** 
 
 ## Build Note
@@ -19,7 +19,7 @@ Instead of building their new libraries, however, you will just build this older
 
 ## Overview
 
-In October of 2022, Donald Knuth released *The Art of Computer Programming: Volume 4b: Combinatorial Algorithms, Part 2*. In this work he revised his previous implementation of his Algorithm X via Dancing Links. His revision included changing the doubly linked links that solved backtracking problems to an array of nodes. This is an interesting optimization. It provides good locality, ease of debugging, and memory safety if you use an array that does not need to be managed like a C++ vector. One of the points Knuth makes clear through his section on Dancing Links is that he wants to give people the tools they need to expand and try his backtracking strategies on many problems. If you want the original Algorithm, please read Knuth's work. Below, I will discuss how I applied or modified his strategies to the problems in this repository.
+In October of 2022, Donald Knuth released *The Art of Computer Programming: Volume 4b: Combinatorial Algorithms, Part 2*. In this work he revised his previous implementation of his Algorithm X via Dancing Links. His revision included changing the doubly linked links that solved backtracking problems to an array of nodes. This is an interesting optimization. It provides good locality, ease of debugging, and memory safety if you use an array that does not need to be managed like a C++ vector. One of the points Knuth makes clear through his section on Dancing Links is that he wants to give people the tools they need to expand and try his backtracking strategies on many problems. If you want the original Algorithm, please read Knuth's work. Below, I will discuss how I applied or modified his strategies to the problems in this repository. I solve three problems: supplying a transportations grid, perfect matching for partners, and maximum weight matching for partners.
 
 
 ## Dancing with Danger
@@ -178,4 +178,4 @@ I then included this implementation in the **[`DisasterGUI.cpp`](/dancing-links/
 
 ## Dancing Partners
 
-I will tackle the perfect matching problem with dancing links next. I have not gotten to this implementation yet.
+The implementation for perfect matching and maximum weight matching are complete. They are now the driving code behind the interactive programs in this project. I am tidying up the code and working on the write up, which will follow soon.
