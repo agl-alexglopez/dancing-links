@@ -9,5 +9,5 @@ TEST_ORDER("Matchmaker.cpp",
            "DisasterLinks.cpp",
            "DisasterPlanning.cpp",)
 
-TEST_BARRIER("MatchmakerGUI.cpp", "Matchmaker.cpp")
+TEST_BARRIER("MatchmakerGUI.cpp", "PartnerLinks.cpp")
 TEST_BARRIER("DisasterGUI.cpp",   "DisasterLinks.cpp")
