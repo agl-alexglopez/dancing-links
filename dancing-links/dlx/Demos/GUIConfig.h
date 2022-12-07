@@ -5,7 +5,7 @@ MENU_ORDER("MatchmakerGUI.cpp",
            "DisasterGUI.cpp")
 
 TEST_ORDER("Matchmaker.cpp",
-           "PerfectLinks.cpp",
+           "PartnerLinks.cpp",
            "DisasterLinks.cpp",
            "DisasterPlanning.cpp",)
 

@@ -4,6 +4,7 @@
 #include <fstream>
 #include <algorithm>
 #include "filelib.h"
+#include "PartnerLinks.h"
 using namespace std;
 using namespace MiniGUI;
 
@@ -470,7 +471,11 @@ namespace {
         editor->setActive(nullptr);
 
         Set<Pair> matching;
-        if (hasPerfectMatching(graph, matching)) {
+        // Uncomment this line for the slower implementation that uses copies of sets.
+        // if (hasPerfectMatching(graph, matching)) {
+
+        PartnerLinks perfectMatchingDLX(graph);
+        if (perfectMatchingDLX.hasPerfectLinks(matching)) {
             /* Store this matching. */
             currMatching.reset(new Set<Pair>(matching));
 
@@ -510,8 +515,13 @@ namespace {
          */
         editor->setActive(nullptr);
 
+        // Uncomment this line for the original slower implementation that uses copies of sets.
+        //currMatching.reset(new Set<Pair>(maximumWeightMatching(graph)));
+
         /* Store this matching. */
-        currMatching.reset(new Set<Pair>(maximumWeightMatching(graph)));
+        PartnerLinks weightedDLX(graph);
+        currMatching.reset(new Set<Pair>(weightedDLX.getMaxWeightMatching()));
+
 
         /* We need to redraw. */
         requestRepaint();

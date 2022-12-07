@@ -1,19 +1,16 @@
-#include "PerfectLinks.h"
+#include "PartnerLinks.h"
 
 
-/* * * * * * * * * * * * * * *    Algorithm X via Dancing Links     * * * * * * * * * * * * * * * */
+/* * * * * * * * * * * * *  Perfect Matching Algorithm X via Dancing Links  * * * * * * * * * * * */
 
-bool PerfectLinks::hasPerfectLinks(Set<Pair>& pairs) {
-    if (dlx.hasSingleton) {
-        return false;
-    }
-    if (dlx.numPeople % 2 != 0) {
+bool PartnerLinks::hasPerfectLinks(Set<Pair>& pairs) {
+    if (dlx.hasSingleton || dlx.numPeople % 2 != 0) {
         return false;
     }
     return isPerfectMatching(pairs);
 }
 
-bool PerfectLinks::isPerfectMatching(Set<Pair>& pairs) {
+bool PartnerLinks::isPerfectMatching(Set<Pair>& pairs) {
     if (dlx.lookupTable[0].right == 0) {
         return true;
     }
@@ -25,20 +22,20 @@ bool PerfectLinks::isPerfectMatching(Set<Pair>& pairs) {
 
     for (int cur = chosenPerson; dlx.links[cur].down != chosenPerson; cur = dlx.links[cur].down) {
 
-        Pair match = coverPerson(cur);
+        Pair match = coverPairing(cur);
 
         if (isPerfectMatching(pairs)) {
             pairs.add(match);
-            uncoverPerson(cur);
+            uncoverPairing(cur);
             return true;
         }
 
-        uncoverPerson(cur);
+        uncoverPairing(cur);
     }
     return false;
 }
 
-int PerfectLinks::choosePerson() {
+int PartnerLinks::choosePerson() {
     int head = 0;
     for (int cur = dlx.lookupTable[0].right; cur != head; cur = dlx.lookupTable[cur].right) {
         // Someone has become inaccessible due to other matches.
@@ -49,10 +46,8 @@ int PerfectLinks::choosePerson() {
     return dlx.lookupTable[0].right;
 }
 
-Pair PerfectLinks::coverPerson(int index) {
+Pair PartnerLinks::coverPairing(int index) {
 
-    // We always start at the index of the header for that column.
-    personLink start = dlx.links[dlx.links[index].down];
     // Now step into the first option for that item.
     index = dlx.links[index].down;
 
@@ -67,12 +62,10 @@ Pair PerfectLinks::coverPerson(int index) {
     dlx.lookupTable[p1.left].right = p1.right;
 
     // p1 needs to dissapear from all other pairings.
-    hidePairings(start, index);
+    hidePairings(dlx.links[index], index);
 
-    // In case the other partner is to the left, just decrement index to get to the left.
-    if (dlx.links[++index].topOrLen < 0) {
-        index -= 2;
-    }
+    // In case I ever apply a selection heuristic, partner might not be to the right.
+    toPairIndex(index);
 
     personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
     dlx.lookupTable[p2.right].left = p2.left;
@@ -85,25 +78,9 @@ Pair PerfectLinks::coverPerson(int index) {
     return {p1.name, p2.name};
 }
 
-void PerfectLinks::uncoverPerson(int index) {
+void PartnerLinks::uncoverPairing(int index) {
 
     index = dlx.links[index].down;
-
-    // Go in the reverse order, uncovering person 2 then person 1.
-    if (dlx.links[--index].topOrLen < 0) {
-        index += 2;
-    }
-
-    personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
-    dlx.lookupTable[p2.left].right = dlx.links[index].topOrLen;
-    dlx.lookupTable[p2.right].left = dlx.links[index].topOrLen;
-
-    unhidePairings(dlx.links[index], index);
-
-    if (dlx.links[--index].topOrLen < 0) {
-        index += 2;
-    }
-
 
     personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
     dlx.lookupTable[p1.left].right = dlx.links[index].topOrLen;
@@ -111,17 +88,46 @@ void PerfectLinks::uncoverPerson(int index) {
 
     unhidePairings(dlx.links[index], index);
 
+    toPairIndex(index);
+
+
+    personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
+    dlx.lookupTable[p2.left].right = dlx.links[index].topOrLen;
+    dlx.lookupTable[p2.right].left = dlx.links[index].topOrLen;
+
+    unhidePairings(dlx.links[index], index);
+
 }
 
-void PerfectLinks::unhidePairings(personLink& start, int index) {
+void PartnerLinks::hidePairings(personLink& start, int index) {
     personLink nextPairing = start;
+    index = start.down;
+    while ((nextPairing = dlx.links[nextPairing.down]) != start) {
+        // We may need this guard to prevent splicing while on a column header.
+        if (index > dlx.lookupTable.size()) {
+
+            // In case the other partner is to the left, just decrement index to go left.
+            toPairIndex(index);
+
+            personLink cur = dlx.links[index];
+
+            dlx.links[cur.up].down = cur.down;
+            dlx.links[cur.down].up = cur.up;
+            dlx.links[cur.topOrLen].topOrLen--;
+        }
+        index = nextPairing.down;
+    }
+}
+
+void PartnerLinks::unhidePairings(personLink& start, int index) {
+    personLink nextPairing = start;
+    // The order does not truly matter but I distinguish this from hide by going upwards.
     index = start.up;
     while ((nextPairing = dlx.links[nextPairing.up]) != start) {
         if (index > dlx.lookupTable.size()) {
 
-            if (dlx.links[--index].topOrLen < 0) {
-                index += 2;
-            }
+            toPairIndex(index);
+
             personLink cur = dlx.links[index];
 
             dlx.links[cur.up].down = index;
@@ -133,32 +139,160 @@ void PerfectLinks::unhidePairings(personLink& start, int index) {
 
 }
 
-void PerfectLinks::hidePairings(personLink& start, int index) {
-    personLink nextPairing = start;
-    index = start.down;
-    while ((nextPairing = dlx.links[nextPairing.down]) != start) {
-        // We may need this guard to prevent splicing while on a column header.
-        if (index > dlx.lookupTable.size()) {
-
-            // In case the other partner is to the left, just decrement index to go left.
-            if (dlx.links[++index].topOrLen < 0) {
-                index -= 2;
-            }
-            personLink cur = dlx.links[index];
-
-            dlx.links[cur.up].down = cur.down;
-            dlx.links[cur.down].up = cur.up;
-            dlx.links[cur.topOrLen].topOrLen--;
-        }
-        index = nextPairing.down;
+inline void PartnerLinks::toPairIndex(int& index) {
+    if (dlx.links[++index].topOrLen <= 0) {
+        index -= 2;
     }
 }
+
+
+/* * * * * * * * * * * * *  Weighted Matching Algorithm X via Dancing Links  * * ** * * * * * * * */
+
+
+Set<Pair> PartnerLinks::getMaxWeightMatching() {
+    if (!dlx.isWeighted) {
+        error("Asking for max weight matching of a graph with no weight information provided.\n"
+              "For weighted graphs provide a Map<string,Map<string,int>> representing a person\n"
+              "and the weights of their preferred connections to the constructor.");
+    }
+    std::pair<int,Set<Pair>> soFar = {};
+    std::pair<int,Set<Pair>> winner = {};
+    fillWeights(soFar, winner);
+    return winner.second;
+}
+
+void PartnerLinks::fillWeights(std::pair<int,Set<Pair>>& soFar,
+                               std::pair<int,Set<Pair>>& winner) {
+    if (dlx.lookupTable[0].right == 0) {
+        return;
+    }
+
+    int chosen = chooseWeightedPerson();
+    if (chosen == -1) {
+        return;
+    }
+    coverPerson(chosen);
+    fillWeights(soFar, winner);
+    uncoverPerson(chosen);
+
+    for (int cur = chosen; dlx.links[cur].down != chosen; cur = dlx.links[cur].down) {
+
+        std::pair<int,Pair> match = coverWeightedPair(cur);
+        soFar.first += match.first;
+        soFar.second += match.second;
+        fillWeights(soFar, winner);
+
+        if (soFar.first > winner.first) {
+            winner = soFar;
+        }
+
+        uncoverPairing(cur);
+        soFar.first -= match.first;
+        soFar.second -= match.second;
+    }
+}
+
+int PartnerLinks::chooseWeightedPerson() {
+    int head = 0;
+    for (int cur = dlx.lookupTable[0].right; cur != head; cur = dlx.lookupTable[cur].right) {
+        // Take the first available person who is still available.
+        if (dlx.links[cur].topOrLen != 0) {
+            return cur;
+        }
+    }
+    return -1;
+}
+
+
+void PartnerLinks::coverPerson(int index) {
+    // Now step into the first option for that item.
+    index = dlx.links[index].down;
+
+
+
+    personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
+    dlx.lookupTable[p1.right].left = p1.left;
+    dlx.lookupTable[p1.left].right = p1.right;
+
+    // p1 needs to dissapear from all other pairings.
+    hidePairings(dlx.links[index], index);
+
+    toPairIndex(index);
+
+    personLink cur = dlx.links[index];
+
+    dlx.links[cur.up].down = cur.down;
+    dlx.links[cur.down].up = cur.up;
+    dlx.links[cur.topOrLen].topOrLen--;
+
+}
+
+void PartnerLinks::uncoverPerson(int index) {
+    // Now step into the first option for that item.
+    index = dlx.links[index].down;
+
+
+
+    personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
+    dlx.lookupTable[p1.left].right = dlx.links[index].topOrLen;
+    dlx.lookupTable[p1.right].left = dlx.links[index].topOrLen;
+
+    // p1 needs to dissapear from all other pairings.
+    unhidePairings(dlx.links[index], index);
+
+    toPairIndex(index);
+
+    personLink cur = dlx.links[index];
+
+    dlx.links[cur.up].down = index;
+    dlx.links[cur.down].up = index;
+    dlx.links[cur.topOrLen].topOrLen++;
+
+}
+
+std::pair<int,Pair> PartnerLinks::coverWeightedPair(int index) {
+    // Now step into the first option for that item.
+    index = dlx.links[index].down;
+
+
+    /* We now must cover the two people in this option in the lookup table. Then go through all
+     * other options and eliminate the other pairings in which each appears because they are paired
+     * off and therefore no longer accessible to other people that want to pair with them.
+     */
+
+    personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
+    dlx.lookupTable[p1.right].left = p1.left;
+    dlx.lookupTable[p1.left].right = p1.right;
+
+    // p1 needs to dissapear from all other pairings.
+    hidePairings(dlx.links[index], index);
+
+
+    std::pair<int,Pair> result = {};
+    if (dlx.links[index + 1].topOrLen < 0) {
+        result.first = std::abs(dlx.links[index - 2].topOrLen);
+        index--;
+    } else {
+        // p2 needs to dissapear from all other pairings.
+        hidePairings(dlx.links[index + 1], index + 1);
+        result.first = std::abs(dlx.links[index - 1].topOrLen);
+        index++;
+    }
+
+    personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
+    dlx.lookupTable[p2.right].left = p2.left;
+    dlx.lookupTable[p2.left].right = p2.right;
+
+    result.second = {p1.name,p2.name};
+    return result;
+}
+
 
 
 /* * * * * * * * * * * * * * *   Constructor to Build the Network   * * * * * * * * * * * * * * * */
 
 
-PerfectLinks::PerfectLinks(const Map<std::string, Set<std::string>>& possibleLinks) {
+PartnerLinks::PartnerLinks(const Map<std::string, Set<std::string>>& possibleLinks) {
 
     dlx.numPairings = 0;
     dlx.numPeople = 0;
@@ -166,6 +300,55 @@ PerfectLinks::PerfectLinks(const Map<std::string, Set<std::string>>& possibleLin
 
     HashMap<std::string, int> columnBuilder = {};
 
+    initializeHeaders(possibleLinks, columnBuilder);
+
+    // Begin building the rows with the negative spacer tiles and the subsequent columns.
+    int index = dlx.links.size();
+    int spacerTitle = -1;
+
+    Set<Pair> seenPairs = {};
+    for (const auto& p : possibleLinks) {
+
+        const Set<std::string>& preferences = possibleLinks[p];
+        if (preferences.isEmpty()) {
+            dlx.hasSingleton = true;
+        }
+        setPerfectPairs(p, preferences, columnBuilder, seenPairs, index, spacerTitle);
+    }
+
+    dlx.links.add({INT_MIN, index - 2, INT_MIN});
+
+}
+
+PartnerLinks::PartnerLinks(const Map<std::string, Map<std::string, int>>& possibleLinks) {
+    dlx.numPairings = 0;
+    dlx.numPairings = 0;
+    dlx.numPeople = 0;
+    dlx.hasSingleton = false;
+    dlx.isWeighted = true;
+
+    HashMap<std::string, int> columnBuilder = {};
+
+    initializeHeaders(possibleLinks, columnBuilder);
+
+    // Begin building the rows with the negative spacer tiles and the subsequent columns.
+    int index = dlx.links.size();
+
+    Set<Pair> seenPairs = {};
+    for (const auto& p : possibleLinks) {
+
+        const Map<std::string,int>& preferences = possibleLinks[p];
+        if (preferences.isEmpty()) {
+            dlx.hasSingleton = true;
+        }
+        setWeightedPairs(p, preferences, columnBuilder, seenPairs, index);
+    }
+    dlx.links.add({INT_MIN, index - 2, INT_MIN});
+}
+
+
+void PartnerLinks::initializeHeaders(const Map<std::string, Set<std::string>>& possibleLinks,
+                                     HashMap<std::string,int>& columnBuilder) {
     // Set up the headers first. Lookup table and first N headers in links.
     dlx.lookupTable.add({"", 0, 1});
     dlx.links.add({});
@@ -173,7 +356,6 @@ PerfectLinks::PerfectLinks(const Map<std::string, Set<std::string>>& possibleLin
     for (const auto& p : possibleLinks) {
 
         columnBuilder[p] = index;
-        dlx.headerIndexMap[p] = index;
 
         dlx.lookupTable.add({p, index - 1, index + 1});
         dlx.lookupTable[0].left++;
@@ -184,20 +366,37 @@ PerfectLinks::PerfectLinks(const Map<std::string, Set<std::string>>& possibleLin
         index++;
     }
     dlx.lookupTable[dlx.lookupTable.size() - 1].right = 0;
+}
 
-    // Begin building the rows with the negative spacer tiles and the subsequent columns.
-    int spacerTitle = -1;
-
-    Set<Pair> seenPairs = {};
+void PartnerLinks::initializeHeaders(const Map<std::string, Map<std::string,int>>& possibleLinks,
+                                     HashMap<std::string,int>& columnBuilder) {
+    // Set up the headers first. Lookup table and first N headers in links.
+    dlx.lookupTable.add({"", 0, 1});
+    dlx.links.add({});
+    int index = 1;
     for (const auto& p : possibleLinks) {
 
-        const Set<std::string>& preferences = possibleLinks[p];
-        if (preferences.isEmpty()) {
-            dlx.hasSingleton = true;
-        }
+        columnBuilder[p] = index;
 
+        dlx.lookupTable.add({p, index - 1, index + 1});
+        dlx.lookupTable[0].left++;
+        // Add the first headers for the item vector. They need count up and down.
+        dlx.links.add({0, index, index});
+
+        dlx.numPeople++;
+        index++;
+    }
+    dlx.lookupTable[dlx.lookupTable.size() - 1].right = 0;
+}
+
+void PartnerLinks::setPerfectPairs(const std::string& person,
+                                   const Set<std::string>& preferences,
+                                   HashMap<std::string,int>& columnBuilder,
+                                   Set<Pair>& seenPairs,
+                                   int& index,
+                                   int& spacerTitle) {
         for (const auto& pref : preferences) {
-            Pair newPair = {p, pref};
+            Pair newPair = {person, pref};
 
             if (!seenPairs.contains(newPair)) {
                 dlx.numPairings++;
@@ -207,10 +406,10 @@ PerfectLinks::PerfectLinks(const Map<std::string, Set<std::string>>& possibleLin
                                index + 2});     // Last item in current option
                 index++;
                 std::string sortedFirst = newPair.first();
-                dlx.links.add({dlx.headerIndexMap[sortedFirst],index, index});
+                dlx.links.add({dlx.links[columnBuilder[sortedFirst]].down,index, index});
 
 
-                dlx.links[dlx.headerIndexMap[sortedFirst]].topOrLen++;
+                dlx.links[dlx.links[columnBuilder[sortedFirst]].down].topOrLen++;
                 // This is the necessary adjustment to the column header's up field for a given item.
                 dlx.links[dlx.links[columnBuilder[sortedFirst]].down].up = index;
                 // The current node is now the new tail in a vertical circular linked list for an item.
@@ -224,8 +423,8 @@ PerfectLinks::PerfectLinks(const Map<std::string, Set<std::string>>& possibleLin
                 // Repeat the process. We only ever have two items in an option.
                 index++;
                 std::string sortedSecond = newPair.second();
-                dlx.links.add({dlx.headerIndexMap[sortedSecond], index, index});
-                dlx.links[dlx.headerIndexMap[sortedSecond]].topOrLen++;
+                dlx.links.add({dlx.links[columnBuilder[sortedSecond]].down, index, index});
+                dlx.links[dlx.links[columnBuilder[sortedSecond]].down].topOrLen++;
                 dlx.links[dlx.links[columnBuilder[sortedSecond]].down].up = index;
                 dlx.links[index].up = columnBuilder[sortedSecond];
                 dlx.links[index].down = dlx.links[columnBuilder[sortedSecond]].down;
@@ -237,46 +436,89 @@ PerfectLinks::PerfectLinks(const Map<std::string, Set<std::string>>& possibleLin
                 index++;
                 spacerTitle--;
             }
-
         }
-    }
+}
 
-    dlx.links.add({INT_MIN, index - 2, INT_MIN});
+void PartnerLinks::setWeightedPairs(const std::string& person,
+                                    const Map<std::string,int>& preferences,
+                                    HashMap<std::string,int>& columnBuilder,
+                                    Set<Pair>& seenPairs,
+                                    int& index) {
+        for (const auto& pref : preferences) {
+            Pair newPair = {person, pref};
 
+            if (!seenPairs.contains(newPair) && preferences[pref] >= 0) {
+                dlx.numPairings++;
+                // Update the count for this column.
+                dlx.links.add({-preferences[pref],     // Negative weight of the partnership
+                               index - 2,              // First item in previous option
+                               index + 2});            // Last item in current option
+                index++;
+                std::string sortedFirst = newPair.first();
+                dlx.links.add({dlx.links[columnBuilder[sortedFirst]].down,index, index});
+
+
+                dlx.links[dlx.links[columnBuilder[sortedFirst]].down].topOrLen++;
+                // This is the necessary adjustment to the column header's up field for a given item.
+                dlx.links[dlx.links[columnBuilder[sortedFirst]].down].up = index;
+                // The current node is now the new tail in a vertical circular linked list for an item.
+                dlx.links[index].up = columnBuilder[sortedFirst];
+                dlx.links[index].down = dlx.links[columnBuilder[sortedFirst]].down;
+                // Update the old tail to reflect the new addition of an item in its option.
+                dlx.links[columnBuilder[sortedFirst]].down = index;
+                // Similar to a previous/current coding pattern but in an above/below column.
+                columnBuilder[sortedFirst] = index;
+
+                // Repeat the process. We only ever have two items in an option.
+                index++;
+                std::string sortedSecond = newPair.second();
+                dlx.links.add({dlx.links[columnBuilder[sortedSecond]].down, index, index});
+                dlx.links[dlx.links[columnBuilder[sortedSecond]].down].topOrLen++;
+                dlx.links[dlx.links[columnBuilder[sortedSecond]].down].up = index;
+                dlx.links[index].up = columnBuilder[sortedSecond];
+                dlx.links[index].down = dlx.links[columnBuilder[sortedSecond]].down;
+                dlx.links[columnBuilder[sortedSecond]].down = index;
+                columnBuilder[sortedSecond] = index;
+
+                // Because all pairings are bidirectional, they should only apear once as options.
+                seenPairs.add(newPair);
+                index++;
+            }
+        }
 }
 
 
 /* * * * * * * * * * * * * * * *   Overloaded Operators for Debugging   * * * * * * * * * * * * * */
 
 
-bool operator==(const PerfectLinks::personLink& lhs, const PerfectLinks::personLink& rhs) {
+bool operator==(const PartnerLinks::personLink& lhs, const PartnerLinks::personLink& rhs) {
     return lhs.topOrLen == rhs.topOrLen && lhs.up == rhs.up && lhs.down == rhs.down;
 }
 
-bool operator!=(const PerfectLinks::personLink& lhs, const PerfectLinks::personLink& rhs) {
+bool operator!=(const PartnerLinks::personLink& lhs, const PartnerLinks::personLink& rhs) {
     return !(lhs == rhs);
 }
 
-bool operator==(const PerfectLinks::personName& lhs, const PerfectLinks::personName& rhs) {
+bool operator==(const PartnerLinks::personName& lhs, const PartnerLinks::personName& rhs) {
     return lhs.name == rhs.name && lhs.left == rhs.left && lhs.right == rhs.right;
 }
 
-bool operator!=(const PerfectLinks::personName& lhs, const PerfectLinks::personName& rhs) {
+bool operator!=(const PartnerLinks::personName& lhs, const PartnerLinks::personName& rhs) {
     return !(lhs == rhs);
 }
 
-std::ostream& operator<<(std::ostream& os, const PerfectLinks::personLink& person) {
+std::ostream& operator<<(std::ostream& os, const PartnerLinks::personLink& person) {
     os << "{ topOrLen: " << person.topOrLen
        << ", up: " << person.up << ", down: " << person.down << "}";
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const PerfectLinks::personName& name) {
+std::ostream& operator<<(std::ostream& os, const PartnerLinks::personName& name) {
     os << "{ name: " << name.name << ", left: " << name.left << ", right: " << name.right << " }";
     return os;
 }
 
-std::ostream& operator<<(std::ostream&os, const Vector<PerfectLinks::personLink>& links) {
+std::ostream& operator<<(std::ostream&os, const Vector<PartnerLinks::personLink>& links) {
     os << "DLX ARRAY" << std::endl;
     for (const auto& item : links) {
         if (item.topOrLen < 0) {
@@ -288,7 +530,7 @@ std::ostream& operator<<(std::ostream&os, const Vector<PerfectLinks::personLink>
     return os;
 }
 
-std::ostream& operator<<(std::ostream&os, const PerfectLinks& links) {
+std::ostream& operator<<(std::ostream&os, const PartnerLinks& links) {
     os << "LOOKUP ARRAY" << std::endl;
     for (const auto& header : links.dlx.lookupTable) {
         os << "{\"" << header.name << "\"," << header.left << "," << header.right << "},";
@@ -309,6 +551,617 @@ std::ostream& operator<<(std::ostream&os, const PerfectLinks& links) {
 /* * * * * * * * * * * * * * * *      Test Cases Below this Point       * * * * * * * * * * * * * */
 
 
+/* * * * * * * * * * * * * * * *            WEIGHTED MATCHING           * * * * * * * * * * * * * */
+
+namespace  {
+
+    /* Utility to go from a list of triples to a world. */
+       struct WeightedLink {
+           std::string from;
+           std::string to;
+           int cost;
+       };
+       Map<std::string, Map<std::string, int>> fromWeightedLinks(const Vector<WeightedLink>& links) {
+           Map<std::string, Map<std::string, int>> result;
+           for (const auto& link: links) {
+               result[link.from][link.to] = link.cost;
+               result[link.to][link.from] = link.cost;
+           }
+           return result;
+       }
+
+}
+
+/* * * * * * * * * * * * * * * *             Initialization             * * * * * * * * * * * * * */
+
+
+STUDENT_TEST("Weighted matching initializes straight line correctly.") {
+    /*
+     *          1    2     3     4      5
+     *       C----D-----A-----F------B-----E
+     *
+     *
+     */
+    const Map<std::string, Map<std::string,int>> provided = {
+        {"A", {{"D", 2}, {"F",3}}},
+        {"B", {{"E", 5}, {"F",4}}},
+        {"C", {{"D", 1}}},
+        {"D", {{"A", 2}, {"C",1}}},
+        {"E", {{"B", 5}}},
+        {"F", {{"A", 3}, {"B",4}}},
+    };
+    Vector<PartnerLinks::personName> lookup {
+        {"",6,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,0}
+    };
+    Vector<PartnerLinks::personLink> dlxItems {
+        /* Standard Line. Two people on ends should have one connection.
+         *      A  B  C  D  E  F
+         *   1  1        1
+         *   2  1              1
+         *   3     1        1
+         *   4     1           1
+         *   5        1  1
+         */
+
+        //       0          1A       2B       3C         4D       5E        6F
+        /*0*/ {0,0,0},   {2,11,8},{2,17,14},{1,20,20},{2,21,9},{1,15,15},{2,18,12},
+        //       7          8A                           9D
+        /*1*/ {-2,5,9},  {1,1,11},                    {4,4,21},
+        //       10         11A                                             12F
+        /*2*/ {-3,8,12}, {1,8,1},                                        {6,6,18},
+        //       13                  14B                          15E
+        /*3*/ {-5,11,15},         {2,2,17},                     {5,5,5},
+        //       16                  17B                                    18F
+        /*4*/ {-4,14,18},         {2,14,2},                              {6,12,6},
+        //       19                           20C        21D
+        /*5*/ {-1,17,21},                   {3,3,3},  {4,9,4},
+        //       22
+        /*6*/ {INT_MIN,20,INT_MIN},
+    };
+    PartnerLinks matches(provided);
+    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(dlxItems, matches.dlx.links);
+}
+
+STUDENT_TEST("Weighted matching does not care about leaving others out.") {
+    /* Here's the world:
+     *                  10
+     *                A --- B
+     *                 \   /
+     *                2 \ / 2
+     *                   C
+     *
+     * There is no perfect matching here, unfortunately.
+     */
+    const Map<std::string, Map<std::string,int>> provided = {
+        {"A", {{"B",10}, {"C",2}}},
+        {"B", {{"A",10}, {"C",2}}},
+        {"C", {{"A",2},{"B", 2}}},
+    };
+    Vector<PartnerLinks::personName> lookup {
+        {"",3,1},{"A",0,2},{"B",1,3},{"C",2,0},
+    };
+    Vector<PartnerLinks::personLink> dlxItems {
+        /*
+         *      A  B  C
+         *   1  1  1
+         *   3  1     1
+         *   2     1  1
+         */
+
+
+        //       0         1A       2B      3C
+        /*0*/ {0,0,0},   {2,8,5}, {2,11,6},{2,12,9},
+        //       4         5A       6B
+        /*1*/ {-10,2,6}, {1,1,8}, {2,2,11},
+        //       7         8A               9C
+        /*2*/ {-2,5,9},  {1,5,1},          {3,3,12},
+        //       10                 11A     12C
+        /*3*/ {-2,8,12},          {2,6,2}, {3,9,3},
+        //       13
+        /*4*/ {INT_MIN,11,INT_MIN},
+    };
+    PartnerLinks matches(provided);
+    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(matches.dlx.links, dlxItems);
+}
+
+
+/* * * * * * * * * * * * * * * *              Cover Logic               * * * * * * * * * * * * * */
+
+
+STUDENT_TEST("Covering a person in weighted will only take that person's pairs out.") {
+    /* Here's the world:
+     *                  10
+     *                A --- B
+     *                 \   /
+     *                2 \ / 2
+     *                   C
+     *
+     * There is no perfect matching here, unfortunately.
+     */
+    const Map<std::string, Map<std::string,int>> provided = {
+        {"A", {{"B",10}, {"C",2}}},
+        {"B", {{"A",10}, {"C",2}}},
+        {"C", {{"A",2},{"B", 2}}},
+    };
+    Vector<PartnerLinks::personName> lookup {
+        {"",3,1},{"A",0,2},{"B",1,3},{"C",2,0},
+    };
+    Vector<PartnerLinks::personLink> dlxItems {
+        /*
+         *      A  B  C
+         *   1  1  1
+         *   3  1     1
+         *   2     1  1
+         */
+
+
+        //       0         1A       2B      3C
+        /*0*/ {0,0,0},   {2,8,5}, {2,11,6},{2,12,9},
+        //       4         5A       6B
+        /*1*/ {-10,2,6}, {1,1,8}, {2,2,11},
+        //       7         8A               9C
+        /*2*/ {-2,5,9},  {1,5,1},          {3,3,12},
+        //       10                 11B     12C
+        /*3*/ {-2,8,12},          {2,6,2}, {3,9,3},
+        //       13
+        /*4*/ {INT_MIN,11,INT_MIN},
+    };
+    PartnerLinks matches(provided);
+    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(matches.dlx.links, dlxItems);
+
+    matches.coverPerson(1);
+
+    Vector<PartnerLinks::personName> lookupCoverA {
+        {"",3,2},{"A",0,2},{"B",0,3},{"C",2,0},
+    };
+    Vector<PartnerLinks::personLink> dlxCoverA {
+        /*
+         *       B C
+         *    3  1 1
+         */
+
+
+        //       0         1A       2B      3C
+        /*0*/ {0,0,0},   {2,8,5}, {1,11,11},{1,12,12},
+        //       4         5A       6B
+        /*1*/ {-10,2,6}, {1,1,8}, {2,2,11},
+        //       7         8A               9C
+        /*2*/ {-2,5,9},  {1,5,1},          {3,3,12},
+        //       10                 11B     12C
+        /*3*/ {-2,8,12},          {2,2,2}, {3,3,3},
+        //       13
+        /*4*/ {INT_MIN,11,INT_MIN},
+    };
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(matches.dlx.links, dlxCoverA);
+
+    matches.uncoverPerson(1);
+    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(matches.dlx.links, dlxItems);
+
+}
+
+STUDENT_TEST("All weights are unique so we can no that we report the right weight and pair.") {
+    /* Here's the world:
+     *                  3
+     *               A-----B
+     *            4  |     |  6
+     *               |     |
+     *               C-----D
+     *                  5
+     * There is no perfect matching here, unfortunately.
+     */
+    const Map<std::string, Map<std::string,int>> provided = {
+        {"A", {{"B", 3}, {"C",4}}},
+        {"B", {{"A", 3}, {"D",6}}},
+        {"C", {{"A", 4}, {"D",5}}},
+        {"D", {{"B", 6}, {"C",5}}},
+    };
+    Vector<PartnerLinks::personName> lookup {
+        {"",4,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,0},
+    };
+    Vector<PartnerLinks::personLink> dlxItems {
+        /*
+         *      A  B  C  D
+         *   1  1  1
+         *   2  1     1
+         *   3     1     1
+         *   4        1  1
+         */
+        //       0         1A      2B        3C        4D
+        /*0*/ {0,0,0},   {2,9,6}, {2,12,7}, {2,15,10},{2,16,13},
+        //       5         6A      7B
+        /*1*/ {-3,3,7},  {1,1,9}, {2,2,12},
+        //       8         9A                10C
+        /*2*/ {-4,6,10}, {1,6,1},          {3,3,15},
+        //       11                12B                 13D
+        /*3*/ {-6,9,13},          {2,7,2},            {4,4,16},
+        //       14                          15C       16D
+        /*4*/ {-5,12,16},                  {3,10,3}, {4,13,4},
+        //       17
+              {INT_MIN,15,INT_MIN},
+    };
+    PartnerLinks matches(provided);
+    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(matches.dlx.links, dlxItems);
+
+    // Cover A, this will select option 2, partners are AB.
+    std::pair<int,Pair> match = matches.coverWeightedPair(1);
+    EXPECT_EQUAL(match.first, 3);
+    EXPECT_EQUAL(match.second, {"A","B"});
+
+    Vector<PartnerLinks::personName> lookupCoverA {
+        {"",4,3},{"A",0,2},{"B",0,3},{"C",0,4},{"D",3,0},
+    };
+    Vector<PartnerLinks::personLink> dlxCoverA {
+        /* Smaller links with A covered via option 1.
+         *      C  D
+         *   4  1  1
+         */
+
+        //       0         1A       2B         3C        4D
+        /*1*/ {0,0,0},   {2,9,6}, {2,12,7}, {1,15,15},{1,16,16},
+        //       5         6A       7B
+        /*2*/ {-3,3,7},  {1,1,9}, {2,2,12},
+        //       8         9A                 10C
+        /*3*/ {-4,6,10}, {1,6,1},           {3,3,15},
+        //       11                 12B                  13D
+        /*4*/ {-6,9,13},          {2,7,2},            {4,4,16},
+        //       14                           15C        16D
+        /*5*/ {-5,12,16},                   {3,3,3},  {4,4,4},
+        //       17
+              {INT_MIN,15,INT_MIN},
+    };
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
+}
+
+/* * * * * * * * * * * * * * * *             Solve Problem              * * * * * * * * * * * * * */
+
+
+PROVIDED_TEST("maximumWeightMatching: Works on a square.") {
+    /* This world:
+     *
+     *         1
+     *      A --- B
+     *      |     |
+     *    8 |     | 2
+     *      |     |
+     *      D --- C
+     *         4
+     *
+     * Best option is to pick BC/AD.
+     */
+    const Map<std::string, Map<std::string,int>> provided = {
+        {"A", {{"B",1}, {"D",8}}},
+        {"B", {{"A",1}, {"C",2}}},
+        {"C", {{"B",2},{"D", 4}}},
+        {"D", {{"A",8},{"C", 4}}},
+    };
+    PartnerLinks weights(provided);
+
+    EXPECT_EQUAL(weights.getMaxWeightMatching(), { {"A", "D"}, {"B", "C"} });
+}
+
+PROVIDED_TEST("maximumWeightMatching: Works on a line of four people.") {
+    /* This world:
+     *
+     *  A --- B --- C --- D
+     *     1     3     1
+     *
+     * Best option is to pick B -- C, even though this is not a perfect
+     * matching.
+     */
+    const Map<std::string, Map<std::string,int>> links = {
+        {"A", {{"B",1}}},
+        {"B", {{"A",1}, {"C",3}}},
+        {"C", {{"B",3},{"D",1}}},
+        {"D", {{"C",1}}},
+    };
+    PartnerLinks weights(links);
+
+    /* Should pick B--C. */
+    EXPECT_EQUAL(weights.getMaxWeightMatching(), { {"B", "C"} });
+}
+
+PROVIDED_TEST("maximumWeightMatching: Works on a line of three people.") {
+    /* This world:
+     *
+     *  A --- B --- C
+     *     1     2
+     *
+     * Best option is to pick B -- C.
+     */
+    auto links = fromWeightedLinks({
+        { "A", "B", 1 },
+        { "B", "C", 2 },
+    });
+
+    PartnerLinks weights(links);
+    /* Should pick B--C. */
+    EXPECT_EQUAL(weights.getMaxWeightMatching(), { {"B", "C"} });
+}
+
+PROVIDED_TEST("maximumWeightMatching: Odd shap that requires us to pick opposite edges.") {
+    /* Because Map and Set internally store items in sorted order, the order
+     * in which you iterate over people when making decisions is sensitive
+     * to the order of those peoples' names. This test looks at a group like
+     * this one, trying out all possible orderings of peoples' names:
+     *
+     *               E
+     *               | 1
+     *               C
+     *            1 / \ 5
+     *             A---B
+     *          1 /  1  \ 1
+     *           F       D
+     *
+     * (Best option is to pick the 5-cost edge and the opposite-side 1-cost
+     * edge.)
+     *
+     */
+    const Map<std::string, Map<std::string,int>> links = {
+        {"A", {{"B",1},{"C",1},{"F",1}}},
+        {"B", {{"A",1},{"C",5},{"D",1}}},
+        {"C", {{"A",1},{"B",5},{"E",1}}},
+        {"D", {{"B",1}}},
+        {"E", {{"C",1}}},
+        {"F", {{"A",1}}},
+    };
+    Vector<PartnerLinks::personName> lookup {
+        {"",6,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,0},
+    };
+    Vector<PartnerLinks::personLink> dlxItems {
+        /*
+         *     A  B  C  D  E  F
+         *  1  1  1
+         *  2  1     1
+         *  3  1              1
+         *  4     1  1
+         *  5     1     1
+         *  6        1     1
+         *
+         */
+
+        //            1A       2B        3C       4D         5E       6F
+        {0,0,0},   {3,14,8},{3,20,9},{3,23,12},{1,21,21},{1,24,24},{1,15,15},
+        {-1,5,9},  {1,1,11},{2,2,17},
+        {-1,8,12}, {1,8,14},         {3,3,18},
+        {-1,11,15},{1,11,1},                                       {6,6,6},
+        {-5,14,18},         {2,9,20},{3,12,23},
+        {-1,17,21},         {2,17,2},          {4,4,4},
+        {-1,20,24},                  {3,18,3},            {5,5,5},
+        {-2147483648,23,-2147483648},
+
+    };
+    PartnerLinks weights(links);
+
+    EXPECT_EQUAL(weights.getMaxWeightMatching(), {{"A","F"},{"B","C"}});
+    EXPECT_EQUAL(weights.dlx.links, dlxItems);
+    EXPECT_EQUAL(weights.dlx.lookupTable, lookup);
+}
+
+PROVIDED_TEST("maximumWeightMatching: Another permutation of the same shape is failing.") {
+    /* Because Map and Set internally store items in sorted order, the order
+     * in which you iterate over people when making decisions is sensitive
+     * to the order of those peoples' names. This test looks at a group like
+     * this one, trying out all possible orderings of peoples' names:
+     *
+     *               E
+     *               | 1
+     *               D
+     *            1 / \ 5
+     *             A---C
+     *          1 /  1  \ 1
+     *           F       B
+     *
+     * (Best option is to pick the 5-cost edge and the opposite-side 1-cost
+     * edge.)
+     *
+     */
+    const Map<std::string, Map<std::string,int>> links = {
+        {"A", {{"C",1},{"D",1},{"F",1}}},
+        {"B", {{"C",1}}},
+        {"C", {{"A",1},{"B",1},{"D",5}}},
+        {"D", {{"A",1},{"C",5},{"E",1}}},
+        {"E", {{"D",1}}},
+        {"F", {{"A",1}}},
+    };
+    Vector<PartnerLinks::personName> lookup {
+        {"",6,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,0},
+    };
+    Vector<PartnerLinks::personLink> dlxItems {
+        /*
+         *     A  B  C  D  E  F
+         *  1  1     1
+         *  2  1        1
+         *  3  1              1
+         *  4     1  1
+         *  5        1  1
+         *  6           1  1
+         *
+         */
+
+        //            1A       2B        3C       4D         5E       6F
+        {0,0,0},   {3,14,8},{1,17,17},{3,20,9},{3,23,12},{1,24,24},{1,15,15},
+        {-1,5,9},  {1,1,11},          {3,3,18},
+        {-1,8,12}, {1,8,14},                   {4,4,21},
+        {-1,11,15},{1,11,1},                                       {6,6,6},
+        {-1,14,18},         {2,2,2},  {3,9,20},
+        {-5,17,21},                   {3,18,3},{4,12,23},
+        {-1,20,24},                            {4,21,4}, {5,5,5},
+        {INT_MIN,23,INT_MIN},
+
+
+    };
+    PartnerLinks weights(links);
+
+    EXPECT_EQUAL(weights.getMaxWeightMatching(), {{"A","F"},{"C","D"}});
+    EXPECT_EQUAL(weights.dlx.links, dlxItems);
+    EXPECT_EQUAL(weights.dlx.lookupTable, lookup);
+}
+
+PROVIDED_TEST("maximumWeightMatching: The network resets after every run.") {
+    /* Because Map and Set internally store items in sorted order, the order
+     * in which you iterate over people when making decisions is sensitive
+     * to the order of those peoples' names. This test looks at a group like
+     * this one, trying out all possible orderings of peoples' names:
+     *
+     *               E
+     *               | 1
+     *               C
+     *            1 / \ 5
+     *             A---B
+     *          1 /  1  \ 1
+     *           F       D
+     *
+     * (Best option is to pick the 5-cost edge and the opposite-side 1-cost
+     * edge.)
+     *
+     */
+    const Map<std::string, Map<std::string,int>> links = {
+        {"A", {{"B",1},{"C",1},{"F",1}}},
+        {"B", {{"A",1},{"C",5},{"D",1}}},
+        {"C", {{"A",1},{"B",5},{"E",1}}},
+        {"D", {{"B",1}}},
+        {"E", {{"C",1}}},
+        {"F", {{"A",1}}},
+    };
+    Vector<PartnerLinks::personName> lookup {
+        {"",6,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,0},
+    };
+    Vector<PartnerLinks::personLink> dlxItems {
+        /*
+         *     A  B  C  D  E  F
+         *  1  1  1
+         *  2  1     1
+         *  3  1              1
+         *  4     1  1
+         *  5     1     1
+         *  6        1     1
+         *
+         */
+
+        //            1A       2B        3C       4D         5E       6F
+        {0,0,0},   {3,14,8},{3,20,9},{3,23,12},{1,21,21},{1,24,24},{1,15,15},
+        {-1,5,9},  {1,1,11},{2,2,17},
+        {-1,8,12}, {1,8,14},         {3,3,18},
+        {-1,11,15},{1,11,1},                                       {6,6,6},
+        {-5,14,18},         {2,9,20},{3,12,23},
+        {-1,17,21},         {2,17,2},          {4,4,4},
+        {-1,20,24},                  {3,18,3},            {5,5,5},
+        {-2147483648,23,-2147483648},
+
+    };
+    PartnerLinks weights(links);
+
+    for (int i = 0; i < 11; i++) {
+        EXPECT_EQUAL(weights.getMaxWeightMatching(), {{"A","F"},{"B","C"}});
+        EXPECT_EQUAL(weights.dlx.links, dlxItems);
+        EXPECT_EQUAL(weights.dlx.lookupTable, lookup);
+    }
+
+}
+
+PROVIDED_TEST("maximumWeightMatching: Small stress test (should take at most a second or two).") {
+    /* Because Map and Set internally store items in sorted order, the order
+     * in which you iterate over people when making decisions is sensitive
+     * to the order of those peoples' names. This test looks at a group like
+     * this one, trying out all possible orderings of peoples' names:
+     *
+     *               *
+     *               | 1
+     *               *
+     *            1 / \ 5
+     *             *---*
+     *          1 /  1  \ 1
+     *           *       *
+     *
+     * (Best option is to pick the 5-cost edge and the opposite-side 1-cost
+     * edge.)
+     *
+     * There are 6! = 720 possible permutations of the ordering of these
+     * people. If your code is able to solve the problem correctly for all of
+     * those orderings, there's a good chance that you're correctly tracking
+     * who is matched at each step. On the other hand, if your code runs into
+     * issues here, it may indicate that there's a bug in how you mark who's
+     * paired and who isn't.
+     */
+    Vector<std::string> people = { "A", "B", "C", "D", "E", "F" };
+    do {
+        auto links = fromWeightedLinks({
+            { people[0], people[1], 5 },
+            { people[1], people[2], 1 },
+            { people[2], people[0], 1 },
+            { people[3], people[0], 1 },
+            { people[4], people[1], 1 },
+            { people[5], people[2], 1 },
+        });
+
+        Set<Pair> expected = {
+            { people[0], people[1] },
+            { people[2], people[5] }
+        };
+
+        PartnerLinks weights(links);
+        EXPECT_EQUAL(weights.getMaxWeightMatching(), expected);
+    } while (next_permutation(people.begin(), people.end()));
+}
+
+PROVIDED_TEST("maximumWeightMatching: Large stress test (should take at most a second or two).") {
+    /* Here, we're giving a chain of people, like this:
+     *
+     *    *---*---*---*---*---*---*---* ... *---*
+     *      1   1   1   1   1   1   1         1
+     *
+     * The number of different matchings in a chain of n people is given by the
+     * nth Fibonacci number. (Great exercise - can you explain why?) This means
+     * that if we have a chain of 21 people, there are F(21) = 10,946 possible
+     * matchings to check. If your program tests every single one of them exactly
+     * once, then it should be pretty quick to determine what the best matching
+     * here is. (It's any matching that uses exactly floor(21 / 2) = 10 edges.
+     *
+     * On the other hand, if your implementation repeatedly constructs the same
+     * matchings over and over again, then the number of options you need to consider
+     * will be too large for your computer to handle in any reasonable time.
+     *
+     * If you're passing the other tests and this test hangs, double-check your
+     * code to make sure you aren't repeatedly constructing the same matchings
+     * multiple times.
+     */
+    const int kNumPeople = 21;
+    Vector<WeightedLink> links;
+    for (int i = 0; i < kNumPeople - 1; i++) {
+        links.add({ std::to_string(i), std::to_string(i + 1), 1 });
+    }
+
+    PartnerLinks weighted(fromWeightedLinks(links));
+
+    auto matching = weighted.getMaxWeightMatching();
+    EXPECT_EQUAL(matching.size(), kNumPeople / 2);
+
+    /* Confirm it's a matching. */
+    Set<std::string> used;
+    for (Pair p: matching) {
+        /* No people paired more than once. */
+        EXPECT(!used.contains(p.first()));
+        EXPECT(!used.contains(p.second()));
+        used += p.first();
+        used += p.second();
+
+        /* Must be a possible links. */
+        EXPECT_EQUAL(abs(stringToInteger(p.first()) - stringToInteger(p.second())), 1);
+    }
+}
+
+
+
+/* * * * * * * * * * * * * * * *            PERFECT MATCHING            * * * * * * * * * * * * * */
+
+
 /* * * * * * * * * * * * * * * *             Initialization             * * * * * * * * * * * * * */
 
 
@@ -327,10 +1180,10 @@ STUDENT_TEST("Line of six but tricky due to natural order.") {
         {"E", {"B"}},
         {"F", {"A", "B"}},
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",6,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,0}
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /* Standard Line. Two people on ends should have one connection.
          *      A  B  C  D  E  F
          *   1  1        1
@@ -355,7 +1208,7 @@ STUDENT_TEST("Line of six but tricky due to natural order.") {
         //       22
         /*6*/ {INT_MIN,20,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 }
@@ -375,10 +1228,10 @@ STUDENT_TEST("We will allow setup of worlds that are impossible to match.") {
         { "B", {"C"} },
         { "C", {"A"} }
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",3,1},{"A",0,2},{"B",1,3},{"C",2,0},
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C
          *   1  1  1
@@ -398,7 +1251,7 @@ STUDENT_TEST("We will allow setup of worlds that are impossible to match.") {
         //       13
         /*4*/ {INT_MIN,11,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 }
@@ -421,10 +1274,10 @@ STUDENT_TEST("Initialize a world that will have matching.") {
         { "E", {"C", "D"} },
         { "F", {"A", "B"} }
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",6,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,0},
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C  D  E  F
          *   1  1        1
@@ -452,7 +1305,7 @@ STUDENT_TEST("Initialize a world that will have matching.") {
         //       25
         /*7*/ {INT_MIN,23,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 }
@@ -477,10 +1330,10 @@ STUDENT_TEST("Setup works on a disconnected hexagon of people and reportes singl
         { "E", {"C", "D"} },
         { "F", {"B"} }
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",6,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,0},
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          * None-v
          *      A  B  C  D  E  F
@@ -500,7 +1353,7 @@ STUDENT_TEST("Setup works on a disconnected hexagon of people and reportes singl
         /*4*/ {-4,14,18},                           {4,4,4},  {5,15,5},
         /*6*/ {INT_MIN,17,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT(matches.dlx.hasSingleton);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
@@ -526,10 +1379,10 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A.") {
         { "C",{"A","D"}},
         { "D",{"C","B"}},
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",4,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,0},
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C  D
          *   1  1  1
@@ -550,18 +1403,18 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A.") {
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     // Cover A, this will select option 2, partners are AB.
-    Pair match = matches.coverPerson(1);
+    Pair match = matches.coverPairing(1);
     EXPECT_EQUAL(match, {"A","B"});
 
-    Vector<PerfectLinks::personName> lookupCoverA {
+    Vector<PartnerLinks::personName> lookupCoverA {
         {"",4,3},{"A",0,2},{"B",0,3},{"C",0,4},{"D",3,0},
     };
-    Vector<PerfectLinks::personLink> dlxCoverA {
+    Vector<PartnerLinks::personLink> dlxCoverA {
         /* Smaller links with A covered via option 1.
          *      C  D
          *   4  1  1
@@ -599,10 +1452,10 @@ STUDENT_TEST("There are no perfect pairings, any matching will fail.") {
         { "B", {"C"} },
         { "C", {"A"} }
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",3,1},{"A",0,2},{"B",1,3},{"C",2,0},
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C
          *   1  1  1
@@ -622,16 +1475,16 @@ STUDENT_TEST("There are no perfect pairings, any matching will fail.") {
         //       13
         /*4*/ {INT_MIN,11,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPerson(1);
+    Pair match = matches.coverPairing(1);
     EXPECT_EQUAL(match, {"A", "B"});
-    Vector<PerfectLinks::personName> lookupA {
+    Vector<PartnerLinks::personName> lookupA {
         {"",3,3},{"A",0,2},{"B",0,3},{"C",0,0},
     };
-    Vector<PerfectLinks::personLink> dlxCoverA {
+    Vector<PartnerLinks::personLink> dlxCoverA {
         /*
          * C is left but there are no available options for C.
          *
@@ -671,10 +1524,10 @@ STUDENT_TEST("We will quickly learn that A-B is a bad pairing that leaves C out.
         { "C", {"B"} },
         { "D", {"A","B"}},
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",4,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,0}
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C  D
          *   1  1  1
@@ -697,16 +1550,16 @@ STUDENT_TEST("We will quickly learn that A-B is a bad pairing that leaves C out.
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPerson(1);
+    Pair match = matches.coverPairing(1);
     EXPECT_EQUAL(match, {"A", "B"});
-    Vector<PerfectLinks::personName> lookupCoverA {
+    Vector<PartnerLinks::personName> lookupCoverA {
         {"",4,3},{"A",0,2},{"B",0,3},{"C",0,4},{"D",3,0}
     };
-    Vector<PerfectLinks::personLink> dlxCoverA {
+    Vector<PartnerLinks::personLink> dlxCoverA {
         /*
          * We cannot reach C and D if we pair A and B.
          *
@@ -748,10 +1601,10 @@ STUDENT_TEST("A-D is a good pairing.") {
         { "C", {"B"} },
         { "D", {"A","B"}},
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",4,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,0}
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C  D
          *   1  1  1
@@ -774,16 +1627,16 @@ STUDENT_TEST("A-D is a good pairing.") {
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPerson(6);
+    Pair match = matches.coverPairing(6);
     EXPECT_EQUAL(match, {"A", "D"});
-    Vector<PerfectLinks::personName> lookupCoverA {
+    Vector<PartnerLinks::personName> lookupCoverA {
         {"",3,2},{"A",0,2},{"B",0,3},{"C",2,0},{"D",3,0}
     };
-    Vector<PerfectLinks::personLink> dlxCoverA {
+    Vector<PartnerLinks::personLink> dlxCoverA {
         /*
          *      B  C
          *   3  1  1
@@ -825,10 +1678,10 @@ STUDENT_TEST("Cover A in a world where everyone has two connections.") {
         { "E", {"C", "D"} },
         { "F", {"A", "B"} }
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",6,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,0},
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C  D  E  F
          *   1  1        1
@@ -856,17 +1709,17 @@ STUDENT_TEST("Cover A in a world where everyone has two connections.") {
         //       25
         /*7*/ {INT_MIN,23,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 
-    Pair match = matches.coverPerson(1);
+    Pair match = matches.coverPairing(1);
     EXPECT_EQUAL(match, {"A","D"});
 
-    Vector<PerfectLinks::personName> lookupCoverA {
+    Vector<PartnerLinks::personName> lookupCoverA {
         {"",6,2},{"A",0,2},{"B",0,3},{"C",2,5},{"D",3,5},{"E",3,6},{"F",5,0},
     };
-    Vector<PerfectLinks::personLink> dlxCoverA {
+    Vector<PartnerLinks::personLink> dlxCoverA {
         /*
          *      B  C  E  F
          *   3  1  1
@@ -911,10 +1764,10 @@ STUDENT_TEST("A-D then B-C solves the world.") {
         { "C", {"B"} },
         { "D", {"A","B"}},
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",4,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,0}
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C  D
          *   1  1  1
@@ -937,16 +1790,16 @@ STUDENT_TEST("A-D then B-C solves the world.") {
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPerson(6);
+    Pair match = matches.coverPairing(6);
     EXPECT_EQUAL(match, {"A", "D"});
-    Vector<PerfectLinks::personName> lookupCoverA {
+    Vector<PartnerLinks::personName> lookupCoverA {
         {"",3,2},{"A",0,2},{"B",0,3},{"C",2,0},{"D",3,0}
     };
-    Vector<PerfectLinks::personLink> dlxCoverA {
+    Vector<PartnerLinks::personLink> dlxCoverA {
         /*
          *      B  C
          *   3  1  1
@@ -969,12 +1822,12 @@ STUDENT_TEST("A-D then B-C solves the world.") {
     EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
-    match = matches.coverPerson(2);
+    match = matches.coverPairing(2);
     EXPECT_EQUAL(match, {"B", "C"});
-    Vector<PerfectLinks::personName> lookupCoverB {
+    Vector<PartnerLinks::personName> lookupCoverB {
         {"",0,0},{"A",0,2},{"B",0,3},{"C",0,0},{"D",3,0}
     };
-    Vector<PerfectLinks::personLink> dlxCoverB {
+    Vector<PartnerLinks::personLink> dlxCoverB {
         /*
          * Empty world is solved.
          *
@@ -999,6 +1852,7 @@ STUDENT_TEST("A-D then B-C solves the world.") {
     EXPECT_EQUAL(dlxCoverB, matches.dlx.links);
 }
 
+
 /* * * * * * * * * * * * * * * *         Cover/Uncover Logic            * * * * * * * * * * * * * */
 
 
@@ -1018,10 +1872,10 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A then uncover."
         { "C",{"A","D"}},
         { "D",{"C","B"}},
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",4,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,0},
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C  D
          *   1  1  1
@@ -1042,18 +1896,18 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A then uncover."
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     // Cover A, this will select option 2, partners are AB.
-    Pair match = matches.coverPerson(1);
+    Pair match = matches.coverPairing(1);
     EXPECT_EQUAL(match, {"A","B"});
 
-    Vector<PerfectLinks::personName> lookupCoverA {
+    Vector<PartnerLinks::personName> lookupCoverA {
         {"",4,3},{"A",0,2},{"B",0,3},{"C",0,4},{"D",3,0},
     };
-    Vector<PerfectLinks::personLink> dlxCoverA {
+    Vector<PartnerLinks::personLink> dlxCoverA {
         /* Smaller links with A covered via option 1.
          *      C  D
          *   4  1  1
@@ -1075,7 +1929,7 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A then uncover."
     EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
-    matches.uncoverPerson(1);
+    matches.uncoverPairing(1);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
@@ -1096,10 +1950,10 @@ STUDENT_TEST("There are no perfect pairings, any matching will fail. Cover uncov
         { "B", {"C"} },
         { "C", {"A"} }
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",3,1},{"A",0,2},{"B",1,3},{"C",2,0},
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C
          *   1  1  1
@@ -1119,16 +1973,16 @@ STUDENT_TEST("There are no perfect pairings, any matching will fail. Cover uncov
         //       13
         /*4*/ {INT_MIN,11,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPerson(1);
+    Pair match = matches.coverPairing(1);
     EXPECT_EQUAL(match, {"A", "B"});
-    Vector<PerfectLinks::personName> lookupA {
+    Vector<PartnerLinks::personName> lookupA {
         {"",3,3},{"A",0,2},{"B",0,3},{"C",0,0},
     };
-    Vector<PerfectLinks::personLink> dlxCoverA {
+    Vector<PartnerLinks::personLink> dlxCoverA {
         /*
          * C is left but there are no available options for C.
          *
@@ -1151,7 +2005,7 @@ STUDENT_TEST("There are no perfect pairings, any matching will fail. Cover uncov
     EXPECT_EQUAL(lookupA, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
-    matches.uncoverPerson(1);
+    matches.uncoverPairing(1);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 }
@@ -1172,10 +2026,10 @@ STUDENT_TEST("We will quickly learn that A-B is a bad pairing that leaves C out.
         { "C", {"B"} },
         { "D", {"A","B"}},
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",4,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,0}
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C  D
          *   1  1  1
@@ -1198,16 +2052,16 @@ STUDENT_TEST("We will quickly learn that A-B is a bad pairing that leaves C out.
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPerson(1);
+    Pair match = matches.coverPairing(1);
     EXPECT_EQUAL(match, {"A", "B"});
-    Vector<PerfectLinks::personName> lookupCoverA {
+    Vector<PartnerLinks::personName> lookupCoverA {
         {"",4,3},{"A",0,2},{"B",0,3},{"C",0,4},{"D",3,0}
     };
-    Vector<PerfectLinks::personLink> dlxCoverA {
+    Vector<PartnerLinks::personLink> dlxCoverA {
         /*
          * We cannot reach C and D if we pair A and B.
          *
@@ -1249,10 +2103,10 @@ STUDENT_TEST("A-D is a good pairing. Cover then uncover.") {
         { "C", {"B"} },
         { "D", {"A","B"}},
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",4,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,0}
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C  D
          *   1  1  1
@@ -1275,16 +2129,16 @@ STUDENT_TEST("A-D is a good pairing. Cover then uncover.") {
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPerson(6);
+    Pair match = matches.coverPairing(6);
     EXPECT_EQUAL(match, {"A", "D"});
-    Vector<PerfectLinks::personName> lookupCoverA {
+    Vector<PartnerLinks::personName> lookupCoverA {
         {"",3,2},{"A",0,2},{"B",0,3},{"C",2,0},{"D",3,0}
     };
-    Vector<PerfectLinks::personLink> dlxCoverA {
+    Vector<PartnerLinks::personLink> dlxCoverA {
         /*
          *      B  C
          *   3  1  1
@@ -1307,7 +2161,7 @@ STUDENT_TEST("A-D is a good pairing. Cover then uncover.") {
     EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
-    matches.uncoverPerson(6);
+    matches.uncoverPairing(6);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 }
@@ -1330,10 +2184,10 @@ STUDENT_TEST("Cover A in a world where everyone has two connections then uncover
         { "E", {"C", "D"} },
         { "F", {"A", "B"} }
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",6,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,0},
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C  D  E  F
          *   1  1        1
@@ -1361,17 +2215,17 @@ STUDENT_TEST("Cover A in a world where everyone has two connections then uncover
         //       25
         /*7*/ {INT_MIN,23,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 
-    Pair match = matches.coverPerson(1);
+    Pair match = matches.coverPairing(1);
     EXPECT_EQUAL(match, {"A","D"});
 
-    Vector<PerfectLinks::personName> lookupCoverA {
+    Vector<PartnerLinks::personName> lookupCoverA {
         {"",6,2},{"A",0,2},{"B",0,3},{"C",2,5},{"D",3,5},{"E",3,6},{"F",5,0},
     };
-    Vector<PerfectLinks::personLink> dlxCoverA {
+    Vector<PartnerLinks::personLink> dlxCoverA {
         /*
          *      B  C  E  F
          *   3  1  1
@@ -1399,7 +2253,7 @@ STUDENT_TEST("Cover A in a world where everyone has two connections then uncover
     EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
-    matches.uncoverPerson(1);
+    matches.uncoverPairing(1);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 }
@@ -1422,10 +2276,10 @@ STUDENT_TEST("Depth two cover and uncover. Cover A then B then uncover B.") {
         { "E", {"C", "D"} },
         { "F", {"A", "B"} }
     };
-    Vector<PerfectLinks::personName> lookup {
+    Vector<PartnerLinks::personName> lookup {
         {"",6,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,0},
     };
-    Vector<PerfectLinks::personLink> dlxItems {
+    Vector<PartnerLinks::personLink> dlxItems {
         /*
          *      A  B  C  D  E  F
          *   1  1        1
@@ -1453,17 +2307,17 @@ STUDENT_TEST("Depth two cover and uncover. Cover A then B then uncover B.") {
         //       25
         /*7*/ {INT_MIN,23,INT_MIN},
     };
-    PerfectLinks matches(provided);
+    PartnerLinks matches(provided);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 
-    Pair match = matches.coverPerson(1);
+    Pair match = matches.coverPairing(1);
     EXPECT_EQUAL(match, {"A","D"});
 
-    Vector<PerfectLinks::personName> lookupCoverA {
+    Vector<PartnerLinks::personName> lookupCoverA {
         {"",6,2},{"A",0,2},{"B",0,3},{"C",2,5},{"D",3,5},{"E",3,6},{"F",5,0},
     };
-    Vector<PerfectLinks::personLink> dlxCoverA {
+    Vector<PartnerLinks::personLink> dlxCoverA {
         /*
          *      B  C  E  F
          *   3  1  1
@@ -1492,13 +2346,13 @@ STUDENT_TEST("Depth two cover and uncover. Cover A then B then uncover B.") {
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
     // Pair B C but that is a bad choice so we will have to uncover.
-    match = matches.coverPerson(2);
+    match = matches.coverPairing(2);
     EXPECT_EQUAL(match, {"B","C"});
 
-    Vector<PerfectLinks::personName> lookupCoverB {
+    Vector<PartnerLinks::personName> lookupCoverB {
         {"",6,5},{"A",0,2},{"B",0,3},{"C",0,5},{"D",3,5},{"E",0,6},{"F",5,0},
     };
-    Vector<PerfectLinks::personLink> dlxCoverB {
+    Vector<PartnerLinks::personLink> dlxCoverB {
         /*
          * Pairing up B and C will leave us no way to access E and F. Must uncover.
          *
@@ -1526,14 +2380,90 @@ STUDENT_TEST("Depth two cover and uncover. Cover A then B then uncover B.") {
     EXPECT_EQUAL(lookupCoverB, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverB, matches.dlx.links);
 
-    matches.uncoverPerson(2);
+    matches.uncoverPairing(2);
     EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
-    matches.uncoverPerson(1);
+    matches.uncoverPairing(1);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 }
+
+
+/* * * * * * * * * * * * * * * *            Solve Problem               * * * * * * * * * * * * * */
+
+
+STUDENT_TEST("Largest shape I will do by hand. After successive calls the network should reset.") {
+    /* Here's the world:
+     *
+     *               A --- B ---C
+     *             /        \   \
+     *       I----J          E---D
+     *       |     \        /
+     *       H----- G --- F
+     *
+     *
+     *
+     */
+    const Map<std::string, Set<std::string>> provided = {
+        { "A", {"B", "J"} },
+        { "B", {"A", "C", "E"} },
+        { "C", {"B", "D"} },
+        { "D", {"C", "E"} },
+        { "E", {"B", "D", "F"} },
+        { "F", {"E", "G"} },
+        { "G", {"F", "H", "J"} },
+        { "H", {"G", "I"} },
+        { "I", {"H", "J"} },
+        { "J", {"A", "G", "I"} }
+    };
+    Vector<PartnerLinks::personName> lookup {
+        {"",10,1},{"A",0,2},{"B",1,3},{"C",2,4},{"D",3,5},{"E",4,6},{"F",5,7},{"G",6,8},{"H",7,9},{"I",8,10},{"J",9,0},
+    };
+    Vector<PartnerLinks::personLink> dlxItems {
+        /*
+         *      A  B  C  D  E  F  G  H  I  J
+         *   1  1  1
+         *   2  1                          1
+         *   3     1  1
+         *   4     1        1
+         *   5        1  1
+         *   6           1  1
+         *   7              1  1
+         *   8                 1  1
+         *   9                    1  1
+         *  10                    1        1
+         *  11                       1  1
+         *  12                          1  1
+         *
+         */
+
+        //              A         B         C        D          E         F         G         H         I        J
+        {0,0,0},    {2,15,12},{3,21,13},{2,24,19},{2,27,25},{3,30,22},{2,33,31},{3,39,34},{2,42,37},{2,45,43},{3,46,16},
+        {-1,9,13},  {1,1,15}, {2,2,18},
+        {-2,12,16}, {1,12,1},                                                                                 {10,10,40},
+        {-3,15,19},           {2,13,21},{3,3,24},
+        {-4,18,22},           {2,18,2},                     {5,5,28},
+        {-5,21,25},                     {3,19,3}, {4,4,27},
+        {-6,24,28},                               {4,25,4}, {5,22,30},
+        {-7,27,31},                                         {5,28,5}, {6,6,33},
+        {-8,30,34},                                                   {6,31,6}, {7,7,36},
+        {-9,33,37},                                                             {7,34,39},{8,8,42},
+        {-10,36,40},                                                            {7,36,7},                     {10,16,46},
+        {-11,39,43},                                                                      {8,37,8}, {9,9,45},
+        {-12,42,46},                                                                                {9,43,9}, {10,40,10},
+        {INT_MIN,45,INT_MIN},
+    };
+
+    PartnerLinks network(provided);
+    for (int i = 0; i < 11; i++) {
+        Set<Pair> matching = {};
+        EXPECT(network.hasPerfectLinks(matching));
+        EXPECT_EQUAL(lookup, network.dlx.lookupTable);
+        EXPECT_EQUAL(dlxItems, network.dlx.links);
+    }
+}
+
 
 namespace {
 
@@ -1591,7 +2521,8 @@ PROVIDED_TEST("hasPerfectMatching works on a world with just one person.") {
      */
 
     Set<Pair> unused;
-    PerfectLinks network({{"A", {}}});
+    Map<std::string, Set<std::string>> map = {{"A", {}}};
+    PartnerLinks network(map);
     EXPECT(!network.hasPerfectLinks(unused));
 }
 
@@ -1600,7 +2531,8 @@ PROVIDED_TEST("hasPerfectMatching works on an empty set of people.") {
      * requirements.
      */
     Set<Pair> unused;
-    PerfectLinks network({});
+    Map<std::string, Set<std::string>> map = {};
+    PartnerLinks network(map);
     EXPECT(network.hasPerfectLinks(unused));
 }
 
@@ -1616,7 +2548,7 @@ PROVIDED_TEST("hasPerfectMatching works on a world with two linked people.") {
     });
 
     Set<Pair> unused;
-    PerfectLinks network(links);
+    PartnerLinks network(links);
     EXPECT(network.hasPerfectLinks(unused));
 }
 
@@ -1636,7 +2568,7 @@ PROVIDED_TEST("hasPerfectMatching works on a world with two linked people, and p
     };
 
     Set<Pair> matching;
-    PerfectLinks network(links);
+    PartnerLinks network(links);
     EXPECT(network.hasPerfectLinks(matching));
     EXPECT_EQUAL(matching, expected);
 }
@@ -1658,7 +2590,7 @@ PROVIDED_TEST("hasPerfectMatching works on a triangle of people.") {
     });
 
     Set<Pair> unused;
-    PerfectLinks network(links);
+    PartnerLinks network(links);
     EXPECT(!network.hasPerfectLinks(unused));
 }
 
@@ -1681,7 +2613,7 @@ PROVIDED_TEST("hasPerfectMatching works on a square of people.") {
     });
 
     Set<Pair> unused;
-    PerfectLinks network(links);
+    PartnerLinks network(links);
     EXPECT(network.hasPerfectLinks(unused));
 }
 
@@ -1704,7 +2636,7 @@ PROVIDED_TEST("hasPerfectMatching works on a square of people, and produces outp
     });
 
     Set<Pair> matching;
-    PerfectLinks network(links);
+    PartnerLinks network(links);
     EXPECT(network.hasPerfectLinks(matching));
     EXPECT(isPerfectMatching(links, matching));
 }
@@ -1730,7 +2662,7 @@ PROVIDED_TEST("hasPerfectMatching works on a pentagon of people.") {
     });
 
     Set<Pair> unused;
-    PerfectLinks network(links);
+    PartnerLinks network(links);
     EXPECT(!network.hasPerfectLinks(unused));
 }
 
@@ -1764,7 +2696,7 @@ PROVIDED_TEST("hasPerfectMatching works on a line of six people.") {
         });
 
         Set<Pair> matching;
-        PerfectLinks network(links);
+        PartnerLinks network(links);
         EXPECT(network.hasPerfectLinks(matching));
         EXPECT(isPerfectMatching(links, matching));
     } while (next_permutation(people.begin(), people.end()));
@@ -1801,7 +2733,7 @@ PROVIDED_TEST("hasPerfectMatching works on a more complex negative example.") {
         });
 
         Set<Pair> matching;
-        PerfectLinks network(links);
+        PartnerLinks network(links);
         EXPECT(!network.hasPerfectLinks(matching));
     } while (next_permutation(people.begin(), people.end()));
 }
@@ -1839,7 +2771,7 @@ PROVIDED_TEST("hasPerfectMatching works on a more complex positive example.") {
         });
 
         Set<Pair> matching;
-        PerfectLinks network(links);
+        PartnerLinks network(links);
         EXPECT(network.hasPerfectLinks(matching));
         EXPECT(isPerfectMatching(links, matching));
     } while (next_permutation(people.begin(), people.end()));
@@ -1873,7 +2805,7 @@ PROVIDED_TEST("hasPerfectMatching works on a caterpillar.") {
         });
 
         Set<Pair> matching;
-        PerfectLinks network(links);
+        PartnerLinks network(links);
         EXPECT(network.hasPerfectLinks(matching));
         EXPECT(isPerfectMatching(links, matching));
     } while (next_permutation(people.begin(), people.end()));
@@ -1919,7 +2851,7 @@ PROVIDED_TEST("hasPerfectMatching stress test: negative example (should take und
     }
 
     Set<Pair> matching;
-    PerfectLinks network(fromLinks(links));
+    PartnerLinks network(fromLinks(links));
     EXPECT(!network.hasPerfectLinks(matching));
 }
 
@@ -1959,7 +2891,7 @@ PROVIDED_TEST("hasPerfectMatching stress test: positive example (should take und
     }
 
     Set<Pair> matching;
-    PerfectLinks network(fromLinks(links));
+    PartnerLinks network(fromLinks(links));
     EXPECT(network.hasPerfectLinks(matching));
     EXPECT(isPerfectMatching(fromLinks(links), matching));
 }

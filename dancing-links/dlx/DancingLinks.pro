@@ -71,10 +71,10 @@ DEFINES     +=  main=qMain qMain=studentMain
 # entries, so no worries about duplicates
 SOURCES         *=  "" \
     DisasterLinks.cpp \
-    PerfectLinks.cpp
+    PartnerLinks.cpp
 HEADERS         *=  "" \
     DisasterLinks.h \
-    PerfectLinks.h
+    PartnerLinks.h
 
 # Gather any .cpp or .h files within the project folder (student/starter code).
 # Second argument true makes search recursive
