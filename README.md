@@ -100,7 +100,7 @@ As an exercise, trace through the same selection process to shrink this world an
 
 As a final note for this section, I am seeking further optimizations. Currently, this implementation can solve all maps except the U.S. grid instantly. My algorithm can confirm that the optimal number of cities to supply lies between 20 and 30. We cannot cover the U.S. with less than 20 supplies and we can cover the U.S. with 30 or more supplies. However, finding the optimal number within this range has proven too much for my implementation. Finding the solution takes too much time.
 
-### Implementation
+### Disaster Links Implementation
 
 I will briefly go over the new data structure that Knuth recommends for these types of problems because it is quite interesting. For a deep dive, see the code and test cases in `DisasterLinks.cpp`.
 
@@ -164,7 +164,7 @@ There are some leftovers from Knuth's logic that I am not sure what to do with i
 
 Unfortunately, I cannot take advantage of the implicit left right nature of array elements next to one another in this implementation. I need explicit `left` `right` fields because I remove cities from all other options that they appear in without eliminating the other options for future supply possibilities. This means I must splice them out of a doubly linked list.
 
-### Usage Instructions
+### Disaster Links Usage Instructions
 
 I chose to implement the solution to this problem as a class that can be found in the **[`DisasterLinks.h`](/dancing-links/dlx/DisasterLinks.h)**, and **[`DisasterLinks.cpp`](/dancing-links/dlx/DisasterLinks.cpp)** files. There are tests at the bottom of the **[`DisasterLinks.cpp`](/dancing-links/dlx/DisasterLinks.cpp)** file that make the internals of the dancing links data structure more understandable.
 
@@ -178,4 +178,178 @@ I then included this implementation in the **[`DisasterGUI.cpp`](/dancing-links/
 
 ## Dancing Partners
 
-The implementation for perfect matching and maximum weight matching are complete. They are now the driving code behind the interactive programs in this project. I am tidying up the code and working on the write up, which will follow soon.
+This section covers the use of Knuth's method to solve graph matching problems. Specifically, I cover two problems: Perfect Matching and Max Weight Matching. When I originally heard Knuth speak about his Dancing Links technique, he mentioned Perfect Matching as an ideal application of his methods. Subsequently, when I read his work I saw that he was interested in generating every possible way to cover a graph. Instead, we will tweak his methods slightly again to achieve slightly easier tasks. These implementations are more in line with what Knuth had in mind, when compared to the disaster planning algorithm discussed in the last section.
+
+### Perfect Matching
+
+Let's look at another graph. This time, the graph will represent people. The connections, or edges, between people are bidirectional and carry no weight.
+
+![pairs-1](/images/pairs-1.png)
+
+How can we match everyone in this graph so that nobody is left out? There are a few ways, here is one.
+
+![pairs-solve-1](/images/pairs-solve-1.png)
+
+There would also be bad choices for partners. For example, if we paired A-D and B-C, E and F would have no partners when we could have matched them. Avoiding such bad choices is the challenge of this problem. We can now represent this graph as a matrix with Knuth's method in mind. However, we will alter our approach as compared to the last section.
+
+![pairs-matrix-1](/images/pairs-matrix-1.png)
+
+Here are the key details from the above matrix.
+
+- Every person appears as an option along the top headers.
+- We only allow for two people for every option, the rows of the matrix.
+- Every option is symmetric and unique. While maps may sometimes confirm a pairing across multiple keys, we only need to place them in this matrix once.
+- Option row titles have no meaning. They are arbitrary numbers and could be used to give a title to every pairing if needed. My solution does not need to do this.
+
+We now must select a person we will attempt to match. The selection is simple.
+
+- Scan all options to confirm that everyone is accessible through a partnership.
+	- If someone has 0 appearances across all options, that means a previous pairing was a bad choice because it left someone stranded. We will stop recursing and backtrack to try a better choice.
+- Select the first available person and try every way to match them.
+- One of the ways to match the person will work.
+
+We know that a person will find a successful match because we find any singletons or odd sized graphs while building the matrix. Therefore, we do not even need to try to match anyone in those cases because we know it will be impossible and do not enter recursion.
+
+Compared to the previous disaster planning problem, covering a person creates a different effect on the matrix. Here is how selection shrinks the problem.
+
+![pairs-cover-A](/images/pairs-cover-A.png)
+
+Here are the key details from the above image:
+
+- We select to pair A with D, marked by the green asterisk (`*`).
+- A and D disappear as people that need to be covered by hiding their columns.
+- All other options effected by this pairing are colored green.
+- A-F and D-E are no longer valid pairings because A and D are paired off.
+
+To complete this pairing we have four more people to pair. Let's look at how a bad choice changes the matrix.
+
+![pairs-bad-cover](/images/pairs-bad-cover.png)
+
+Here are the key details from the above image:
+
+- Selecting to pair B-C leaves E and F isolated.
+- We know E and F cannot be paired because the headers will point to themselves and have no options to access.
+- To solve a Perfect Matching problem, all options and items must disappear from the world with the last choice.
+- The problem is solved when we have an empty world or matrix.
+
+I am not currently aware of any optimizations for this problem. It is very fast at finding solutions, especially because it only must find one. In, contrast max weight matching is much more difficult.
+
+### Max Weight Matching
+
+Here is another graph. Again, the nodes are people and the edges are the connections showing their willingness to pair with that person. However the edges have a weight.
+
+![weight-1](/images/weight-1.png)
+
+It is clear to see how to match everyone so nobody is left out. However, complete that matching and total the numbers shared between the pairs. You will see that we leave out a valuable edge between B and C. Here is the correct choice to maximize edge weight.
+
+![weight-1-solved](/images/weight-1-solved.png)
+
+Here are the key details from the above graph:
+
+- B-C and A-F produce a much higher weight than a Perfect Matching.
+- Max Weight matching allows for people to be left out, meaning it will work on any sized graph.
+
+We will represent this graph in a matrix almost identically to our Perfect Matching problem.
+
+![weight-matrix-1](/images/weight-matrix-1.png)
+
+Here are the key details from the above image:
+
+- People remain as items across the columns.
+- We only allow pairs as options.
+- The options are given a title that includes the weight of the pair.
+
+Because this problem asks a slightly different question of us, we need to develop one new method for covering people and eliminating options.
+
+To find the Maximum Weight Matching, we must explore every possible pairing and report back the best one we found. My best attempt at this is using what is called an include/exclude pattern. Here is how it goes in abstract.
+
+- Select the next available person.
+- Exclude them from other options as a possible partner and recurse.
+- Include them and try every possible way of pairing them off with their possible partners.
+- From these two choices keep the result of the best choice that led to the highest weight matching.
+
+Step 2 of the above algorithm is the only one that requires a new method of covering a person in the matrix. Here is what it looks like.
+
+![matrix-cover-person](/images/matrix-cover-person.png)
+
+Here are the key details of the above image:
+
+- The person we are covering is marked by the asterisk (A).
+- When we cover an individual person, the only options that disappear are the pairings that that person can affect by being absent.
+- We do NOT take this person's partner's out of the world in each option.
+- F is unreachable and that is completely acceptable. In fact, we will continue to attempt combinations of partners until the world is empty or nobody can be paired.
+
+We will then continue the process of excluding and including each person at every level of recursion to produce every possible pairing and record the best weight as we go.
+
+Trying to explain or trace through the generation of pairings beyond this level of detail can become confusing, so I will leave it at that. This implementation definitely requires a recursive leap of faith.
+
+This is the slower of the two implementations and I am not aware of any optimizations at this time. However, I am sure they exist and will try to incorporate them as I learn.
+
+### Partner Links Implementation
+
+Luckily, both of the Matching problems can use the exact same types and data structures to solve their problems. We only alter the algorithm's logic when necessary.
+
+We again pack all of the nodes into one array. We use a lookup table array and the actual array that contains the dancing links logic.
+
+Here is the type that goes in the lookup table and controls our recursion, telling us when all people have been partnered or who to pick next.
+
+```c++
+typedef struct personName {
+	std::string name;
+	int left;
+	int right;
+}personName;
+```
+
+Here is the type we place in the array that we walk through during recursion. The array remains in place, we only ever alter the fields of the nodes. As a header this types `topOrLen` will store the number of options we have to access a pairing for a person. As an item in a column, the `topOrLen` will point back up to the header. It can also give us the name of that item in the lookup table. The left and right fields of the node are implicit because pairs are next to one another in an array.
+
+```c++
+typedef struct personLink {
+	int topOrLen;
+	int up;
+	int down;
+}personLink;
+```
+
+I place the two arrays and some extra logic information in a struct called a Network.
+
+```c++
+typedef struct Network {
+	Vector<personName> lookupTable;
+	Vector<personLink> links;
+	int numPeople;     // Total people in the network.
+	int numPairings;   // The number of pairings or rows in the matrix.
+	bool hasSingleton; // No perfect matching if someone is alone.
+	bool isWeighted;   // Must provide weights for max weight matching.
+}Network;
+```
+
+The lookup table is identical to the disaster planning problem.
+
+![lookup-table-illustrated](/images/lookup-table-illustrated.png)
+
+Our Dancing Links array will look slightly different in these implementations. Here is the array used for Perfect Matching.
+
+![perfect-matrix-illustrated](/images/perfect-matrix-illustrated.png)
+
+We always know that any other nodes for a pairing are directly next to one another in the array. The array has one modification for the maximum weight matching.
+
+![weight-matrix-array-illustrated](/images/weight-matrix-array-illustrated.png)
+
+Notice that we include the weight for a pairing in as a negative number. This tells us the weight we need and also that we have arrived at a spacer node, not a partner node.
+
+### Partner Links Usage Instructions
+
+I chose to implement the solution to this problem as a class that can be found in the **[`PartnerLinks.h`](/dancing-links/dlx/PartnerLinks.h)**, and **[`PartnerLinks.cpp`](/dancing-links/dlx/PartnerLinks.cpp)** files. There are tests at the bottom of the **[`PartnerLinks.cpp`](/dancing-links/dlx/DisasterLinks.cpp)** file that make the internals of the dancing links data structure more understandable.
+
+I then included this implementation in the **[`MatchmakerGUI.cpp`](/dancing-links/dlx/Demos/MatchmakerGUI.cpp)** file as the solver for grid illustration tool. If you want to see how this implementation finds matches complete the following steps.
+
+1. Open the project in Qt Creator with the correct Stanford C++ library installed. (See the [Build Note](#build-note)).
+2. Build and run the project.
+3. Select the `Matchmaker` option from the top menu.
+4. Draw a graph or select a premade example from the load option.
+5. Select `Find Perfect Matching` or `Find Max-Weight Matching` to solve the appropriate problem.
+
+## Runtime Analysis
+
+I am curious how these implementations stack up against the original solutions I wrote to these problems. I will put together a more formal runtime analysis when able.

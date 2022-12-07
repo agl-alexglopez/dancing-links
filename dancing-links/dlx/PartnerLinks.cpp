@@ -707,6 +707,7 @@ std::ostream& operator<<(std::ostream&os, const PartnerLinks& links) {
 
 /* * * * * * * * * * * * * * * *            WEIGHTED MATCHING           * * * * * * * * * * * * * */
 
+
 namespace  {
 
     /* Utility to go from a list of triples to a world. */
@@ -725,6 +726,7 @@ namespace  {
        }
 
 }
+
 
 /* * * * * * * * * * * * * * * *             Initialization             * * * * * * * * * * * * * */
 
@@ -1191,24 +1193,29 @@ PROVIDED_TEST("maximumWeightMatching: The network resets after every run.") {
         /*
          *     A  B  C  D  E  F
          *  1  1  1
-         *  2  1     1
-         *  3  1              1
-         *  4     1  1
-         *  5     1     1
-         *  6        1     1
+         *  1  1     1
+         *  1  1              1
+         *  5     1  1
+         *  1     1     1
+         *  1        1     1
          *
          */
 
-        //            1A       2B        3C       4D         5E       6F
+        // 0          1A       2B        3C       4D         5E       6F
         {0,0,0},   {3,14,8},{3,20,9},{3,23,12},{1,21,21},{1,24,24},{1,15,15},
+        // 7          8A       9B
         {-1,5,9},  {1,1,11},{2,2,17},
+        // 10         11A                12C
         {-1,8,12}, {1,8,14},         {3,3,18},
+        // 13         14A                                             15F
         {-1,11,15},{1,11,1},                                       {6,6,6},
+        // 16                  17B       18C
         {-5,14,18},         {2,9,20},{3,12,23},
+        // 19                  20B                21D
         {-1,17,21},         {2,17,2},          {4,4,4},
+        // 22                            23C                24E
         {-1,20,24},                  {3,18,3},            {5,5,5},
-        {-2147483648,23,-2147483648},
-
+        {INT_MIN,23,INT_MIN},
     };
     PartnerLinks weights(links);
 
