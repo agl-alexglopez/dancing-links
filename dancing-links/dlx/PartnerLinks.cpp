@@ -62,6 +62,59 @@ bool PartnerLinks::isPerfectMatching(Set<Pair>& pairs) {
 }
 
 /**
+ * @brief getAllPerfectLinks  retrieves every configuration of a graph of people that will
+ *                            produce a Perfect Matching. This is not every possible pairing
+ *                            of people, rather, only those pairings that will produce
+ *                            Perfect Matching.
+ * @return                    set of sets. Each set is a unique Perfect Matching configuration.
+ */
+Set<Set<Pair>> PartnerLinks::getAllPerfectLinks() {
+    if (dlx.hasSingleton || dlx.numPeople % 2 != 0) {
+        return {};
+    }
+    /* Going with a pass by reference method here becuase I like the "no copy recursion" principle
+     * behind Knuth's dancing links. I can profile to see if this is any faster than creating
+     * copies of sets through the stack frames and returning the desired result as the return type.
+     */
+    Set<Set<Pair>> result = {};
+    Set<Pair> soFar = {};
+    fillPerfectMatchings(soFar, result);
+    return result;
+}
+
+/**
+ * @brief fillPerfectMatchings  finds all available Perfect Matchings for a network. Fills the
+ *                              sets that complete this task as pass by reference output
+ *                              parameters. Every Perfect Matching configuration is unique.
+ * @param soFar                 the helper set we insert/delete from as we build Matchings.
+ * @param result                the output parameter we fill with any Perfect Matchings we find.
+ */
+void PartnerLinks::fillPerfectMatchings(Set<Pair>& soFar, Set<Set<Pair>>& result) {
+    if (dlx.lookupTable[0].right == 0) {
+        result.add(soFar);
+        return;
+    }
+    int chosen = choosePerson();
+    if (chosen == -1) {
+        return;
+    }
+    // Explore every possibility without this person to see if a heavier matching exists without.
+
+    // Now loop through every possible option for every combination of people available.
+    for (int cur = chosen; dlx.links[cur].down != chosen; cur = dlx.links[cur].down) {
+
+        Pair match = coverPairing(cur);
+        soFar += match;
+
+        fillPerfectMatchings(soFar, result);
+
+        // Selecting to partner chosenPerson with this option did not work out. Retry other option.
+        uncoverPairing(cur);
+        soFar -= match;
+    }
+}
+
+/**
  * @brief choosePerson  chooses a person for the Perfect Matching algorithm. It will simply
  *                      select the next person avaialable with no advanced heuristics. However,
  *                      it first checks if anyone has been isolated due to previous parings.
@@ -70,8 +123,7 @@ bool PartnerLinks::isPerfectMatching(Set<Pair>& pairs) {
  * @return              the index of the next person to pair or -1 if someone is alone.
  */
 int PartnerLinks::choosePerson() {
-    int head = 0;
-    for (int cur = dlx.lookupTable[0].right; cur != head; cur = dlx.lookupTable[cur].right) {
+    for (int cur = dlx.lookupTable[0].right; cur != 0; cur = dlx.lookupTable[cur].right) {
         // Someone has become inaccessible due to other matches.
         if (dlx.links[cur].topOrLen == 0) {
             return -1;
@@ -117,7 +169,6 @@ Pair PartnerLinks::coverPairing(int index) {
     // p2 needs to dissapear from all other pairings.
     hidePersonPairings(dlx.links[index], index);
 
-    // This is reported as an output parameter for the pairings we chose.
     return {p1.name, p2.name};
 }
 
@@ -139,13 +190,11 @@ void PartnerLinks::uncoverPairing(int index) {
 
     toPairIndex(index);
 
-
     personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
     dlx.lookupTable[p2.left].right = dlx.links[index].topOrLen;
     dlx.lookupTable[p2.right].left = dlx.links[index].topOrLen;
 
     unhidePersonPairings(dlx.links[index], index);
-
 }
 
 /**
@@ -159,7 +208,7 @@ void PartnerLinks::hidePersonPairings(personLink& start, int index) {
     personLink nextPairing = start;
     index = start.down;
     while ((nextPairing = dlx.links[nextPairing.down]) != start) {
-        // We may need this guard to prevent splicing while on a column header.
+        // We need this guard to prevent splicing while on a column header.
         if (index > dlx.lookupTable.size()) {
 
             // In case the other partner is to the left, just decrement index to go left.
@@ -183,7 +232,7 @@ void PartnerLinks::hidePersonPairings(personLink& start, int index) {
  */
 void PartnerLinks::unhidePersonPairings(personLink& start, int index) {
     personLink nextPairing = start;
-    // The order does not truly matter but I distinguish this from hide by going upwards.
+    // The direction does not truly matter but I distinguish this from hide by going upwards.
     index = start.up;
     while ((nextPairing = dlx.links[nextPairing.up]) != start) {
         if (index > dlx.lookupTable.size()) {
@@ -230,8 +279,9 @@ Set<Pair> PartnerLinks::getMaxWeightMatching() {
               "and the weights of their preferred connections to the constructor.");
     }
     /* In the spirit of "no copy" recursion by Knuth, we can just fill and remove from one set and
-     * record the best snapshot of pairings in the winner set. Have to profile to see if this faster
-     * than normal recursion with copies of sets.
+     * record the best snapshot of pairings in the winner set. Have to profile to see if adding
+     * and removing from a set during recursion is faster than creating new sets in the stack frames
+     * of recursive calls. Possible space vs speed tradeoff?
      */
     std::pair<int,Set<Pair>> soFar = {};
     std::pair<int,Set<Pair>> winner = {};
@@ -406,7 +456,6 @@ std::pair<int,Pair> PartnerLinks::coverWeightedPair(int index) {
  * @param possibleLinks  the map of people and partners they are willing to work with.
  */
 PartnerLinks::PartnerLinks(const Map<std::string, Set<std::string>>& possibleLinks) {
-
     dlx.numPairings = 0;
     dlx.numPeople = 0;
     dlx.hasSingleton = false;
@@ -429,9 +478,7 @@ PartnerLinks::PartnerLinks(const Map<std::string, Set<std::string>>& possibleLin
         }
         setPerfectPairs(p, preferences, columnBuilder, seenPairs, index, spacerTitle);
     }
-
     dlx.links.add({INT_MIN, index - 2, INT_MIN});
-
 }
 
 /**
@@ -3055,4 +3102,71 @@ PROVIDED_TEST("hasPerfectMatching stress test: positive example (should take und
     PartnerLinks network(fromLinks(links));
     EXPECT(network.hasPerfectLinks(matching));
     EXPECT(isPerfectMatching(fromLinks(links), matching));
+}
+
+
+/* * * * * * * * * * * * *     Bonus: Find All Perfect Matchings        * * * * * * * * * * * * * */
+
+/* It would be nice to find a way to cycle through all perfect matchings as an option in the graph
+ * viewer. As of now, there is no way to see the results of this function in any meaningful way.
+ * Need to learn more about how drawing works for this application then possibly add to it.
+ */
+
+PROVIDED_TEST("getAllPerfectMatching works on a square of people, and produces output.") {
+    /* Here's the world:
+     *
+     *               A --- B
+     *               |     |
+     *               |     |
+     *               D --- C
+     *
+     * There are two different perfect matching here: AB / CD, and AC/BC.
+     * Either will work.
+     */
+    auto links = fromLinks({
+        { "A", "B" },
+        { "B", "C" },
+        { "C", "D" },
+        { "D", "A" }
+    });
+    Set<Set<Pair>> allMatches = {
+        {{"A","B"}, {"D","C"}},
+        {{"A","D"}, {"B","C"}}
+    };
+    PartnerLinks network(links);
+    EXPECT_EQUAL(network.getAllPerfectLinks(), allMatches);
+}
+
+STUDENT_TEST("All possible pairings is huge, but all perfect matching configs is just 4.") {
+    /* Here's the world:
+     *
+     *               A --- B ---C
+     *             /        \   \
+     *       I----J          E---D
+     *       |     \        /
+     *       H----- G --- F
+     *
+     *
+     *
+     */
+    const Map<std::string, Set<std::string>> provided = {
+        { "A", {"B", "J"} },
+        { "B", {"A", "C", "E"} },
+        { "C", {"B", "D"} },
+        { "D", {"C", "E"} },
+        { "E", {"B", "D", "F"} },
+        { "F", {"E", "G"} },
+        { "G", {"F", "H", "J"} },
+        { "H", {"G", "I"} },
+        { "I", {"H", "J"} },
+        { "J", {"A", "G", "I"} }
+    };
+    Set<Set<Pair>> allMatches = {
+        {{ "A", "B" }, { "C", "D" }, { "E", "F" }, { "G", "H" }, { "I", "J" }},
+        {{ "A", "B" }, { "C", "D" }, { "E", "F" }, { "G", "J" }, { "H", "I" }},
+        {{ "A", "J" }, { "B", "C" }, { "D", "E" }, { "F", "G" }, { "H", "I" }},
+        {{ "A", "J" }, { "B", "E" }, { "C", "D" }, { "F", "G" }, { "H", "I" }},
+    };
+    PartnerLinks network(provided);
+    EXPECT_EQUAL(network.getAllPerfectLinks(), allMatches);
 }

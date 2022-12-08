@@ -213,6 +213,15 @@ public:
     bool hasPerfectLinks(Set<Pair>& pairs);
 
     /**
+     * @brief getAllPerfectLinks  retrieves every configuration of a graph of people that will
+     *                            produce a Perfect Matching. This is not every possible pairing
+     *                            of people, rather, only those pairings that will produce
+     *                            Perfect Matching.
+     * @return                    set of sets. Each set is a unique Perfect Matching configuration.
+     */
+    Set<Set<Pair>> getAllPerfectLinks();
+
+    /**
      * @brief getMaxWeightMatching  determines the Max Weight Matching of a PartnerLinks matrix. A
      *                              Max Weight Matching is the greatest sum of edge weights we can
      *                              acheive by partnering up people in a network.
@@ -239,6 +248,15 @@ private:
      * @return                   true if the matching is found, false if not.
      */
     bool isPerfectMatching(Set<Pair>& pairs);
+
+    /**
+     * @brief fillPerfectMatchings  finds all available Perfect Matchings for a network. Fills the
+     *                              sets that complete this task as pass by reference output
+     *                              parameters. Every Perfect Matching configuration is unique.
+     * @param soFar                 the helper set we insert/delete from as we build Matchings.
+     * @param result                the output parameter we fill with any Perfect Matchings we find.
+     */
+    void fillPerfectMatchings(Set<Pair>& soFar, Set<Set<Pair>>& result);
 
     /**
      * @brief fillWeights  recusively finds the maximum weight pairings possible given a dancing
