@@ -295,9 +295,9 @@ Here is the type that goes in the lookup table and controls our recursion, telli
 
 ```c++
 typedef struct personName {
-	std::string name;
-	int left;
-	int right;
+    std::string name;
+    int left;
+    int right;
 }personName;
 ```
 
@@ -305,9 +305,9 @@ Here is the type we place in the array that we walk through during recursion. Th
 
 ```c++
 typedef struct personLink {
-	int topOrLen;
-	int up;
-	int down;
+    int topOrLen;
+    int up;
+    int down;
 }personLink;
 ```
 
@@ -315,12 +315,12 @@ I place the two arrays and some extra logic information in a struct called a Net
 
 ```c++
 typedef struct Network {
-	Vector<personName> lookupTable;
-	Vector<personLink> links;
-	int numPeople;     // Total people in the network.
-	int numPairings;   // The number of pairings or rows in the matrix.
-	bool hasSingleton; // No perfect matching if someone is alone.
-	bool isWeighted;   // Must provide weights for max weight matching.
+    Vector<personName> lookupTable;
+    Vector<personLink> links;
+    int numPeople;     // Total people in the network.
+    int numPairings;   // The number of pairings or rows in the matrix.
+    bool hasSingleton; // No perfect matching if someone is alone.
+    bool isWeighted;   // Must provide weights for max weight matching.
 }Network;
 ```
 
