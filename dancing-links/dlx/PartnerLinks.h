@@ -241,10 +241,10 @@ private:
     bool isPerfectMatching(Set<Pair>& pairs);
 
     /**
-     * @brief fillWeights  in the spirit of "no copy recursion" that Knuth has created with dancing
-     *                     links, I use pass by reference to fill/remove from a soFar pair during
-     *                     recursion. The winner pair will record the best weight found and keep
-     *                     the Set as an output parameter.
+     * @brief fillWeights  recusively finds the maximum weight pairings possible given a dancing
+     *                     links network with weighted partners. Uses the soFar set to store all
+     *                     possible pairing combinations while the winner output parameter tracks
+     *                     snapshots of the best weight and pairs found so far.
      * @param soFar        the pair of weight and pairs we fill with every possible pairing.
      * @param winner       the pair of weight and pairs that records the best weight found.
      */
