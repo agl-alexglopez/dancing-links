@@ -218,7 +218,7 @@ Here are the key details from the above image:
 
 - We select to pair A with D, marked by the green asterisk (`*`).
 - A and D disappear as people that need to be covered by hiding their columns.
-- All other options effected by this pairing are colored green.
+- All other options affected by this pairing are colored green.
 - A-F and D-E are no longer valid pairings because A and D are paired off.
 
 To complete this pairing we have four more people to pair. Let's look at how a bad choice changes the matrix.
