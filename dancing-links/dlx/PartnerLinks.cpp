@@ -98,9 +98,12 @@ void PartnerLinks::fillPerfectMatchings(Set<Pair>& soFar, Set<Set<Pair>>& result
     if (chosen == -1) {
         return;
     }
-    // Explore every possibility without this person to see if a heavier matching exists without.
 
-    // Now loop through every possible option for every combination of people available.
+    /* The chosen person must be included in any Perfect Matching configuration or else it would
+     * not be Perfect Matching. We will explore all ways to pair them off and include each in
+     * the output parameter. Some ways might leave loners and we won't include those.
+     */
+
     for (int cur = chosen; dlx.links[cur].down != chosen; cur = dlx.links[cur].down) {
 
         Pair match = coverPairing(cur);
@@ -108,7 +111,6 @@ void PartnerLinks::fillPerfectMatchings(Set<Pair>& soFar, Set<Set<Pair>>& result
 
         fillPerfectMatchings(soFar, result);
 
-        // Selecting to partner chosenPerson with this option did not work out. Retry other option.
         uncoverPairing(cur);
         soFar -= match;
     }
