@@ -276,7 +276,7 @@ Here are the key details of the above image:
 
 - The person we are covering is marked by the asterisk (A).
 - When we cover an individual person, the only options that disappear are the pairings that that person can affect by being absent.
-- We do NOT take this person's partner's out of the world in each option.
+- We do NOT remove all options that include this person's partner. For example, we do not remove all other options that have B or C as a possible partner.
 - F is unreachable and that is completely acceptable. In fact, we will continue to attempt combinations of partners until the world is empty or nobody can be paired.
 
 We will then continue the process of excluding and including each person at every level of recursion to produce every possible pairing and record the best weight as we go.
