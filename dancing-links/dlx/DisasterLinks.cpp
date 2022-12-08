@@ -62,9 +62,7 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
     /* Try to cover this city by first supplying the most connected city nearby. Try cities with
      * successively fewer connections then if all else fails supply the isolated city itself.
      */
-    for (int cur = chosenIndex;
-         dlx.grid[cur].down != chosenIndex;
-         cur = dlx.grid[cur].down) {
+    for (int cur = chosenIndex; dlx.grid[cur].down != chosenIndex; cur = dlx.grid[cur].down) {
 
         /* We will try the supply options as specified above to cover the city in question. This is
          * critical for the output parameter, the set of cities we covered in a successful solution.
@@ -233,7 +231,6 @@ DisasterLinks::DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwo
     // We will set this up for a reverse build of column links for a given item.
     HashMap<std::string,int> columnBuilder = {};
     std::vector<std::pair<std::string,int>> connectionSizes = {};
-    HashMap<std::string,int> headerIndexMap = {};
 
     // We need to start preparing items in the grid immediately after the headers.
     initializeHeaders(roadNetwork, connectionSizes, columnBuilder);

@@ -196,7 +196,7 @@ There would also be bad choices for partners. For example, if we paired A-D and 
 
 Here are the key details from the above matrix.
 
-- Every person appears as an option along the top headers.
+- Every person appears as an item along the top headers.
 - We only allow for two people for every option, the rows of the matrix.
 - Every option is symmetric and unique. While maps may sometimes confirm a pairing across multiple keys, we only need to place them in this matrix once.
 - Option row titles have no meaning. They are arbitrary numbers and could be used to give a title to every pairing if needed. My solution does not need to do this.

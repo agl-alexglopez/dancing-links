@@ -269,7 +269,7 @@ void PartnerLinks::fillWeights(std::pair<int,Set<Pair>>& soFar, std::pair<int,Se
         soFar.first += match.first;
         soFar.second += match.second;
 
-        // Go explore every weight that taking this pair produces
+        // Go explore every weight that matching this pair produces
         fillWeights(soFar, winner);
 
         // The winner pair will copy in the weight and Set if its the best so far.
