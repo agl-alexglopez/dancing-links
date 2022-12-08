@@ -94,7 +94,9 @@ void PartnerLinks::fillPerfectMatchings(Set<Pair>& soFar, Set<Set<Pair>>& result
         result.add(soFar);
         return;
     }
+
     int chosen = choosePerson();
+    // A person is left by themselves so backtrack to better choice.
     if (chosen == -1) {
         return;
     }
