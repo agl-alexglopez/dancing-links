@@ -232,7 +232,7 @@ Here are the key details from the above image:
 - To solve a Perfect Matching problem, all options and items must disappear from the world with the last choice.
 - The problem is solved when we have an empty world or matrix.
 
-I am not currently aware of any optimizations for this problem. It is very fast at finding solutions, especially because it only must find one. In, contrast max weight matching is much more difficult.
+I am not currently aware of any optimizations for this problem. It is very fast at finding solutions, especially because it only must find one. I added the bonus functionality of finding all possible perfect matching configurations to the graph editor application. To solve that problem, the algorithm requires minimal adjustments and it is remarkably fast. For example, requesting all possible perfect matchings on `Sample3`, a somewhat large network of connections, will yield 630 results immediately. I should try to find the limits of this algorithm in the runtime analysis section. In, contrast max weight matching is much more difficult.
 
 ### Max Weight Matching
 
@@ -275,9 +275,9 @@ Step 2 of the above algorithm is the only one that requires a new method of cove
 Here are the key details of the above image:
 
 - The person we are covering is marked by the asterisk (A).
-- When we cover an individual person, the only options that disappear are the pairings that that person can affect by being absent.
+- When we cover an individual person, the only options that disappear are the pairings the chosen person can affect by being absent.
 - We do NOT remove all options that include this person's partner. For example, we do not remove all other options that have B or C as a possible partner.
-- F is unreachable and that is completely acceptable. In fact, we will continue to attempt combinations of partners until the world is empty or nobody can be paired.
+- F becomes unreachable and that is completely acceptable. In fact, we will continue to attempt combinations of partners until the world is empty or nobody can be paired.
 
 We will then continue the process of excluding and including each person at every level of recursion to produce every possible pairing and record the best weight as we go.
 
@@ -348,7 +348,7 @@ I then included this implementation in the **[`MatchmakerGUI.cpp`](/dancing-link
 2. Build and run the project.
 3. Select the `Matchmaker` option from the top menu.
 4. Draw a graph or select a premade example from the load option.
-5. Select `Find Perfect Matching` or `Find Max-Weight Matching` to solve the appropriate problem.
+5. Select `Find Perfect Matching`, `Find All Perfect Matchings` or `Find Max-Weight Matching` to solve the appropriate problem.
 
 ## Runtime Analysis
 
