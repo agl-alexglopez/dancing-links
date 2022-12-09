@@ -755,6 +755,7 @@ std::ostream& operator<<(std::ostream&os, const PartnerLinks& links) {
 
 /* * * * * * * * * * * * * * * *      Test Cases Below this Point       * * * * * * * * * * * * * */
 
+
 namespace  {
     /* Utility to go from a list of triples to a world. */
        struct WeightedLink {
