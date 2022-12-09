@@ -68,7 +68,7 @@ bool PartnerLinks::isPerfectMatching(Set<Pair>& pairs) {
  *                            Perfect Matching.
  * @return                    set of sets. Each set is a unique Perfect Matching configuration.
  */
-Set<Set<Pair>> PartnerLinks::getAllPerfectLinks() {
+Vector<Set<Pair>> PartnerLinks::getAllPerfectLinks() {
     if (dlx.hasSingleton || dlx.numPeople % 2 != 0) {
         return {};
     }
@@ -76,7 +76,7 @@ Set<Set<Pair>> PartnerLinks::getAllPerfectLinks() {
      * behind Knuth's dancing links. I can profile to see if this is any faster than creating
      * copies of sets through the stack frames and returning the desired result as the return type.
      */
-    Set<Set<Pair>> result = {};
+    Vector<Set<Pair>> result = {};
     Set<Pair> soFar = {};
     fillPerfectMatchings(soFar, result);
     return result;
@@ -89,7 +89,7 @@ Set<Set<Pair>> PartnerLinks::getAllPerfectLinks() {
  * @param soFar                 the helper set we insert/delete from as we build Matchings.
  * @param result                the output parameter we fill with any Perfect Matchings we find.
  */
-void PartnerLinks::fillPerfectMatchings(Set<Pair>& soFar, Set<Set<Pair>>& result) {
+void PartnerLinks::fillPerfectMatchings(Set<Pair>& soFar, Vector<Set<Pair>>& result) {
     if (dlx.lookupTable[0].right == 0) {
         result.add(soFar);
         return;
@@ -3133,7 +3133,7 @@ PROVIDED_TEST("getAllPerfectMatching works on a square of people, and produces o
         { "C", "D" },
         { "D", "A" }
     });
-    Set<Set<Pair>> allMatches = {
+    Vector<Set<Pair>> allMatches = {
         {{"A","B"}, {"D","C"}},
         {{"A","D"}, {"B","C"}}
     };
@@ -3165,7 +3165,7 @@ STUDENT_TEST("All possible pairings is huge, but all perfect matching configs is
         { "I", {"H", "J"} },
         { "J", {"A", "G", "I"} }
     };
-    Set<Set<Pair>> allMatches = {
+    Vector<Set<Pair>> allMatches = {
         {{ "A", "B" }, { "C", "D" }, { "E", "F" }, { "G", "H" }, { "I", "J" }},
         {{ "A", "B" }, { "C", "D" }, { "E", "F" }, { "G", "J" }, { "H", "I" }},
         {{ "A", "J" }, { "B", "C" }, { "D", "E" }, { "F", "G" }, { "H", "I" }},

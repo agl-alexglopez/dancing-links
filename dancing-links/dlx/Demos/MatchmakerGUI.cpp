@@ -34,6 +34,7 @@ namespace {
 
     const string kNoPerfectMatching = "No perfect matching exists.";
     const string kNoPerfectMatchingTitle = "No Perfect Matching";
+    const string kAllMatchesFoundTitle = "Perfect Matches:";
 
     const int kMinWeight = 1;
     const int kMaxWeight = 10;
@@ -65,6 +66,11 @@ namespace {
         /* Current matching, if any. */
         unique_ptr<Set<Pair>> currMatching;
 
+        /* Every perfect matching if requested */
+
+        unique_ptr<Vector<Set<Pair>>> allMatching;
+        int currMatchingIndex;
+
         /* Panel layout:
          *
          * [name of file] [              delete button                  ]
@@ -72,7 +78,7 @@ namespace {
          * [save button ]
          * [load button ]
          *
-         * [ find perfect matching ][ max-weight matching  ]
+         * [ find perfect matching ][show previous matching][find all perfect matchings][show next matching][ max-weight matching  ]
          */
         Temporary<GContainer> controls;
         GLabel*  fileLabel;
@@ -83,6 +89,9 @@ namespace {
 
         GContainer* graphControls;
         GButton* perfectMatchButton;
+        GButton* prevMatchButton;
+        GButton* allMatchButton;
+        GButton* nextMatchButton;
         GButton* maxWeightMatchButton;
         GSlider* edgeWeightSlider;
 
@@ -113,6 +122,9 @@ namespace {
         bool handleUnsavedChanges();
 
         void findPerfectMatching();
+        void showPrevMatching();
+        void findAllPerfectMatching();
+        void showNextMatching();
         void findMaxWeightMatching();
 
         void drawGraph();
@@ -149,7 +161,10 @@ namespace {
         leftPanel->add(loadButton);
 
         deleteButton = new GButton("Delete");
-        perfectMatchButton   = new GButton("Find Perfect Matching");
+        perfectMatchButton = new GButton("Find Perfect Matching");
+        prevMatchButton = new GButton("Show Previous Matching");
+        allMatchButton = new GButton("Find All Perfect Matchings");
+        nextMatchButton = new GButton("Show Next Matching");
         maxWeightMatchButton = new GButton("Find Max-Weight Matching");
 
         edgeWeightSlider = new GSlider(kMinWeight, kMaxWeight, kDefaultWeight);
@@ -160,12 +175,17 @@ namespace {
 
         graphControls = new GContainer();
         graphControls->add(perfectMatchButton);
+        graphControls->add(prevMatchButton);
+        graphControls->add(allMatchButton);
+        graphControls->add(nextMatchButton);
         graphControls->add(maxWeightMatchButton);
         graphControls->add(new GLabel("Edge weight: "));
         graphControls->add(edgeWeightSlider);
         controls->addToGrid(graphControls, 4, 0, 1, 2);
 
         graphControls->setEnabled(false);
+        prevMatchButton->setEnabled(false);
+        nextMatchButton->setEnabled(false);
 
         controls->setWidth(window().getWidth() * 0.9);
 
@@ -204,6 +224,8 @@ namespace {
         entitySelected(nullptr);
         dirty(false);
         currMatching.reset();
+        allMatching.reset();
+        currMatchingIndex = 0;
         graphControls->setEnabled(true);
         requestRepaint();
     }
@@ -274,6 +296,12 @@ namespace {
             if (somethingSelected) deleteSelected();
         } else if (editor && source == perfectMatchButton) {
             findPerfectMatching();
+        } else if (editor && source == prevMatchButton) {
+            showPrevMatching();
+        } else if (editor && source == allMatchButton) {
+            findAllPerfectMatching();
+        } else if (editor && source == nextMatchButton) {
+            showNextMatching();
         } else if (editor && source == maxWeightMatchButton) {
             findMaxWeightMatching();
         }
@@ -445,6 +473,10 @@ namespace {
     }
 
     void MatchmakerGUI::findPerfectMatching() {
+        allMatching.reset();
+        prevMatchButton->setEnabled(false);
+        nextMatchButton->setEnabled(false);
+
         /* Extract the graph. */
         Map<string, Set<string>> graph;
         auto g = editor->viewer();
@@ -489,7 +521,74 @@ namespace {
         }
     }
 
+    void MatchmakerGUI::showPrevMatching() {
+        if (allMatching && (*allMatching).size() > 1) {
+            if (--currMatchingIndex < 0) {
+                currMatchingIndex = (*allMatching).size() - 1;
+            }
+            currMatching.reset(new Set<Pair>((*allMatching)[currMatchingIndex]));
+            requestRepaint();
+        }
+    }
+
+    void MatchmakerGUI::showNextMatching() {
+        if (allMatching && (*allMatching).size() > 1) {
+            ++currMatchingIndex %= (*allMatching).size();
+            currMatching.reset(new Set<Pair>((*allMatching)[currMatchingIndex]));
+            requestRepaint();
+        }
+    }
+
+    void MatchmakerGUI::findAllPerfectMatching() {
+        /* Extract the graph. */
+        Map<string, Set<string>> graph;
+        auto g = editor->viewer();
+
+        /* Install nodes. */
+        g->forEachNode([&](GraphEditor::Node* node) {
+            graph[node->label()] = {};
+        });
+
+        /* Install edges. */
+        g->forEachEdge([&](GraphEditor::Edge* edge) {
+            auto src = edge->from()->label();
+            auto dst = edge->to()->label();
+
+            graph[src] += dst;
+            graph[dst] += src;
+        });
+
+        /* Deselect everything; we aren't working on nodes/edges right now.
+         *
+         * This must come first, since this has the effect of clearing any
+         * existing matching.
+         */
+        editor->setActive(nullptr);
+        PartnerLinks perfectMatchingDLX(graph);
+        Vector<Set<Pair>> allFoundMatchings = perfectMatchingDLX.getAllPerfectLinks();
+        if (allFoundMatchings.size()) {
+            allMatching.reset(new Vector<Set<Pair>>(allFoundMatchings));
+            prevMatchButton->setEnabled(true);
+            nextMatchButton->setEnabled(true);
+            currMatchingIndex = 0;
+            /* Can we just reset this to a set in the vector or do we have to use new everytime?*/
+            currMatching.reset(new Set<Pair>((*allMatching)[currMatchingIndex]));
+            requestRepaint();
+            GOptionPane::showMessageDialog(&window(), to_string((*allMatching).size()), kAllMatchesFoundTitle);
+        } else {
+            allMatching.reset();
+            currMatching.reset();
+            requestRepaint();
+            GOptionPane::showMessageDialog(&window(), kNoPerfectMatching, kNoPerfectMatchingTitle);
+        }
+    }
+
     void MatchmakerGUI::findMaxWeightMatching() {
+        allMatching.reset();
+        prevMatchButton->setEnabled(false);
+        nextMatchButton->setEnabled(false);
+
+
         /* Extract the graph. */
         Map<string, Map<string, int>> graph;
         auto g = editor->viewer();

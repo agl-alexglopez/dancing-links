@@ -217,9 +217,9 @@ public:
      *                            produce a Perfect Matching. This is not every possible pairing
      *                            of people, rather, only those pairings that will produce
      *                            Perfect Matching.
-     * @return                    set of sets. Each set is a unique Perfect Matching configuration.
+     * @return                    vector of sets. Each is a unique Perfect Matching configuration.
      */
-    Set<Set<Pair>> getAllPerfectLinks();
+    Vector<Set<Pair>> getAllPerfectLinks();
 
     /**
      * @brief getMaxWeightMatching  determines the Max Weight Matching of a PartnerLinks matrix. A
@@ -256,7 +256,7 @@ private:
      * @param soFar                 the helper set we insert/delete from as we build Matchings.
      * @param result                the output parameter we fill with any Perfect Matchings we find.
      */
-    void fillPerfectMatchings(Set<Pair>& soFar, Set<Set<Pair>>& result);
+    void fillPerfectMatchings(Set<Pair>& soFar, Vector<Set<Pair>>& result);
 
     /**
      * @brief fillWeights  recusively finds the maximum weight pairings possible given a dancing
