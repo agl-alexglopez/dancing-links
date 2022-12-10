@@ -64,9 +64,6 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
      */
     for (int cur = chosenIndex; dlx.grid[cur].down != chosenIndex; cur = dlx.grid[cur].down) {
 
-        /* We will try the supply options as specified above to cover the city in question. This is
-         * critical for the output parameter, the set of cities we covered in a successful solution.
-         */
         std::string supplyLocation = coverCity(cur);
 
         if (isCovered(numSupplies - 1, suppliedCities)) {
@@ -75,11 +72,9 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
             uncoverCity(cur);
             return true;
         }
-
         // This cleanup is in case of failed choices. Try another starting supply location.
         uncoverCity(cur);
     }
-
     return false;
 }
 

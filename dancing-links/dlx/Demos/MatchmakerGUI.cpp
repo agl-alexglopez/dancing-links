@@ -272,6 +272,10 @@ namespace {
          * the colors are correct.
          */
         currMatching.reset();
+        allMatching.reset();
+        currMatchingIndex = 0;
+        prevMatchButton->setEnabled(false);
+        nextMatchButton->setEnabled(false);
     }
 
     void MatchmakerGUI::entityCreated(GraphEditor::Entity* entity) {
