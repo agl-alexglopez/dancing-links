@@ -4,9 +4,9 @@ RUN_TESTS_MENU_OPTION()
 MENU_ORDER("MatchmakerGUI.cpp",
            "DisasterGUI.cpp")
 
-TEST_ORDER("Matchmaker.cpp",
+TEST_ORDER("DisasterLinks.cpp",
+           "Matchmaker.cpp",
            "PartnerLinks.cpp",
-           "DisasterLinks.cpp",
            "DisasterPlanning.cpp",)
 
 TEST_BARRIER("MatchmakerGUI.cpp", "PartnerLinks.cpp")

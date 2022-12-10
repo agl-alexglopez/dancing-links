@@ -218,17 +218,17 @@ private:
     bool isCovered(int numSupplies, Set<std::string>& suppliedCities);
 
     /**
-     * @brief chooseCity  selects a city we are trying to cover either by giving it supplies or
-     *                    covering an adjacent neighbor. The selection uses the following
-     *                    heuristic:
-     *                        - Select the most isolated city so far.
-     *                        - We must cover this city so select an adjacent city with the
-     *                          most connections and try that first.
-     *                        - If that fails we try the next adjacent city with most connections.
-     *                        - Finally, try to supply the actual city in question, not neighbors.
-     * @return            the index of the city we are selecting to attempt to cover.
+     * @brief chooseIsolatedCity  selects a city we are trying to cover either by giving it supplies
+     *                            or covering an adjacent neighbor. The selection uses the following
+     *                            heuristic:
+     *                              - Select the most isolated city so far.
+     *                              - We must cover this city so select an adjacent city with the
+     *                                most connections and try that first.
+     *                              - If that fails try the next city with most connections.
+     *                              - Finally, try actual city in question, not neighbors.
+     * @return                    the index of the city we are selecting to attempt to cover.
      */
-    int chooseCity();
+    int chooseIsolatedCity();
 
     /**
      * @brief coverCity  covers a city with the option below the specified index. A city in question

@@ -322,7 +322,7 @@ private:
      * @param start                 the node of the person we unhide in the selected option.
      * @param index                 the index of the person we are unhiding in the selected option.
      */
-    void unhidePersonPairings(personLink&start, int index);
+    void unhidePersonPairings(personLink& start, int index);
 
     /**
      * @brief coverWeightedPair  when we cover a weighted pair in Max Weight Matching we should

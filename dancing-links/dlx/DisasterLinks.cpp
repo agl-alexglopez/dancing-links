@@ -57,7 +57,7 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
     }
 
     // Choose the city that appears the least across all sets because that will be hard to cover.
-    int chosenIndex = chooseCity();
+    int chosenIndex = chooseIsolatedCity();
 
     /* Try to cover this city by first supplying the most connected city nearby. Try cities with
      * successively fewer connections then if all else fails supply the isolated city itself.
@@ -72,25 +72,27 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
             uncoverCity(cur);
             return true;
         }
+
         // This cleanup is in case of failed choices. Try another starting supply location.
         uncoverCity(cur);
     }
+
     return false;
 }
 
 /**
- * @brief chooseCity  selects a city we are trying to cover either by giving it supplies or
- *                    covering an adjacent neighbor. The selection uses the following
- *                    heuristic:
- *                        - Select the most isolated city so far.
- *                        - We must cover this city so select an adjacent city with the
- *                          most connections and try that first.
- *                        - If that fails we try the next adjacent city with most connections.
- *                        - Finally, if all other neighbors fail, try to supply the actual city
- *                          in question, not neighbors.
+ * @brief chooseIsolatedCity  selects a city we are trying to cover either by giving it supplies or
+ *                            covering an adjacent neighbor. The selection uses the following
+ *                            heuristic:
+ *                              - Select the most isolated city so far.
+ *                              - We must cover this city so select an adjacent city with the
+ *                                most connections and try that first.
+ *                              - If that fails we try the next adjacent city with most connections.
+ *                              - Finally, if all other neighbors fail, try to supply the city
+ *                                in question, not neighbors.
  * @return            the index of the city we are selecting to attempt to cover.
  */
-int DisasterLinks::chooseCity() {
+int DisasterLinks::chooseIsolatedCity() {
     int min = INT_MAX;
     int chosenIndex = 0;
     int head = 0;
@@ -117,7 +119,6 @@ std::string DisasterLinks::coverCity(int index) {
 
     cityItem start = dlx.grid[startIndex];
     cityItem cur = dlx.grid[start.right];
-
 
     /* Be sure to leave the row of the option we supply unchanged. Splice these cities out of all
      * other options in which they can be found above and below the current row.
