@@ -434,8 +434,6 @@ std::pair<int,Pair> PartnerLinks::coverWeightedPair(int index) {
         result.first = std::abs(dlx.links[index - 2].topOrLen);
         index--;
     } else {
-        // p2 needs to dissapear from all other pairings.
-        hidePersonPairings(dlx.links[index + 1], index + 1);
         result.first = std::abs(dlx.links[index - 1].topOrLen);
         index++;
     }
@@ -443,6 +441,8 @@ std::pair<int,Pair> PartnerLinks::coverWeightedPair(int index) {
     personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
     dlx.lookupTable[p2.right].left = p2.left;
     dlx.lookupTable[p2.left].right = p2.right;
+    // p2 needs to dissapear from all other pairings.
+    hidePersonPairings(dlx.links[index], index);
 
     result.second = {p1.name,p2.name};
     return result;
