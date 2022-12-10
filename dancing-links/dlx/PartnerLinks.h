@@ -336,23 +336,23 @@ private:
     std::pair<int,Pair> coverWeightedPair(int index);
 
     /**
-     * @brief coverPerson  to generate all possible pairings in any pairing algorithm, we need to
-     *                     include every person in future possible pairings and exclude them. To
-     *                     exclude a person, we will cover only that person. Instead of eliminating
-     *                     every option that includes both people in a Pair, we only eliminate
-     *                     other appearances of this individual in other pairings. It is a subtle
-     *                     but important difference from covering a pairing.
-     * @param index        the index of the person we cover. Chooses option below this index.
+     * @brief hidePerson  to generate all possible pairings in any pairing algorithm, we need to
+     *                    include every person in future possible pairings and exclude them. To
+     *                    exclude a person, we will cover only that person. Instead of eliminating
+     *                    every option that includes both people in a Pair, we only eliminate
+     *                    other appearances of this individual in other pairings. It is a subtle
+     *                    but important difference from covering a pairing.
+     * @param index       the index of the person we cover. Chooses option below this index.
      */
-    void coverPerson(int index);
+    void hidePerson(int index);
 
     /**
-     * @brief uncoverPerson  undoes the work of covering a person, reinstating all possible pairings
-     *                       that include this person. Will undo the same option chosen in
-     *                       coverPerson() if given the same index.
-     * @param index          the index of the person to uncover. Chooses option below this index.
+     * @brief unhidePerson  undoes the work of covering a person, reinstating all possible pairings
+     *                      that include this person. Will undo the same option chosen in
+     *                      hidePerson() if given the same index.
+     * @param index         the index of the person to uncover. Chooses option below this index.
      */
-    void uncoverPerson(int index);
+    void unhidePerson(int index);
 
     /**
      * @brief toPairIndex  helper function to increment the index to the next partner. We might

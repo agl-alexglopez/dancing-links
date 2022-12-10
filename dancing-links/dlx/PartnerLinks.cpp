@@ -311,9 +311,9 @@ void PartnerLinks::fillWeights(std::pair<int,Set<Pair>>& soFar, std::pair<int,Se
         return;
     }
     // Explore every possibility without this person to see if a heavier matching exists without.
-    coverPerson(chosen);
+    hidePerson(chosen);
     fillWeights(soFar, winner);
-    uncoverPerson(chosen);
+    unhidePerson(chosen);
 
     // Now loop through every possible option for every combination of people available.
     for (int cur = chosen; dlx.links[cur].down != chosen; cur = dlx.links[cur].down) {
@@ -360,15 +360,15 @@ int PartnerLinks::chooseWeightedPerson() {
 
 
 /**
- * @brief coverPerson  to generate all possible pairings in any pairing algorithm, we need to
- *                     include every person in future possible pairings and exclude them. To
- *                     exclude a person, we will cover only that person. Instead of eliminating
- *                     every option that includes both people in a Pair, we only eliminate
- *                     other appearances of this individual in other pairings. It is a subtle
- *                     but important difference from covering a pairing.
- * @param index        the index of the person we cover. Chooses option below this index.
+ * @brief hidePerson  to generate all possible pairings in any pairing algorithm, we need to
+ *                    include every person in future possible pairings and exclude them. To
+ *                    exclude a person, we will cover only that person. Instead of eliminating
+ *                    every option that includes both people in a Pair, we only eliminate
+ *                    other appearances of this individual in other pairings. It is a subtle
+ *                    but important difference from covering a pairing.
+ * @param index       the index of the person we cover. Chooses option below this index.
  */
-void PartnerLinks::coverPerson(int index) {
+void PartnerLinks::hidePerson(int index) {
     index = dlx.links[index].down;
 
     personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
@@ -387,12 +387,12 @@ void PartnerLinks::coverPerson(int index) {
 }
 
 /**
- * @brief uncoverPerson  undoes the work of covering a person, reinstating all possible pairings
- *                       that include this person. Will undo the same option chosen in
- *                       coverPerson() if given the same index.
- * @param index          the index of the person to uncover. Chooses option below this index.
+ * @brief unhidePerson  undoes the work of covering a person, reinstating all possible pairings
+ *                      that include this person. Will undo the same option chosen in
+ *                      hidePerson() if given the same index.
+ * @param index         the index of the person to uncover. Chooses option below this index.
  */
-void PartnerLinks::uncoverPerson(int index) {
+void PartnerLinks::unhidePerson(int index) {
     index = dlx.links[index].down;
 
     personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
@@ -974,7 +974,7 @@ STUDENT_TEST("Covering a person in weighted will only take that person's pairs o
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    matches.coverPerson(1);
+    matches.hidePerson(1);
 
     Vector<PartnerLinks::personName> lookupCoverA {
         {"",3,2},{"A",0,2},{"B",0,3},{"C",2,0},
@@ -1000,7 +1000,7 @@ STUDENT_TEST("Covering a person in weighted will only take that person's pairs o
     EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxCoverA);
 
-    matches.uncoverPerson(1);
+    matches.unhidePerson(1);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
