@@ -823,6 +823,20 @@ namespace  {
 /* * * * * * * * * * * * * * * *             Initialization             * * * * * * * * * * * * * */
 
 
+STUDENT_TEST("Empty is empty.") {
+    const Map<std::string, Map<std::string,int>> provided = {};
+    Vector<PartnerLinks::personName> lookup {
+        {"",0,0}
+    };
+    Vector<PartnerLinks::personLink> dlxItems {
+        {0,0,0},
+        {INT_MIN,-1,INT_MIN},
+    };
+    PartnerLinks matches(provided);
+    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(dlxItems, matches.dlx.links);
+}
+
 STUDENT_TEST("Weighted matching initializes straight line correctly.") {
     /*
      *          1    2     3     4      5
@@ -1417,6 +1431,20 @@ PROVIDED_TEST("maximumWeightMatching: Large stress test (should take at most a s
 
 /* * * * * * * * * * * * * * * *             Initialization             * * * * * * * * * * * * * */
 
+
+STUDENT_TEST("Empty is empty perfect matching.") {
+    const Map<std::string, Set<std::string>> provided = {};
+    Vector<PartnerLinks::personName> lookup {
+        {"",0,0}
+    };
+    Vector<PartnerLinks::personLink> dlxItems {
+        {0,0,0},
+        {INT_MIN,-1,INT_MIN},
+    };
+    PartnerLinks matches(provided);
+    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(dlxItems, matches.dlx.links);
+}
 
 STUDENT_TEST("Line of six but tricky due to natural order.") {
     /*
