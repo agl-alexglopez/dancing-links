@@ -81,6 +81,14 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
     return false;
 }
 
+/**
+ * @brief getAllDisasterConfigurations  returns every possible disaster configuration possible
+ *                                      with a given supply count. I advise finding the optimal
+ *                                      number of supplies before running this function or it
+ *                                      will work very hard. It is slow.
+ * @param numSupplies                   the number of supplies we have to distribute.
+ * @return                              all possible distributions of the supplies.
+ */
 Set<Set<std::string>> DisasterLinks::getAllDisasterConfigurations(int numSupplies) {
     if (numSupplies < 0) {
         error("Negative supply count.");
@@ -92,6 +100,15 @@ Set<Set<std::string>> DisasterLinks::getAllDisasterConfigurations(int numSupplie
     return allConfigurations;
 }
 
+/**
+ * @brief fillConfigurations  finds all possible distributions of the given number of supplies.
+ *                            It generates duplicate configurations and uses a Set to filter
+ *                            them out. This is slow and I want to only generate unique
+ *                            configurations but am having trouble finding a way.
+ * @param numSupplies         the number of supplies we have to distribute.
+ * @param suppliedCities      the set that will hold new configurations that work.
+ * @param allConfigurations   the set that records all configurations found.
+ */
 void DisasterLinks::fillConfigurations(int numSupplies,
                                        Set<std::string>& suppliedCities,
                                        Set<Set<std::string>>& allConfigurations) {

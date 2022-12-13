@@ -162,9 +162,9 @@ namespace {
 
         deleteButton = new GButton("Delete");
         perfectMatchButton = new GButton("Find Perfect Matching");
-        prevMatchButton = new GButton("Show Previous Matching");
+        prevMatchButton = new GButton("<<");
         allMatchButton = new GButton("Find All Perfect Matchings");
-        nextMatchButton = new GButton("Show Next Matching");
+        nextMatchButton = new GButton(">>");
         maxWeightMatchButton = new GButton("Find Max-Weight Matching");
 
         edgeWeightSlider = new GSlider(kMinWeight, kMaxWeight, kDefaultWeight);
@@ -478,8 +478,12 @@ namespace {
 
     void MatchmakerGUI::findPerfectMatching() {
         allMatching.reset();
+
         prevMatchButton->setEnabled(false);
         nextMatchButton->setEnabled(false);
+        perfectMatchButton->setEnabled(false);
+        allMatchButton->setEnabled(false);
+        maxWeightMatchButton->setEnabled(false);
 
         /* Extract the graph. */
         Map<string, Set<string>> graph;
@@ -523,6 +527,9 @@ namespace {
 
             GOptionPane::showMessageDialog(&window(), kNoPerfectMatching, kNoPerfectMatchingTitle);
         }
+        perfectMatchButton->setEnabled(true);
+        allMatchButton->setEnabled(true);
+        maxWeightMatchButton->setEnabled(true);
     }
 
     void MatchmakerGUI::showPrevMatching() {
@@ -544,6 +551,11 @@ namespace {
     }
 
     void MatchmakerGUI::findAllPerfectMatching() {
+        prevMatchButton->setEnabled(false);
+        nextMatchButton->setEnabled(false);
+        perfectMatchButton->setEnabled(false);
+        allMatchButton->setEnabled(false);
+        maxWeightMatchButton->setEnabled(false);
         /* Extract the graph. */
         Map<string, Set<string>> graph;
         auto g = editor->viewer();
@@ -585,12 +597,19 @@ namespace {
             requestRepaint();
             GOptionPane::showMessageDialog(&window(), kNoPerfectMatching, kNoPerfectMatchingTitle);
         }
+        perfectMatchButton->setEnabled(true);
+        allMatchButton->setEnabled(true);
+        maxWeightMatchButton->setEnabled(true);
     }
 
     void MatchmakerGUI::findMaxWeightMatching() {
         allMatching.reset();
+        /* For larger graphs this can be a slow function so disable while it thinks. */
         prevMatchButton->setEnabled(false);
         nextMatchButton->setEnabled(false);
+        perfectMatchButton->setEnabled(false);
+        allMatchButton->setEnabled(false);
+        maxWeightMatchButton->setEnabled(false);
 
 
         /* Extract the graph. */
@@ -628,6 +647,9 @@ namespace {
 
         /* We need to redraw. */
         requestRepaint();
+        perfectMatchButton->setEnabled(true);
+        allMatchButton->setEnabled(true);
+        maxWeightMatchButton->setEnabled(true);
     }
 
     const string kMatchedColor   = "#ffd320";     // Slide highlight color

@@ -60,6 +60,11 @@ bool isReadyRec(const Map<string, Set<string>> & roadNetwork,
                 int supplyRemaining,
                 Set<string> &supplyLocations);
 
+Set<Set<string>> fillSupplySchemes(const Map<string, Set<string>>& roadNetwork,
+                                   const Set<string> citiesToCover,
+                                   int numSupplies,
+                                   Set<string> supplyLocations);
+
 string getPriorityCity(const Map<string, Set<string>> &roadNetwork,
                        const Set<string>& remaining);
 
@@ -155,6 +160,76 @@ bool isReadyRec(const Map<string, Set<string>> & roadNetwork,
         return true;
     }
     return false;
+}
+
+/**
+ * @brief findAllSupplySchemes  finds every possible configuration of supply distribution with the
+ *                              given number of supplies. Only use this function once the optimal
+ *                              number of supplies is known. Otherwise it will be slower than
+ *                              it already is.
+ * @param roadNetwork           Map representing the cities and cities that connect to those cities.
+ * @param numSupplies           the integer count of total supplies we have to distribute.
+ * @return                      Set of Sets of all distributions.
+ */
+Set<Set<string>> findAllSupplySchemes(const Map<string, Set<string>>& roadNetwork,
+                                      int numSupplies) {
+    if (numSupplies < 0) {
+        error("negative supplies.");
+    }
+    if (roadNetwork.isEmpty()) {
+        return {};
+    }
+    // Set will make insertion and deletions easier.
+    Set<string> citiesToTry = {};
+    for (const auto &key : roadNetwork) {
+        citiesToTry += key;
+    }
+    return fillSupplySchemes(roadNetwork, citiesToTry, numSupplies, {});
+}
+
+/**
+ * @brief fillSupplySchemes  finds all possible distributions of the number of supplies given. This
+ *                           is slow and I use a Set to filter out duplicates. I am seeking a
+ *                           better way to do this but am not sure the best way to avoid duplicates.
+ * @param roadNetwork        the Map representing cities and cities that connect to those cities.
+ * @param citiesToCover      the Set of cities we will examine as candidates for supply.
+ * @param numSupplies        the integer count of total supplies we have to distribute.
+ * @param supplyLocations    the output Parameter of locations we will carry back to main function.
+ * @return                   the Set of all supply configurations.
+ */
+Set<Set<string>> fillSupplySchemes(const Map<string, Set<string>>& roadNetwork,
+                                   const Set<string> citiesToCover,
+                                   int numSupplies,
+                                   Set<string> supplyLocations) {
+    if (citiesToCover.isEmpty() && numSupplies >= 0) {
+        return {supplyLocations};
+    }
+    if (numSupplies <= 0) {
+        return {};
+    }
+
+    // See helper below. We can save recursive calls if we pick cities with low connection count.
+    string city = getPriorityCity(roadNetwork, citiesToCover);
+    Set<string> connectedCities = roadNetwork[city];
+
+    Set<Set<string>> result = {};
+    // city is the most isolated so far. Nearest neighbors will almost certainly be best choice
+    for (auto &connection : connectedCities) {
+
+        // These are all the cities connected to the adjacent city.
+        Set<string> connectedToConnection = roadNetwork[connection];
+        result += fillSupplySchemes(roadNetwork,
+                                    citiesToCover - connection - connectedToConnection,
+                                    numSupplies - 1,
+                                    supplyLocations + connection);
+    }
+
+    // Now we can check if the isolated city would be a good choice. Possible, but less likely.
+    result += fillSupplySchemes(roadNetwork,
+                                citiesToCover - city - connectedCities,
+                                numSupplies - 1,
+                                supplyLocations + city);
+    return result;
 }
 
 /**
@@ -737,3 +812,30 @@ PROVIDED_TEST("Stress test: 6 x 6 grid, with output. (This should take at most a
     }
 }
 
+STUDENT_TEST("All possible configurations of a square.") {
+    /*
+     *
+     *        A----B
+     *        |    |
+     *        C----D
+     *
+     *
+     *
+     */
+    const Map<std::string, Set<std::string>> cities = {
+        {"A", {"B","C"}},
+        {"B", {"A","D"}},
+        {"C", {"A","D"}},
+        {"D", {"B","C"}},
+    };
+    Set<Set<std::string>> allConfigs = {
+        {"A","C"},
+        {"A","B"},
+        {"A","D"},
+        {"B","C"},
+        {"B","D"},
+        {"C","D"},
+    };
+    Set<Set<std::string>> allFound = findAllSupplySchemes(cities, 2);
+    EXPECT_EQUAL(allFound,allConfigs);
+}

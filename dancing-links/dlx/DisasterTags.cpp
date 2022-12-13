@@ -73,8 +73,63 @@ bool DisasterTags::isDLXCovered(int numSupplies, Set<std::string>& supplyLocatio
         // We will know which cities to uncover thanks to which we tagged on the way down.
         uncoverCity(cur);
     }
-
     return false;
+}
+
+/**
+ * @brief getAllDisasterConfigurations  returns every possible disaster configuration possible
+ *                                      with a given supply count. I advise finding the optimal
+ *                                      number of supplies before running this function or it
+ *                                      will work very hard. It is slow.
+ * @param numSupplies                   the number of supplies we have to distribute.
+ * @return                              all possible distributions of the supplies.
+ */
+Set<Set<std::string>> DisasterTags::getAllDisasterConfigurations(int numSupplies) {
+    if (numSupplies < 0) {
+        error("Negative supply count.");
+    }
+
+    Set<std::string> suppliedCities {};
+    Set<Set<std::string>> allConfigurations = {};
+    fillConfigurations(numSupplies, suppliedCities, allConfigurations);
+    return allConfigurations;
+}
+
+/**
+ * @brief fillConfigurations  finds all possible distributions of the given number of supplies.
+ *                            It generates duplicate configurations and uses a Set to filter
+ *                            them out. This is slow and I want to only generate unique
+ *                            configurations but am having trouble finding a way.
+ * @param numSupplies         the number of supplies we have to distribute.
+ * @param suppliedCities      the set that will hold new configurations that work.
+ * @param allConfigurations   the set that records all configurations found.
+ */
+void DisasterTags::fillConfigurations(int numSupplies,
+                                      Set<std::string>& suppliedCities,
+                                      Set<Set<std::string>>& allConfigurations) {
+
+    if (dlx.table[0].right == 0 && numSupplies >= 0) {
+        allConfigurations.add(suppliedCities);
+        return;
+    }
+    if (numSupplies <= 0) {
+        return;
+    }
+    int chosenIndex = chooseIsolatedCity();
+    if (chosenIndex == -1) {
+        return;
+    }
+    for (int cur = chosenIndex; dlx.grid[cur].down != chosenIndex; cur = dlx.grid[cur].down) {
+
+        std::string supplyLocation = coverCity(cur, numSupplies);
+        suppliedCities.add(supplyLocation);
+
+        fillConfigurations(numSupplies - 1, suppliedCities, allConfigurations);
+
+        suppliedCities.remove(supplyLocation);
+        // This cleanup is in case of failed choices. Try another starting supply location.
+        uncoverCity(cur);
+    }
 }
 
 /**
@@ -128,7 +183,7 @@ std::string DisasterTags::coverCity(int index, const int supplyTag) {
              * number of supplies remaining when distributed. Only give supplies to cities that
              * are still in need and have not been tagged.
              */
-            if (dlx.grid[top].supplyTag == 0) {
+            if (!dlx.grid[top].supplyTag) {
                 dlx.grid[top].supplyTag = supplyTag;
                 dlx.table[dlx.table[top].left].right = dlx.table[top].right;
                 dlx.table[dlx.table[top].right].left = dlx.table[top].left;
@@ -1186,4 +1241,33 @@ PROVIDED_TEST("Stress test: 6 x 6 grid, with output. (This should take at most a
             EXPECT(checkCovered(row + std::to_string(col), grid, locations));
         }
     }
+}
+
+STUDENT_TEST("All possible configurations of a square.") {
+    /*
+     *
+     *        A----B
+     *        |    |
+     *        C----D
+     *
+     *
+     *
+     */
+    const Map<std::string, Set<std::string>> cities = {
+        {"A", {"B","C"}},
+        {"B", {"A","D"}},
+        {"C", {"A","D"}},
+        {"D", {"B","C"}},
+    };
+    Set<Set<std::string>> allConfigs = {
+        {"A","C"},
+        {"A","B"},
+        {"A","D"},
+        {"B","C"},
+        {"B","D"},
+        {"C","D"},
+    };
+    DisasterTags grid(cities);
+    Set<Set<std::string>> allFound = grid.getAllDisasterConfigurations(2);
+    EXPECT_EQUAL(grid.getAllDisasterConfigurations(2),allConfigs);
 }

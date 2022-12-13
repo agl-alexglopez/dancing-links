@@ -201,7 +201,7 @@ typedef struct city {
     int topOrLen;
     int up;
     int down;
-	// New addition! supplyTag instead of left-right.
+    // New addition! supplyTag instead of left-right.
     int supplyTag;
 }city;
 ```

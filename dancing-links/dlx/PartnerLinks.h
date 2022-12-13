@@ -359,7 +359,7 @@ private:
      *                     need to move left or right.
      * @param index        the index we take by reference to advance.
      */
-    inline void toPairIndex(int& index);
+    inline int toPairIndex(int index);
 
 
     /* * * * * * * * * *   Build and Initialize Dancing Links Data Structure    * * * * * * * * * */
@@ -389,14 +389,14 @@ private:
      *                         structure. Perfect pairs do not have any weight information and
      *                         options will simply be given a number from 1 to N number of matches.
      * @param person           the person who will set all possible matches for.
-     * @param personPairs      the set of all people this person is willing to pair with.
+     * @param preferences      the set of all people this person is willing to pair with.
      * @param columnBuilder    the structure we use to track and build all columns in one array.
      * @param seenPairs        helper set to keep pairings unique and bidirectional.
      * @param index            we advance the index as an output parameter.
      * @param spacerTitle      we advance the spacerTitle to number each option.
      */
     void setPerfectPairs(const std::string& person,
-                         const Set<std::string>& personPairs,
+                         const Set<std::string>& preferences,
                          HashMap<std::string,int>& columnBuilder,
                          Set<Pair>& seenPairs,
                          int& index,
@@ -409,13 +409,13 @@ private:
      *                          We can then get the weight and names of any partnership while
      *                          recursing easily. Negative weights are ignored and no pairing made.
      * @param person            the person who's weighted matches we will set.
-     * @param personPairs       the people this person can pair with and the weight of those pairs.
+     * @param preferences       the people this person can pair with and the weight of those pairs.
      * @param columnBuilder     the structure we use to track and build all columns in one array.
      * @param seenPairs         helper set to keep pairings unique and bidirectional.
      * @param index             we advance the index as an output parameter.
      */
     void setWeightedPairs(const std::string& person,
-                          const Map<std::string,int>& personPairs,
+                          const Map<std::string,int>& preferences,
                           HashMap<std::string,int>& columnBuilder,
                           Set<Pair>& seenPairs,
                           int& index);

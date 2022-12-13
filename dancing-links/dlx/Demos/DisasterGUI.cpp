@@ -38,11 +38,33 @@ namespace {
         COVERED_DIRECTLY
     };
 
+    /* This communicates solver used and index in kSolverColorOptions to use as well. */
+    enum CitySolver {
+        SET_BASED=0,
+        QUAD_DLX=1,
+        TAGGED_DLX=2,
+    };
+
     /* Colors to use when drawing cities. */
-    const vector<CityColors> kCityColors = {
-        { "#101010", "#202020", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#A0A0A0") },   // Uncovered
-        { "#303060", "#404058", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#C0C0C0") },   // Indirectly covered
-        { "#806030", "#FFDF80", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
+    const vector<vector<CityColors>> kSolverColorOptions = {
+        /* SET_BASED */
+        {
+            { "#101010", "#202020", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#A0A0A0") },   // Uncovered
+            { "#303060", "#404058", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#C0C0C0") },   // Indirectly covered
+            { "#806030", "#FFDF80", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
+        },
+        /* QUAD_DLX */
+        {
+            { "#101010", "#202020", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#A0A0A0") },   // Uncovered
+            { "#303060", "#404058", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#C0C0C0") },   // Indirectly covered
+            { "#FF00FF", "#F5CBF5", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
+        },
+        /* TAGGED_DLX */
+        {
+            { "#101010", "#202020", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#A0A0A0") },   // Uncovered
+            { "#303060", "#404058", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#C0C0C0") },   // Indirectly covered
+            { "#00FFFF", "#C5EBEB", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
+        },
     };
 
     /* Colors to use to draw the roads. */
@@ -223,7 +245,8 @@ namespace {
     void drawCities(GWindow& window,
                     const Geometry& geo,
                     const DisasterTest& network,
-                    const Set<string>& selected) {
+                    const Set<string>& selected,
+                    enum CitySolver solverUsed) {
 
         /* For simplicity, just make a single oval. */
         GOval oval(0, 0, 2 * kCityRadius, 2 * kCityRadius);
@@ -240,8 +263,8 @@ namespace {
             else if (!(selected * network.network[city]).isEmpty()) state = COVERED_INDIRECTLY;
 
             /* There's no way to draw a filled circle with a boundary as one call. */
-            oval.setColor(kCityColors[state].borderColor);
-            oval.setFillColor(kCityColors[state].fillColor);
+            oval.setColor(kSolverColorOptions[solverUsed][state].borderColor);
+            oval.setFillColor(kSolverColorOptions[solverUsed][state].fillColor);
             window.draw(oval,
                         center.x - kCityRadius,
                         center.y - kCityRadius);
@@ -252,7 +275,7 @@ namespace {
                                                     center.y - kCityRadius,
                                                     2 * kCityRadius,
                                                     2 * kCityRadius
-                                                }, kCityColors[state].font);
+                                                }, kSolverColorOptions[solverUsed][state].font);
             render->alignCenterHorizontally();
             render->alignCenterVertically();
             render->draw(window);
@@ -261,7 +284,8 @@ namespace {
 
     void visualizeNetwork(GWindow& window,
                           const DisasterTest& network,
-                          const Set<string>& selected) {
+                          const Set<string>& selected,
+                          enum CitySolver solverUsed) {
         clearDisplay(window, kBackgroundColor);
 
         /* Edge case: Don't draw if the window is too small. */
@@ -281,7 +305,7 @@ namespace {
              * artifacts.
              */
             drawRoads(window, geo, network, selected);
-            drawCities(window, geo, network, selected);
+            drawCities(window, geo, network, selected, solverUsed);
         }
     }
 
@@ -294,6 +318,11 @@ namespace {
         }
         return result;
     }
+
+    /* I wish I could use a function pointer or something but my DLX solvers need instantiation
+     * of their respective classes and I am not sure how that would be united into one function
+     * with a function pointer. Instead just do the same functions many times.
+     */
 
     /* Uses binary search to find the optimal number of cities to use for disaster
      * preparedness, populating the result field with the minimum group of cities
@@ -327,10 +356,8 @@ namespace {
             }
         }
     }
-    /* I wish I could use a function pointer or something but my DLX solvers need instantiation
-     * of their respective classes and I am not sure how that would be united into one function
-     * with a function pointer. Instead just do the same function twice.
-     */
+
+
     void solveOptimallyWithQuadDLX(const DisasterTest& test, Set<string>& result) {
         /* The variable 'low' is the lowest number that might be feasible.
          * The variable 'high' is the highest number that we know is feasible.
@@ -360,33 +387,98 @@ namespace {
             }
         }
     }
-    void solveOptimallyWithSupplyTagDLX(const DisasterTest& test, Set<string>& result) {
-        /* The variable 'low' is the lowest number that might be feasible.
-         * The variable 'high' is the highest number that we know is feasible.
-         */
-        int low = 0, high = test.network.size();
 
-        /* Begin with a feasible solution that uses as many cities as we'd like. */
+    void solveOptimallyWithSupplyTagDLX(const DisasterTest& test, Set<string>& result) {
+        int low = 0, high = test.network.size();
         DisasterTags network(test.network);
         (void) network.hasDisasterCoverage(high, result);
-
         while (low < high) {
-            /* This line looks weird, but it's designed to avoid integer overflows
-             * on large inputs. The idea that (high + low) can overflow, but
-             * (high - low) / 2 never will.
-             */
             int mid = low + (high - low) / 2;
             Set<string> thisResult;
-
-            /* If this option works, decrease high to it, since we know all is good. */
             if (network.hasDisasterCoverage(mid, thisResult)) {
                 high = mid;
-                result = thisResult; // Remember this result for later.
+                result = thisResult;
             }
-            /* Otherwise, rule out anything less than or equal to it. */
             else {
                 low = mid + 1;
             }
+        }
+    }
+
+    /* These are all bad and slow. Right now I can only generate all viable configurations by
+     * filtering out duplicate configurations with a Set. I then transfer all solutions from the
+     * set to the vector to make it work better with the GUI. I would like to only generate unique
+     * coverage schemes so I can use a vector from the beggining. I haven't figured it out.
+     */
+
+    void solveAllWithSets(const DisasterTest& test, unique_ptr<vector<Set<string>>>& allSolutions) {
+        int low = 0, high = test.network.size();
+        Set<string> result = {};
+        (void) canBeMadeDisasterReady(test.network, high, result);
+        while (low < high) {
+            int mid = low + (high - low) / 2;
+            Set<string> thisResult;
+            if (canBeMadeDisasterReady(test.network, mid, thisResult)) {
+                high = mid;
+                result = thisResult;
+            }
+            else {
+                low = mid + 1;
+            }
+        }
+        int optimalSupplies = result.size();
+        Set<Set<string>> allFoundConfigs = findAllSupplySchemes(test.network, optimalSupplies);
+        for (const auto& found : allFoundConfigs) {
+            (*allSolutions).push_back(found);
+        }
+    }
+
+    void solveAllWithQuadDLX(const DisasterTest& test,
+                             unique_ptr<vector<Set<string>>>& allSolutions) {
+        int low = 0, high = test.network.size();
+        Set<string> result = {};
+        DisasterLinks network(test.network);
+        (void) network.isDisasterReady(high, result);
+        while (low < high) {
+            int mid = low + (high - low) / 2;
+            Set<string> thisResult;
+
+            if (network.isDisasterReady(mid, thisResult)) {
+                high = mid;
+                result = thisResult;
+            }
+            else {
+                low = mid + 1;
+            }
+        }
+        int optimalSupplies = result.size();
+        Set<Set<string>> allFoundConfigs = findAllSupplySchemes(test.network, optimalSupplies);
+        for (const auto& found : allFoundConfigs) {
+            (*allSolutions).push_back(found);
+        }
+    }
+
+    void solveAllWithSupplyTagDLX(const DisasterTest& test,
+                                  unique_ptr<vector<Set<string>>>& allSolutions) {
+        int low = 0, high = test.network.size();
+        Set<string> result = {};
+        DisasterTags network(test.network);
+        (void) network.hasDisasterCoverage(high, result);
+        while (low < high) {
+            int mid = low + (high - low) / 2;
+            Set<string> thisResult;
+            if (network.hasDisasterCoverage(mid, thisResult)) {
+                high = mid;
+                result = thisResult;
+            }
+            else {
+                low = mid + 1;
+            }
+        }
+        int optimalSupplies = result.size();
+        Set<Set<string>> allFoundConfigs = findAllSupplySchemes(test.network, optimalSupplies);
+        for (const auto& found : allFoundConfigs) {
+            (*allSolutions).push_back(found);
         }
     }
 
@@ -406,13 +498,22 @@ namespace {
 
         /* Dropdown of the solver you want to use for the problem */
         Temporary<GComboBox> mSolver;
-        const string mSetSolver = "Set Based Solver";
-        const string mQuadDLXSolver = "Quadruple Linked DLX Solver";
-        const string mSupplyTagDLXSolver = "Supply Tag DLX Solver";
+        enum CitySolver mSolverUsed;
+        const string mSetSolver = "Solver: Set Based";
+        const string mQuadDLXSolver = "Solver: Quadruple Linked DLX";
+        const string mSupplyTagDLXSolver = "Solver: Supply Tag DLX";
         const vector<string> mSolverNames = {mSetSolver, mQuadDLXSolver, mSupplyTagDLXSolver};
 
         /* Button to trigger the solver. */
         Temporary<GButton> mSolve;
+
+        /* Button to trigger finding all distributions of optimal supplies. */
+        Temporary<GButton> mPrevSolution;
+        Temporary<GButton> mAllSolutions;
+        Temporary<GButton> mNextSolution;
+        unique_ptr<vector<Set<string>>> mStoredSolutions;
+        int mCurrentSolutionIndex;
+        const string mAllSolutionsMessage = "Solutions Found:";
 
         /* Current network and solution. */
         DisasterTest    mNetwork;
@@ -423,6 +524,10 @@ namespace {
 
         /* Computes an optimal solution. */
         void solve();
+        /* Computes all optimal solutions. */
+        void showPreviousSolution();
+        void solveAll();
+        void showNextSolution();
     };
 
     DisasterGUI::DisasterGUI(GWindow& window) : ProblemHandler(window) {
@@ -439,8 +544,16 @@ namespace {
         solvers->setEditable(false);
 
         mProblems = Temporary<GComboBox>(choices, window, "SOUTH");
+        /* Select the implementation you want to solve the problems */
         mSolver = Temporary<GComboBox>(solvers, window, "SOUTH");
         mSolve    = Temporary<GButton>(new GButton("Solve"), window, "SOUTH");
+        mPrevSolution = Temporary<GButton>(new GButton("<<"), window, "SOUTH");
+        /* These implementations are fast enough to find all optimal solutions in good time. */
+        mAllSolutions = Temporary<GButton>(new GButton("All Optimal Solutions"), window, "SOUTH");
+        mNextSolution = Temporary<GButton>(new GButton(">>"), window, "SOUTH");
+        mPrevSolution->setEnabled(false);
+        mNextSolution->setEnabled(false);
+        mCurrentSolutionIndex = 0;
 
         loadWorld(choices->getSelectedItem());
     }
@@ -454,11 +567,18 @@ namespace {
     void DisasterGUI::actionPerformed(GObservable* source) {
         if (source == mSolve) {
             solve();
+        } else if (source == mAllSolutions) {
+            solveAll();
+        } else if (source == mPrevSolution) {
+            showPreviousSolution();
+        } else if (source == mNextSolution) {
+            showNextSolution();
         }
     }
 
     void DisasterGUI::repaint() {
-        visualizeNetwork(window(), mNetwork, mSelected);
+        /* Added functionality to draw the network different colors based on solver used. */
+        visualizeNetwork(window(), mNetwork, mSelected, mSolverUsed);
     }
 
     void DisasterGUI::loadWorld(const string& filename) {
@@ -467,24 +587,34 @@ namespace {
 
         mNetwork = loadDisaster(input);
         mSelected.clear();
+        mStoredSolutions.reset();
+        mPrevSolution->setEnabled(false);
+        mNextSolution->setEnabled(false);
         requestRepaint();
     }
 
     void DisasterGUI::solve() {
         /* Clear out any old solution. We're going to get a new one. */
         mSelected.clear();
+        mStoredSolutions.reset();
 
         /* Disable all controls until the operation finishes. */
         mSolve->setEnabled(false);
         mProblems->setEnabled(false);
+        mAllSolutions->setEnabled(false);
+        mPrevSolution->setEnabled(false);
+        mNextSolution->setEnabled(false);
 
         if (mSolver->getSelectedItem() == mSetSolver) {
             mSolver->setEnabled(false);
+            mSolverUsed = SET_BASED;
             solveOptimallyWithSets(mNetwork, mSelected);
         } else if (mSolver->getSelectedItem() == mQuadDLXSolver) {
             mSolver->setEnabled(false);
+            mSolverUsed = QUAD_DLX;
             solveOptimallyWithQuadDLX(mNetwork, mSelected);
         } else if (mSolver->getSelectedItem() == mSupplyTagDLXSolver) {
+            mSolverUsed = TAGGED_DLX;
             mSolver->setEnabled(false);
             solveOptimallyWithSupplyTagDLX(mNetwork, mSelected);
         }
@@ -493,6 +623,64 @@ namespace {
         mSolve->setEnabled(true);
         mProblems->setEnabled(true);
         mSolver->setEnabled(true);
+        mAllSolutions->setEnabled(true);
+
+        requestRepaint();
+    }
+
+    void DisasterGUI::showPreviousSolution() {
+        if (mStoredSolutions && (*mStoredSolutions).size() > 1) {
+            if (--mCurrentSolutionIndex < 0) {
+                mCurrentSolutionIndex = (*mStoredSolutions).size() - 1;
+            }
+            mSelected = (*mStoredSolutions)[mCurrentSolutionIndex];
+            requestRepaint();
+        }
+    }
+
+    void DisasterGUI::showNextSolution() {
+        if (mStoredSolutions && (*mStoredSolutions).size() > 1) {
+            ++mCurrentSolutionIndex %= (*mStoredSolutions).size();
+            mSelected = (*mStoredSolutions)[mCurrentSolutionIndex];
+            requestRepaint();
+        }
+    }
+
+    void DisasterGUI::solveAll() {
+        /* Clear out any old solution. We're going to get a new one. */
+        mSelected.clear();
+        mStoredSolutions.reset(new vector<Set<string>>{});
+
+        /* Disable all controls until the operation finishes. */
+        mSolve->setEnabled(false);
+        mProblems->setEnabled(false);
+        mCurrentSolutionIndex = 0;
+
+        if (mSolver->getSelectedItem() == mSetSolver) {
+            mAllSolutions->setEnabled(false);
+            mSolverUsed = SET_BASED;
+            solveAllWithSets(mNetwork, mStoredSolutions);
+        } else if (mSolver->getSelectedItem() == mQuadDLXSolver) {
+            mAllSolutions->setEnabled(false);
+            mSolverUsed = QUAD_DLX;
+            solveAllWithQuadDLX(mNetwork, mStoredSolutions);
+        } else if (mSolver->getSelectedItem() == mSupplyTagDLXSolver) {
+            mSolverUsed = TAGGED_DLX;
+            mAllSolutions->setEnabled(false);
+            solveAllWithSupplyTagDLX(mNetwork, mStoredSolutions);
+        }
+
+        mSelected = (*mStoredSolutions)[mCurrentSolutionIndex];
+
+        /* Are there other ways to dynamically display messages besides a pop up? */
+        GOptionPane::showMessageDialog(&window(), to_string((*mStoredSolutions).size()), mAllSolutionsMessage);
+        /* Enable controls. */
+        mSolve->setEnabled(true);
+        mProblems->setEnabled(true);
+        mSolver->setEnabled(true);
+        mAllSolutions->setEnabled(true);
+        mPrevSolution->setEnabled(true);
+        mNextSolution->setEnabled(true);
 
         requestRepaint();
     }

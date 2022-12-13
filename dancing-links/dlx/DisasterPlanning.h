@@ -28,5 +28,15 @@
 bool canBeMadeDisasterReady(const Map<std::string, Set<std::string>>& roadNetwork,
                             int numCities,
                             Set<std::string>& supplyLocations);
-
+/**
+ * @brief findAllSupplySchemes  finds every possible configuration of supply distribution with the
+ *                              given number of supplies. Only use this function once the optimal
+ *                              number of supplies is known. Otherwise it will be slower than
+ *                              it already is.
+ * @param roadNetwork           Map representing the cities and cities that connect to those cities.
+ * @param numSupplies           the integer count of total supplies we have to distribute.
+ * @return                      Set of Sets of all distributions.
+ */
+Set<Set<std::string>> findAllSupplySchemes(const Map<std::string, Set<std::string>>& roadNetwork,
+                                           int numSupplies);
 #endif

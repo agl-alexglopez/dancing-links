@@ -164,7 +164,7 @@ Pair PartnerLinks::coverPairing(int index) {
     hidePersonPairings(dlx.links[index], index);
 
     // In case I ever apply a selection heuristic, partner might not be to the right.
-    toPairIndex(index);
+    index = toPairIndex(index);
 
     personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
     dlx.lookupTable[p2.right].left = p2.left;
@@ -192,7 +192,7 @@ void PartnerLinks::uncoverPairing(int index) {
 
     unhidePersonPairings(dlx.links[index], index);
 
-    toPairIndex(index);
+    index = toPairIndex(index);
 
     personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
     dlx.lookupTable[p2.left].right = dlx.links[index].topOrLen;
@@ -216,7 +216,7 @@ void PartnerLinks::hidePersonPairings(personLink& start, int index) {
         if (index > dlx.lookupTable.size()) {
 
             // In case the other partner is to the left, just decrement index to go left.
-            toPairIndex(index);
+            index = toPairIndex(index);
 
             personLink cur = dlx.links[index];
 
@@ -241,7 +241,7 @@ void PartnerLinks::unhidePersonPairings(personLink& start, int index) {
     while ((nextPairing = dlx.links[nextPairing.up]) != start) {
         if (index > dlx.lookupTable.size()) {
 
-            toPairIndex(index);
+            index = toPairIndex(index);
 
             personLink cur = dlx.links[index];
 
@@ -259,11 +259,12 @@ void PartnerLinks::unhidePersonPairings(personLink& start, int index) {
  *                     need to move left or right.
  * @param index        the index we take by reference to advance.
  */
-inline void PartnerLinks::toPairIndex(int& index) {
+inline int PartnerLinks::toPairIndex(int index) {
     // There are only ever two people in an option so this is a safe increment/decrement.
     if (dlx.links[++index].topOrLen <= 0) {
         index -= 2;
     }
+    return index;
 }
 
 
@@ -378,7 +379,7 @@ void PartnerLinks::hidePerson(int index) {
     // Only hide pairings for this person.
     hidePersonPairings(dlx.links[index], index);
 
-    toPairIndex(index);
+    index = toPairIndex(index);
     // Partner will only disapear in this instance of the pairing, not all other instances.
     personLink cur = dlx.links[index];
     dlx.links[cur.up].down = cur.down;
@@ -401,7 +402,7 @@ void PartnerLinks::unhidePerson(int index) {
 
     unhidePersonPairings(dlx.links[index], index);
 
-    toPairIndex(index);
+    index = toPairIndex(index);
     personLink cur = dlx.links[index];
     dlx.links[cur.up].down = index;
     dlx.links[cur.down].up = index;
@@ -578,7 +579,7 @@ void PartnerLinks::initializeHeaders(const Map<std::string, Map<std::string,int>
  *                         structure. Perfect pairs do not have any weight information and
  *                         options will simply be given a number from 1 to N number of matches.
  * @param person           the person who will set all possible matches for.
- * @param personPairs      the set of all people this person is willing to pair with.
+ * @param preferences      the set of all people this person is willing to pair with.
  * @param columnBuilder    the structure we use to track and build all columns in one array.
  * @param seenPairs        helper set to keep pairings unique and bidirectional.
  * @param index            we advance the index as an output parameter.
@@ -640,7 +641,7 @@ void PartnerLinks::setPerfectPairs(const std::string& person,
  *                          We can then get the weight and names of any partnership while
  *                          recursing easily. Negative weights are ignored and no pairing made.
  * @param person            the person who's weighted matches we will set.
- * @param personPairs       the people this person can pair with and the weight of those pairs.
+ * @param preferences       the people this person can pair with and the weight of those pairs.
  * @param columnBuilder     the structure we use to track and build all columns in one array.
  * @param seenPairs         helper set to keep pairings unique and bidirectional.
  * @param index             we advance the index as an output parameter.
