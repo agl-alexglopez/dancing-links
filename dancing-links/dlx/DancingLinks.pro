@@ -71,9 +71,16 @@ DEFINES     +=  main=qMain qMain=studentMain
 # entries, so no worries about duplicates
 SOURCES         *=  "" \
     DisasterLinks.cpp \
-    PartnerLinks.cpp
+    DisasterTags.cpp \
+    DisasterUtilities.cpp \
+    MatchingUtilities.cpp \
+    PartnerLinks.cpp \
+    PerformanceTests.cpp
 HEADERS         *=  "" \
     DisasterLinks.h \
+    DisasterTags.h \
+    DisasterUtilities.h \
+    MatchingUtilities.h \
     PartnerLinks.h
 
 # Gather any .cpp or .h files within the project folder (student/starter code).

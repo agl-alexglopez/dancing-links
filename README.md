@@ -6,6 +6,8 @@
 	- Dancing Links Class **([`DisasterLinks.h`](/dancing-links/dlx/DisasterLinks.h))**
 	- Dancing Links Implementation **([`DisasterLinks.cpp`](dancing-links/dlx/DisasterLinks.cpp))**
 	- Traditional Set Implementation **([`DisasterPlanning.cpp`](/dancing-links/dlx/DisasterPlanning.cpp))** 
+	- Dancing Links with Supply Tags Class **([`DisasterTags.h`](/dancing-links/dlx/DisasterTags.h))**
+	- Dancing Links with Supply Tags Implementation **([`DisasterTags.cpp`](/dancing-links/dlx/DisasterTags.cpp))**
 - Matchmaker
 	- Dancing Links Class **([`PartnerLinks.h`](/dancing-links/dlx/PartnerLinks.h))**
 	- Dancing Links Implementation **([`PartnerLinks.cpp`](/dancing-links/dlx/PartnerLinks.cpp))**
@@ -175,6 +177,10 @@ I then included this implementation in the **[`DisasterGUI.cpp`](/dancing-links/
 3. Select the `Disaster Planning` option from the top menu.
 4. Select any map from the drop down menu at the bottom of the window.
 5. Press `Solve` to view the fewest number of cities that can cover the map.
+
+## Supply Tags: A Second Approach
+
+I recently found a slight optimization to the Disaster Planning problem with Dancing Links that has made a significant speed improvement. This allows me to get rid of the `left` and `right` fields from the previous approach. The code is done and the write up will follow shortly.
 
 ## Dancing Partners
 

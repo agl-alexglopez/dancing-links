@@ -12,6 +12,7 @@
 #include "gthread.h"
 #include "simpio.h"
 #include "DisasterLinks.h"
+#include "DisasterTags.h"
 #include <regex>
 using namespace std;
 using namespace MiniGUI;
@@ -298,15 +299,43 @@ namespace {
      * preparedness, populating the result field with the minimum group of cities
      * that ended up being needed.
      */
-    void solveOptimally(const DisasterTest& test, Set<string>& result) {
+    void solveOptimallyWithSets(const DisasterTest& test, Set<string>& result) {
         /* The variable 'low' is the lowest number that might be feasible.
          * The variable 'high' is the highest number that we know is feasible.
          */
         int low = 0, high = test.network.size();
 
+        /* Begin with a feasible solution that uses as many cities as we'd like. */
+        (void) canBeMadeDisasterReady(test.network, high, result);
 
-        // Uncomment this line if you want the less efficient solution that uses copies of sets.
-        // (void) canBeMadeDisasterReady(test.network, high, result);
+        while (low < high) {
+            /* This line looks weird, but it's designed to avoid integer overflows
+             * on large inputs. The idea that (high + low) can overflow, but
+             * (high - low) / 2 never will.
+             */
+            int mid = low + (high - low) / 2;
+            Set<string> thisResult;
+
+            /* If this option works, decrease high to it, since we know all is good. */
+            if (canBeMadeDisasterReady(test.network, mid, thisResult)) {
+                high = mid;
+                result = thisResult; // Remember this result for later.
+            }
+            /* Otherwise, rule out anything less than or equal to it. */
+            else {
+                low = mid + 1;
+            }
+        }
+    }
+    /* I wish I could use a function pointer or something but my DLX solvers need instantiation
+     * of their respective classes and I am not sure how that would be united into one function
+     * with a function pointer. Instead just do the same function twice.
+     */
+    void solveOptimallyWithQuadDLX(const DisasterTest& test, Set<string>& result) {
+        /* The variable 'low' is the lowest number that might be feasible.
+         * The variable 'high' is the highest number that we know is feasible.
+         */
+        int low = 0, high = test.network.size();
 
         /* Begin with a feasible solution that uses as many cities as we'd like. */
         DisasterLinks network(test.network);
@@ -320,11 +349,37 @@ namespace {
             int mid = low + (high - low) / 2;
             Set<string> thisResult;
 
-            // Uncomment this line if you want the less efficient solution that uses copies of sets.
-            // if (canBeMadeDisasterReady(test.network, mid, thisResult)) {
-
             /* If this option works, decrease high to it, since we know all is good. */
             if (network.isDisasterReady(mid, thisResult)) {
+                high = mid;
+                result = thisResult; // Remember this result for later.
+            }
+            /* Otherwise, rule out anything less than or equal to it. */
+            else {
+                low = mid + 1;
+            }
+        }
+    }
+    void solveOptimallyWithSupplyTagDLX(const DisasterTest& test, Set<string>& result) {
+        /* The variable 'low' is the lowest number that might be feasible.
+         * The variable 'high' is the highest number that we know is feasible.
+         */
+        int low = 0, high = test.network.size();
+
+        /* Begin with a feasible solution that uses as many cities as we'd like. */
+        DisasterTags network(test.network);
+        (void) network.hasDisasterCoverage(high, result);
+
+        while (low < high) {
+            /* This line looks weird, but it's designed to avoid integer overflows
+             * on large inputs. The idea that (high + low) can overflow, but
+             * (high - low) / 2 never will.
+             */
+            int mid = low + (high - low) / 2;
+            Set<string> thisResult;
+
+            /* If this option works, decrease high to it, since we know all is good. */
+            if (network.hasDisasterCoverage(mid, thisResult)) {
                 high = mid;
                 result = thisResult; // Remember this result for later.
             }
@@ -349,6 +404,13 @@ namespace {
         /* Dropdown of all the problems to choose from. */
         Temporary<GComboBox> mProblems;
 
+        /* Dropdown of the solver you want to use for the problem */
+        Temporary<GComboBox> mSolver;
+        const string mSetSolver = "Set Based Solver";
+        const string mQuadDLXSolver = "Quadruple Linked DLX Solver";
+        const string mSupplyTagDLXSolver = "Supply Tag DLX Solver";
+        const vector<string> mSolverNames = {mSetSolver, mQuadDLXSolver, mSupplyTagDLXSolver};
+
         /* Button to trigger the solver. */
         Temporary<GButton> mSolve;
 
@@ -370,7 +432,14 @@ namespace {
         }
         choices->setEditable(false);
 
+        GComboBox* solvers = new GComboBox();
+        for (const string& solver : mSolverNames) {
+            solvers->addItem(solver);
+        }
+        solvers->setEditable(false);
+
         mProblems = Temporary<GComboBox>(choices, window, "SOUTH");
+        mSolver = Temporary<GComboBox>(solvers, window, "SOUTH");
         mSolve    = Temporary<GButton>(new GButton("Solve"), window, "SOUTH");
 
         loadWorld(choices->getSelectedItem());
@@ -409,11 +478,21 @@ namespace {
         mSolve->setEnabled(false);
         mProblems->setEnabled(false);
 
-        solveOptimally(mNetwork, mSelected);
+        if (mSolver->getSelectedItem() == mSetSolver) {
+            mSolver->setEnabled(false);
+            solveOptimallyWithSets(mNetwork, mSelected);
+        } else if (mSolver->getSelectedItem() == mQuadDLXSolver) {
+            mSolver->setEnabled(false);
+            solveOptimallyWithQuadDLX(mNetwork, mSelected);
+        } else if (mSolver->getSelectedItem() == mSupplyTagDLXSolver) {
+            mSolver->setEnabled(false);
+            solveOptimallyWithSupplyTagDLX(mNetwork, mSelected);
+        }
 
         /* Enable controls. */
         mSolve->setEnabled(true);
         mProblems->setEnabled(true);
+        mSolver->setEnabled(true);
 
         requestRepaint();
     }
@@ -455,7 +534,7 @@ namespace {
 
             cout << "Running your code to find the fewest number of cities needed... " << flush;
             Set<string> cities;
-            solveOptimally(scenario, cities);
+            solveOptimallyWithSets(scenario, cities);
             cout << "done!" << endl;
 
             displayBestCities(cities);

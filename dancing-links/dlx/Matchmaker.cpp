@@ -393,66 +393,6 @@ STUDENT_TEST("Line of six but easier to test this way.") {
 
 /* * * * * *  * * Provided Tests * * * * * * * * * * * */
 
-namespace {
-    /* Utility to go from a list of triples to a world. */
-    struct WeightedLink {
-        string from;
-        string to;
-        int cost;
-    };
-    Map<string, Map<string, int>> fromWeightedLinks(const Vector<WeightedLink>& links) {
-        Map<string, Map<string, int>> result;
-        for (const auto& link: links) {
-            result[link.from][link.to] = link.cost;
-            result[link.to][link.from] = link.cost;
-        }
-        return result;
-    }
-
-    /* Pairs to world. */
-    Map<string, Set<string>> fromLinks(const Vector<Pair>& pairs) {
-        Map<string, Set<string>> result;
-        for (const auto& link: pairs) {
-            result[link.first()].add(link.second());
-            result[link.second()].add(link.first());
-        }
-        return result;
-    }
-
-    /* Checks if a set of pairs forms a perfect matching. */
-    bool isPerfectMatching(const Map<string, Set<string>>& possibleLinks,
-                           const Set<Pair>& matching) {
-        /* Need to check that
-         *
-         * 1. each pair is indeed a possible link,
-         * 2. each person appears in exactly one pair.
-         */
-        Set<string> used;
-        for (Pair p: matching) {
-            /* Are these folks even in the group of people? */
-            if (!possibleLinks.containsKey(p.first())) return false;
-            if (!possibleLinks.containsKey(p.second())) return false;
-
-            /* If these people are in the group, are they linked? */
-            if (!possibleLinks[p.first()].contains(p.second()) ||
-                !possibleLinks[p.second()].contains(p.first())) {
-                return false;
-            }
-
-            /* Have we seen them before? */
-            if (used.contains(p.first()) || used.contains(p.second())) {
-                return false;
-            }
-
-            /* Add them both. */
-            used += p.first();
-            used += p.second();
-        }
-
-        /* Confirm that's everyone. */
-        return used.size() == possibleLinks.size();
-    }
-}
 
 PROVIDED_TEST("hasPerfectMatching works on a world with just one person.") {
     /* The world is just a single person A, with no others. How sad. :-(

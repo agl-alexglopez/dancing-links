@@ -1,7 +1,7 @@
 /**
  * Author: Alexander G. Lopez
- * File: DisasterLinks.h
- * -------------------------
+ * File DisasterTags.h
+ * --------------------------
  * This file defines the class for an implementation of Algorithm X via Dancing Links by Donald
  * Knuth. For a full discussion of this implementation see the readme.md. However, the basics are
  * that this implementation accomplishes a modified exact cover search of a transportation network
@@ -40,12 +40,15 @@
  *
  * We must distribute two supplies. Select the city to cover that is the most isolated in the
  * network. It will have the lowest number of appearances across all sets. The (*) marks our
- * selection.
+ * selection. When we supply a city all of the associated cities in whichever supply option we
+ * choose get a supply number tag. It is the same as the number of supplies remaining before we
+ * give out that supply.
  *
  *            *
- *            2  4  1  4  2  2
+ *    Tag --> 2  2  2  2
  *            A  B  C  D  E  F
  *         B     1     1  1  1
+ *    Tag --> 2  2  2  2
  *         D  1  1  1  1
  *         A  1        1
  *         C        1  1
@@ -66,6 +69,15 @@
  * Notice that A and C no longer can help this network as supply locations. The only helpful options
  * are B E and F. Luckily our selection heuristic will select to cover E with option B.
  *
+ *    Tag --> 1  1
+ *            E  F
+ *    Tag --> 1  1
+ *         B  1  1
+ *         A
+ *         C
+ *         E  1
+ *         F    1
+ *
  *           0
  *         A
  *         C
@@ -73,7 +85,11 @@
  *         F
  *
  * Thus our world is empty and the problem is solved by supplying cities B and D when given two
- * supplies. If we were given one supply we would not have been able cover this network.
+ * supplies. If we were given one supply we would not have been able cover this network. Had we
+ * needed to take back the supplies from a supply location we would use the supply tag to only
+ * uncover all associated cities with that supply tag. This saves a meaningful amount of work
+ * when compared to an implementation that uses quadruply linked lists with up,down,left, and right
+ * fields.
  *
  * If you wish to see how significantly this varies from Knuth's original implementation please read
  *
@@ -85,143 +101,119 @@
  *      Knuth
  *
  */
-#pragma once
-#ifndef DISASTERLINKS_H
-#define DISASTERLINKS_H
-#include <limits.h>
+#ifndef DISASTERTAGS_H
+#define DISASTERTAGS_H
+#include <string>
 #include "GUI/SimpleTest.h"
+#include "set.h"
 #include "map.h"
 #include "hashmap.h"
-#include "set.h"
 
-#define NOT_PROCESSED INT_MIN
 
-class DisasterLinks {
+class DisasterTags {
 
 public:
 
-
-    /* The cityItem will carry most of the logic of our problem. These nodes are in the grid we
-     * set up in order for the links to "dance" as we recurse and leave the data structure in place.
-     */
-    typedef struct cityItem {
-        /* If this item is a column header, this is the number of items in a column.
-         * If this item is in the grid, this is the index of the header for an item.
-         */
+    typedef struct city {
         int topOrLen;
-        // We traverse through options to cover one item with the up down field.
         int up;
         int down;
-        // We cut an item within an option out of the world with the left right field to recurse.
-        int left;
-        int right;
-    }cityItem;
+        /* New addition! If we tag all cities associated with a supply location with the same
+         * supply number tag, we no longer need a second doubly linked list. No right left pointers
+         * are needed. Instead we will always check the supply tags of headers for a colum and items
+         * in that column. If the header has not been tagged, the city needs to be tagged and then
+         * can be removed from the world. If a city has been tagged we know it has an associated
+         * supply number and is safe. We will use this number if we need to uncover that city
+         * because giving that exact supply did not work for all of the cities associated with that
+         * supply number.
+         */
+        int supplyTag;
+    }city;
 
-    /* The cityHeader helps us track what items still need to be covered. We also use this as a
-     * lookup table for the names of the options in which we find an item. This option is the city
-     * we have given supplies to.
-     */
-    typedef struct cityHeader {
+    typedef struct cityName {
         std::string name;
         int left;
         int right;
-    }cityHeader;
+    }cityName;
 
-
-    /* This Network is our world. These data structures will remain in place during the recursive
-     * algorithm. We do not need to make any copies, only modify the indices of the cityItems in
-     * the grid in order to find the solution. All backtracking can be accomplished by only
-     * modifying the fields of surrounding nodes and leaving the node in question unchanged.
-     * This is the core concept behind Knuth's Algorithm X via Dancing Links which I have adapted
-     * to this problem.
-     */
     typedef struct Network {
-        Vector<cityHeader> lookupTable;
-        Vector<cityItem> grid;
-        /* In this application, the number of colums equals the number of rows. Cities are both
-         * items that need to be covered and cities that can receive supplies.
+        // Use table to control recursion and know when all cities are safe. Table will be empty.
+        Vector<cityName> table;
+        /* Contains all dancing links nodes. Cities apear as columns with appearances across rows.
+         * Rows are the same cities but they indicate which other cities they cover if supplied.
          */
+        Vector<city> grid;
+        // All cities apear as rows and columns so the grid is square.
         int numItemsAndOptions;
     }Network;
 
+
+    /* * * * * * * * * *    Constructor and Dancing Links Solver        * * * * * * * * * * * * * */
+
+
     /**
-     * @brief DisasterLinks  a custom constructor for this class that can turn a Map representation
+     * @brief DisasterTags   a custom constructor for this class that can turn a Map representation
      *                       of a transportation grid into a vector grid prepared for exact cover
      *                       search via dancing links.
      * @param roadNetwork    the transportation grid passed in via map form.
      */
-    DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwork);
+    DisasterTags(const Map<std::string, Set<std::string>>& roadNetwork);
 
-    /**
-     * @brief isDisasterReady  performs a recursive search to determine if a transportation grid
-     *                         can be covered with the specified number of emergency supplies. It
-     *                         will also place the found cities in the output parameter if there
-     *                         exists a solution. A city is covered or safe if it has supplies or
-     *                         is adjacent to a city with supplies. The solution may not use all
-     *                         of the provided supplies.
-     * @param numSupplies      the limiting number of supplies we must distribute.
-     * @param suppliedCities   the output parameter telling which cities received supplies.
-     * @return                 true if we have found a viable supply scheme, false if not.
+     /**
+     * @brief hasDisasterCoverage  performs a recursive search to determine if a transportation grid
+     *                             can be covered with the specified number of emergency supplies.
+     *                             Places the found cities in the output parameter if there
+     *                             exists a solution. A city is covered if it has supplies or
+     *                             is adjacent to a city with supplies. The solution may not use all
+     *                             of the provided supplies.
+     * @param numSupplies          the limiting number of supplies we must distribute.
+     * @param suppliedCities       the output parameter telling which cities received supplies.
+     * @return                     true if we have found a viable supply scheme, false if not.
      */
-    bool isDisasterReady(int numSupplies, Set<std::string>& suppliedCities);
-
-    Set<Set<std::string>> getAllDisasterConfigurations(int numSupplies);
+    bool hasDisasterCoverage(int numSupplies, Set<std::string>& supplyLocations);
 
 
-    /* The following operators are nothing special. The fields of these types are simple integers.
-     * We just need to define how to compare the fields in the structs. I also need helpful
-     * printing information for the structs while debugging.
-     */
+    /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
 
-    friend bool operator==(const cityItem& lhs, const cityItem& rhs);
 
-    friend bool operator!=(const cityItem& lhs, const cityItem& rhs);
+    friend bool operator==(const city& lhs, const city& rhs);
 
-    friend bool operator==(const cityHeader& lhs, const cityHeader& rhs);
+    friend bool operator!=(const city& lhs, const city& rhs);
 
-    friend bool operator!=(const cityHeader& lhs, const cityHeader& rhs);
+    friend bool operator==(const cityName& lhs, const cityName& rhs);
 
-    friend std::ostream& operator<<(std::ostream& os, const cityItem& city);
+    friend bool operator!=(const cityName& lhs, const cityName& rhs);
 
-    friend std::ostream& operator<<(std::ostream& os, const cityHeader& city);
+    friend std::ostream& operator<<(std::ostream& os, const city& city);
 
-    friend std::ostream& operator<<(std::ostream&os, const Vector<cityItem>& grid);
+    friend std::ostream& operator<<(std::ostream& os, const cityName& city);
 
-    friend std::ostream& operator<<(std::ostream&os, const DisasterLinks& network);
+    friend std::ostream& operator<<(std::ostream&os, const Vector<city>& grid);
+
+    friend std::ostream& operator<<(std::ostream&os, const Vector<cityName>& links);
+
+    friend std::ostream& operator<<(std::ostream&os, const DisasterTags& network);
 
 
 private:
 
-    /* An instance of this class will produce a Network item that helps us solve the problem. It
-     * will stay in place until the instance is destructed. So you could, for example, run a loop
-     * with decreasing supply amounts to test against this network and it will always restore
-     * itself between tests.
-     */
+    /* * * * * * * * * *       Core Dancing Links Implementation        * * * * * * * * * * * * * */
+
+    // I choose to pack all the data structures into a struct. Am I thinking in C?
     Network dlx;
 
-
-    /* * * * * * * * * * * * * *       Modified Algorithm X via Dancing Links     * * * * * * * * */
-
-
     /**
-     * @brief isCovered       performs a modified exact cover search of a transportation Network.
-     *                        Given a number of supplies for the network, determines if every city
-     *                        is covered. A city is covered if it has received supplies or is
-     *                        adjacent to a city with supplies. If a city has supplies it may not
-     *                        be supplied again. However, if a city is safely covered by an adjacent
-     *                        city with supplies, this safe city may still receive supplies to cover
-     *                        other cities. With infinite supplies this algorithm will find a good
-     *                        solution. For the optimal solution, challenge decrease supply
-     *                        counts until it confirms a network cannot be covered with that amount.
-     * @param numSupplies     the number of supplies that we have to distribute over the network.
-     * @param suppliedCities  the output parameter showing the cities we have chosen to supply.
-     * @return                true if all cities are safe with given supplies, false if not.
+     * @brief isDLXCovered     performs an in-place recursive search on a dancing links data
+     *                         structure to determine if a transportation grid is safe with the
+     *                         given number of supplies. A city is safe if it has supplies or is
+     *                         adjacent to a city with supplies. All cities are tagged with the
+     *                         supply number that has covered them either by being next to a city
+     *                         with that supply number or holding the supply themselves.
+     * @param numSupplies      the depth or our recursive search. How many supplies we can give out.
+     * @param supplyLocations  the output parameter upon successfull coverage. Empty if we fail.
+     * @return                 true if we can cover the grid with the given supplies, false if not.
      */
-    bool isCovered(int numSupplies, Set<std::string>& suppliedCities);
-
-    void fillConfigurations(int numSupplies,
-                            Set<std::string>& suppliedCities,
-                            Set<Set<std::string>>& allConfigurations);
+    bool isDLXCovered(int numSupplies, Set<std::string>& supplyLocations);
 
     /**
      * @brief chooseIsolatedCity  selects a city we are trying to cover either by giving it supplies
@@ -237,40 +229,27 @@ private:
     int chooseIsolatedCity();
 
     /**
-     * @brief coverCity  covers a city with the option below the specified index. A city in question
-     *                   may be covered by supplying a neighbor or supplying the city itself.
-     * @param index      the index we start at for an item. We select the option beneath this index.
-     * @return           the string name of the option we used to cover a city, neighbor or city.
+     * @brief coverCity  covers a city wit supplies and all of its neighbors. All cities are tagged
+     *                   with a supply number equivalent to the current depth of the recursive
+     *                   search. This tells us which cities are now unsafe if distributing that
+     *                   exact supply did not work out and it must be removed later.
+     * @param index      the index for the current city we are trying to cover.
+     * @param supplyTag  uses the number of supplies remaining as a unique tag for recursive depth.
+     * @return           the name of the city holding the supplies.
      */
-    std::string coverCity(int index);
+    std::string coverCity(int index, const int supplyTag);
 
     /**
      * @brief uncoverCity  uncovers a city if that choice of option did not lead to a covered
      *                     network. Uncovers the same option that was selected for coverage if given
-     *                     the same index.
+     *                     the same index. Will only uncover those cities that were covered by
+     *                     the previously given supply.
      * @param index        the index of the item we covered with the option below the index.
      */
     void uncoverCity(int index);
 
-    /**
-     * @brief hideCityCol  when we supply an option it covers itself and connected cities. We must
-     *                     remove these cities from any other sets that contain them to make them
-     *                     disappear from the world as uncovered cities. However, we keep them as
-     *                     available cities to supply.
-     * @param start        the city we start at in a row. We traverse downward to snip city out.
-     */
-    void hideCityCol(const DisasterLinks::cityItem& start);
 
-    /**
-     * @brief unhideCityCol  when an option fails, we must put the cities it covers back into all
-     *                       the sets to which they belong. This puts the cities back in network.
-     * @param start          the city in the option we start at. We traverse upward to unhide.
-     * @param index          the index we need cities to point to in order to restore network.
-     */
-    void unhideCityCol(const DisasterLinks::cityItem& start, int index);
-
-
-    /* * * * * * * * * * * * * *    Logic to Build the Dancing Links Structure    * * * * * * * * */
+    /* * * * * * * * * *    Constructors for Dancing Links Building     * * * * * * * * * * * * * */
 
 
     /**
@@ -314,9 +293,7 @@ private:
                           HashMap<std::string,int>& columnBuilder,
                           int index);
 
-
-    // I like to test the private internals of a class rather than just unit tests so add this here.
     ALLOW_TEST_ACCESS();
 };
 
-#endif // DISASTERLINKS_H
+#endif // DISASTERTAGS
