@@ -601,21 +601,19 @@ namespace {
         /* Disable all controls until the operation finishes. */
         mSolve->setEnabled(false);
         mProblems->setEnabled(false);
+        mSolver->setEnabled(false);
         mAllSolutions->setEnabled(false);
         mPrevSolution->setEnabled(false);
         mNextSolution->setEnabled(false);
 
         if (mSolver->getSelectedItem() == mSetSolver) {
-            mSolver->setEnabled(false);
             mSolverUsed = SET_BASED;
             solveOptimallyWithSets(mNetwork, mSelected);
         } else if (mSolver->getSelectedItem() == mQuadDLXSolver) {
-            mSolver->setEnabled(false);
             mSolverUsed = QUAD_DLX;
             solveOptimallyWithQuadDLX(mNetwork, mSelected);
         } else if (mSolver->getSelectedItem() == mSupplyTagDLXSolver) {
             mSolverUsed = TAGGED_DLX;
-            mSolver->setEnabled(false);
             solveOptimallyWithSupplyTagDLX(mNetwork, mSelected);
         }
 
@@ -654,19 +652,18 @@ namespace {
         /* Disable all controls until the operation finishes. */
         mSolve->setEnabled(false);
         mProblems->setEnabled(false);
+        mSolver->setEnabled(false);
+        mAllSolutions->setEnabled(false);
         mCurrentSolutionIndex = 0;
 
         if (mSolver->getSelectedItem() == mSetSolver) {
-            mAllSolutions->setEnabled(false);
             mSolverUsed = SET_BASED;
             solveAllWithSets(mNetwork, mStoredSolutions);
         } else if (mSolver->getSelectedItem() == mQuadDLXSolver) {
-            mAllSolutions->setEnabled(false);
             mSolverUsed = QUAD_DLX;
             solveAllWithQuadDLX(mNetwork, mStoredSolutions);
         } else if (mSolver->getSelectedItem() == mSupplyTagDLXSolver) {
             mSolverUsed = TAGGED_DLX;
-            mAllSolutions->setEnabled(false);
             solveAllWithSupplyTagDLX(mNetwork, mStoredSolutions);
         }
 

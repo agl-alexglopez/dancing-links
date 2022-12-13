@@ -156,18 +156,6 @@ There are some leftovers from Knuth's logic that I am not sure what to do with i
 
 Unfortunately, I cannot take advantage of the implicit left right nature of array elements next to one another in this implementation. I need explicit `left` `right` fields because I remove cities from all other options that they appear in without eliminating the other options for future supply possibilities. This means I must splice them out of a doubly linked list.
 
-### Disaster Links Usage Instructions
-
-I chose to implement the solution to this problem as a class that can be found in the **[`DisasterLinks.h`](/dancing-links/dlx/DisasterLinks.h)**, and **[`DisasterLinks.cpp`](/dancing-links/dlx/DisasterLinks.cpp)** files. There are tests at the bottom of the **[`DisasterLinks.cpp`](/dancing-links/dlx/DisasterLinks.cpp)** file that make the internals of the dancing links data structure more understandable.
-
-I then included this implementation in the **[`DisasterGUI.cpp`](/dancing-links/dlx/Demos/DisasterGUI.cpp)** file as the solver for the maps included in this repository. If you want to see how this implementation solves the provided maps use the following steps.
-
-1. Open the project in Qt Creator with the correct Stanford C++ library installed. (See the [Build Note](#build-note)).
-2. Build and run the project.
-3. Select the `Disaster Planning` option from the top menu.
-4. Select any map from the drop down menu at the bottom of the window.
-5. Select the implementation that you want to solve the map in the drop down menu: a traditional set based implementation, this quadruple linked dancing links solver, or the next supply tag implementation. Press `Solve` to view the fewest number of cities that can cover the map.
-
 ## Supply Tags: A Second Approach
 
 The previous approach is unable to take advantage of the fact that cities in a row are directly next to one another in an array. I thought that using a quadruple linked list--up, down, left, and right--was required. This way I could cut a city out of the world while keeping other supply options available. This is actually not necessary.
@@ -188,7 +176,7 @@ Here are the key details of the above image:
 - When we need to cleanup after distributing these two supplies, we will know that E and F were the only cities covered by supplying city B. Cities A, B, C, and D were already covered. We know this because the supply tags do not match.
 - We do not need to traverse the up-down linked list once we tag all cities in an option. It is sufficient to tag the cities in the supply option we chose and the headers for those cities.
 
-For this small example that has a successful supply scheme with two supplies it might not be clear why this is so useful. However, for large maps it becomes important to know which cities to uncover if a supply location does not work out. While backtracking, these tags help only uncover those cities that were uncovered when we entered a specific level of recursion.
+For this small example that has a successful supply scheme with two supplies it might not be clear why this is so useful. However, for large maps it becomes important to know which cities to uncover if a supply location does not work out. While backtracking, these tags help only uncover those cities that were covered when we entered a specific level of recursion.
 
 An added benefit of this approach is that the types are much simpler and we eliminate any traversals of the up-down linked list, other than to try every supply option that covers a city. This implementation is significantly faster than the previous one. However, this speed gain is only noticeable on the scale of milliseconds, so practically the speed difference only grows to noticeable seconds of difference on large maps.
 
@@ -236,7 +224,22 @@ There are some new details from the above image.
 - The spacer nodes point up to the first element in the previous option and down to the last element in the current option. This helps us visit and tag all cities in an option regardless of which city we start at.
 - The supply tag is `0` by default, telling us a city needs to be covered. It will then take the tag of whatever supply number it is given when covered.
 
-Unfortunately, this implementation is still not fast enough to crack the code on the U.S. Map. It can confirm that the U.S. can be covered with 30 supplies, slightly faster than the other implementation, but gets stuck trying to find the optimal number between 20 and 30 supplies. The usage instructions are the same as for the previous section.
+Unfortunately, this implementation is still not fast enough to crack the code on the U.S. Map. It can confirm that the U.S. can be covered with 30 supplies, slightly faster than the other implementation, but gets stuck trying to find the optimal number between 20 and 30 supplies. The usage instructions are the same as for both solvers follows below.
+
+## Disaster Planning Usage Instructions
+
+I chose to implement the solution to these problems as classes that can be found in the **[`DisasterLinks.h`](/dancing-links/dlx/DisasterLinks.h)**/**[`DisasterLinks.cpp`](/dancing-links/dlx/DisasterLinks.cpp)** and **[`DisasterTags.h`](/dancing-links/dlx/DisasterTags.h)**/**[`DisasterTags.cpp`](/dancing-links/dlx/DisasterTags.cpp)** files, respectively. There are tests at the bottom of the all `.cpp` files that make the internals of the dancing links data structure more understandable.
+
+I then included these implementations in the **[`DisasterGUI.cpp`](/dancing-links/dlx/Demos/DisasterGUI.cpp)** file as the solvers for the maps included in this repository. If you want to see how each implementation solves the provided maps use the following steps.
+
+1. Open the project in Qt Creator with the correct Stanford C++ library installed. (See the [Build Note](#build-note)).
+2. Build and run the project.
+3. Select the `Disaster Planning` option from the top menu.
+4. Select any map from the drop down menu at the bottom of the window.
+5. Select the implementation that you want to solve the map in the drop down menu: a traditional set based implementation, a quadruple linked dancing links solver, or the supply tag implementation. You can distinguish the solvers by the colors they paint the cities.
+6. Press `Solve` to find the first Optimal Map coverage found or press `All Optimal Solutions` to find all possible supply distributions with the optimal number of supplies. You can cycle through configurations with the next and previous arrows if you find all solutions. 
+
+It is interesting to note which cities have more flexibility with their disaster supplies. For example, Colorado is a slightly larger map than Tokyo. However, all solvers take a noticeable amount of time to tell us that there are 136 configurations with optimal supplies. Then, when asked about Tokyo, all solvers will quickly report that there are 790 viable configurations for the optimal number of supplies. Some maps are more challenging than others and some configurations have more flexibility than others.
 
 ## Dancing Partners
 
