@@ -78,7 +78,7 @@ namespace {
          * [save button ]
          * [load button ]
          *
-         * [ find perfect matching ][show previous matching][find all perfect matchings][show next matching][ max-weight matching  ]
+         * [ find perfect matching ][<<][find all perfect matchings][>>][ max-weight matching  ]
          */
         Temporary<GContainer> controls;
         GLabel*  fileLabel;
