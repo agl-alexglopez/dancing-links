@@ -110,17 +110,7 @@ It might appear from the previous section that we use a traditional `NxN` grid t
 
 Instead we can fit all of the logic for this algorithm into one array. Because this is implemented in `C++`, I use a `vector` to organize this data. Here is how I organized what I needed to solve this problem.
 
-- Create a lookup table of city names so that we can collect the names of cities that we supply as an output parameter during recursion.
-- Create the actual grid array. This array will contain item nodes.
-- Item nodes have the following fields: `topOrLen`, `up`, `down`, `left`, `right`.
-- If an item node is the header for a column, the first field is the length of the column so we can select an isolated city to cover.
-- If an item node is in a column, its first field points back up to the column header.
-- Every row of the grid will be signified by a spacer node with a negative `topOrLen` field. This field tells us which city we are supplying in the given option.
-- Every column is a circular doubly linked list and every row is a circular doubly linked list.
-- Instead of pointers to other nodes, these directional fields store indices to other locations in the array.
-- Recursion occurs with the data structure remaining in place. No copies are necessary.
-
-Here is the struct for the type we place in the lookup table.
+Here is the struct for the type we place in the lookup table. This will manage our recursion. When the lookup table head points to itself, we know all cities are covered.
 
 ```c++
 typedef struct cityHeader {
@@ -176,7 +166,7 @@ I then included this implementation in the **[`DisasterGUI.cpp`](/dancing-links/
 2. Build and run the project.
 3. Select the `Disaster Planning` option from the top menu.
 4. Select any map from the drop down menu at the bottom of the window.
-5. Select the implementation that you want to solve the map. Press `Solve` to view the fewest number of cities that can cover the map.
+5. Select the implementation that you want to solve the map in the drop down menu: a traditional set based implementation, this quadruple linked dancing links solver, or the next supply tag implementation. Press `Solve` to view the fewest number of cities that can cover the map.
 
 ## Supply Tags: A Second Approach
 
@@ -192,7 +182,7 @@ We are given two supplies to cover this grid, so we will use them to tag the cit
 
 Here are the key details of the above image:
 
-- We always tag the items in the supply option with same unique tag as the header for the cities in that option.
+- We always tag the cities in the supply option with same unique tag as the header for the cities covered by that location.
 - When we enter the next level of recursion we have a new number of supplies as we try to cover E and F.
 - We tag all cities in option B with the same number.
 - When we need to cleanup after distributing these two supplies, we will know that E and F were the only cities covered by supplying city B. Cities A, B, C, and D were already covered. We know this because the supply tags do not match.
@@ -200,11 +190,53 @@ Here are the key details of the above image:
 
 For this small example that has a successful supply scheme with two supplies it might not be clear why this is so useful. However, for large maps it becomes important to know which cities to uncover if a supply location does not work out. While backtracking, these tags help only uncover those cities that were uncovered when we entered a specific level of recursion.
 
-An added benefit of this approach is that the types are much simpler and we eliminate any traversals of the up-down linked list, other than to try every supply option that covers a city. This implementation is significantly faster than the previous one. However, this speed gain is only noticeable on the scale of milliseconds, so practically the speed difference can only be felt on very large maps.
+An added benefit of this approach is that the types are much simpler and we eliminate any traversals of the up-down linked list, other than to try every supply option that covers a city. This implementation is significantly faster than the previous one. However, this speed gain is only noticeable on the scale of milliseconds, so practically the speed difference only grows to noticeable seconds of difference on large maps.
 
-### Supply Tag Types
+### Supply Tags Implementation
 
-To be complete.
+Much of the implementation is the same. Here is the new type that is able to get rid of the left-right field in the dancing links grid.
+
+```c++
+typedef struct city {
+    int topOrLen;
+    int up;
+    int down;
+	// New addition! supplyTag instead of left-right.
+    int supplyTag;
+}city;
+```
+
+The lookup table with the city names is identical.
+
+```c++
+typedef struct cityName {
+    std::string name;
+    int left;
+    int right;
+}cityName;
+```
+
+The network type is also the same.
+
+```c++
+typedef struct Network {
+    Vector<cityName> table;
+    Vector<city> grid;
+    int numItemsAndOptions;
+}Network;
+```
+
+The dancing links grid will look slightly different without the left right field.
+
+![supply-tag-array-illustrated](/images/supply-tag-array-illustrated.png)
+
+There are some new details from the above image.
+
+- We use the spacer nodes, the ones with the negative `topOrLen` field, to tell us the supply option and how to continue iterating through the cities in a supply option to cover.
+- The spacer nodes point up to the first element in the previous option and down to the last element in the current option. This helps us visit and tag all cities in an option regardless of which city we start at.
+- The supply tag is `0` by default, telling us a city needs to be covered. It will then take the tag of whatever supply number it is given when covered.
+
+Unfortunately, this implementation is still not fast enough to crack the code on the U.S. Map. It can confirm that the U.S. can be covered with 30 supplies, slightly faster than the other implementation, but gets stuck trying to find the optimal number between 20 and 30 supplies. The usage instructions are the same as for the previous section.
 
 ## Dancing Partners
 
