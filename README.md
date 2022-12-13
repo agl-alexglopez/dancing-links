@@ -176,11 +176,35 @@ I then included this implementation in the **[`DisasterGUI.cpp`](/dancing-links/
 2. Build and run the project.
 3. Select the `Disaster Planning` option from the top menu.
 4. Select any map from the drop down menu at the bottom of the window.
-5. Press `Solve` to view the fewest number of cities that can cover the map.
+5. Select the implementation that you want to solve the map. Press `Solve` to view the fewest number of cities that can cover the map.
 
 ## Supply Tags: A Second Approach
 
-I recently found a slight optimization to the Disaster Planning problem with Dancing Links that has made a significant speed improvement. This allows me to get rid of the `left` and `right` fields from the previous approach. The code is done and the write up will follow shortly.
+The previous approach is unable to take advantage of the fact that cities in a row are directly next to one another in an array. I thought that using a quadruple linked list--up, down, left, and right--was required. This way I could cut a city out of the world while keeping other supply options available. This is actually not necessary.
+
+I can minimize the work being done by simply tagging all the cities covered by the supply option with a unique tag. Luckily this problem supplies a unique tag: the number of supplies. The number of supplies we are given is the limit to the depth of our recursion. So, if we use the number of supplies we have left as a unique tag for the cities that are covered, we can avoid much complexity. Take for example the same map we worked with previously.
+
+![grid-1](/images/grid-1.png)
+
+We are given two supplies to cover this grid, so we will use them to tag the cities we supply.
+
+![supply-tag](/images/supply-tag.png)
+
+Here are the key details of the above image:
+
+- We always tag the items in the supply option with same unique tag as the header for the cities in that option.
+- When we enter the next level of recursion we have a new number of supplies as we try to cover E and F.
+- We tag all cities in option B with the same number.
+- When we need to cleanup after distributing these two supplies, we will know that E and F were the only cities covered by supplying city B. Cities A, B, C, and D were already covered. We know this because the supply tags do not match.
+- We do not need to traverse the up-down linked list once we tag all cities in an option. It is sufficient to tag the cities in the supply option we chose and the headers for those cities.
+
+For this small example that has a successful supply scheme with two supplies it might not be clear why this is so useful. However, for large maps it becomes important to know which cities to uncover if a supply location does not work out. While backtracking, these tags help only uncover those cities that were uncovered when we entered a specific level of recursion.
+
+An added benefit of this approach is that the types are much simpler and we eliminate any traversals of the up-down linked list, other than to try every supply option that covers a city. This implementation is significantly faster than the previous one. However, this speed gain is only noticeable on the scale of milliseconds, so practically the speed difference can only be felt on very large maps.
+
+### Supply Tag Types
+
+To be complete.
 
 ## Dancing Partners
 
