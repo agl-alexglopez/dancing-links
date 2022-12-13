@@ -28,6 +28,7 @@
 bool canBeMadeDisasterReady(const Map<std::string, Set<std::string>>& roadNetwork,
                             int numCities,
                             Set<std::string>& supplyLocations);
+
 /**
  * @brief findAllSupplySchemes  finds every possible configuration of supply distribution with the
  *                              given number of supplies. Only use this function once the optimal
