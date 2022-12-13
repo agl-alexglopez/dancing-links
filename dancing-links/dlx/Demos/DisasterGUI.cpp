@@ -544,8 +544,9 @@ namespace {
         solvers->setEditable(false);
 
         mProblems = Temporary<GComboBox>(choices, window, "SOUTH");
-        /* Select the implementation you want to solve the problems */
+        /* Select the implementation you want to solve the problems, initially sets.*/
         mSolver = Temporary<GComboBox>(solvers, window, "SOUTH");
+        mSolverUsed = SET_BASED;
         mSolve    = Temporary<GButton>(new GButton("Solve"), window, "SOUTH");
         mPrevSolution = Temporary<GButton>(new GButton("<<"), window, "SOUTH");
         /* These implementations are fast enough to find all optimal solutions in good time. */
