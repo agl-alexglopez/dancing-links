@@ -160,6 +160,7 @@ public:
         bool isWeighted;                // Must provide weights to ask for max weight matching.
     }Network;
 
+    PartnerLinks();
     /**
      * @brief PartnerLinks   the constructor for a world intended to check for Perfect Matching.
      *                       Provide a map of the person, and the set of people they are willing to

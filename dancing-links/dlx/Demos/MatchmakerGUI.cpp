@@ -15,6 +15,13 @@ ostream& operator<< (ostream& out, const Pair& pair) {
 }
 
 namespace {
+
+    enum MatchSolver {
+        SET_BASED=0,
+        DLX_PAIRS=1
+    };
+
+
     const string kUnsavedChanges = "You have unsaved changes.\n\nDo you want to save?";
     const string kUnsavedChangesTitle = "Unsaved Changes";
 
@@ -78,7 +85,7 @@ namespace {
          * [save button ]
          * [load button ]
          *
-         * [ find perfect matching ][<<][find all perfect matchings][>>][ max-weight matching  ]
+         * [Solver: ][ find perfect matching ][<<][find all perfect matchings][>>][ max-weight matching  ]
          */
         Temporary<GContainer> controls;
         GLabel*  fileLabel;
@@ -88,6 +95,12 @@ namespace {
         GButton* deleteButton;
 
         GContainer* graphControls;
+        Temporary<GComboBox> solverDropdown;
+        const string setSolver = "Solver: Set Based";
+        const string dlxSolver = "Solver: DLX Pairs";
+        const vector<string> solverNames = {setSolver, dlxSolver};
+        MatchSolver selectedSolver;
+
         GButton* perfectMatchButton;
         GButton* prevMatchButton;
         GButton* allMatchButton;
@@ -121,13 +134,13 @@ namespace {
 
         bool handleUnsavedChanges();
 
-        void findPerfectMatching();
         void showPrevMatching();
-        void findAllPerfectMatching();
         void showNextMatching();
-        void findMaxWeightMatching();
+        void solvePerfectMatching();
+        void solveAllPerfectMatching();
+        void solveMaxWeightMatching();
 
-        void drawGraph();
+        void drawGraph(const MatchSolver solverUsed);
 
         /* Is anything selected? */
         bool somethingSelected = false;
@@ -161,6 +174,18 @@ namespace {
         leftPanel->add(loadButton);
 
         deleteButton = new GButton("Delete");
+
+        GComboBox* solvers = new GComboBox();
+        for (const string& solver : solverNames) {
+            solvers->addItem(solver);
+        }
+        solvers->setEditable(false);
+
+
+        /* Select the implementation you want to solve the problems, initially sets.*/
+        solverDropdown = Temporary<GComboBox>(solvers, window(), "SOUTH");
+        selectedSolver = SET_BASED;
+
         perfectMatchButton = new GButton("Find Perfect Matching");
         prevMatchButton = new GButton("<<");
         allMatchButton = new GButton("Find All Perfect Matchings");
@@ -252,7 +277,7 @@ namespace {
             if (editor->viewer()->numNodes() == 0) {
                 drawInstructions();
             } else {
-                drawGraph();
+                drawGraph(selectedSolver);
             }
         } else {
             drawWelcomeMessage();
@@ -299,15 +324,15 @@ namespace {
         } else if (editor && source == deleteButton) {
             if (somethingSelected) deleteSelected();
         } else if (editor && source == perfectMatchButton) {
-            findPerfectMatching();
+            solvePerfectMatching();
         } else if (editor && source == prevMatchButton) {
             showPrevMatching();
         } else if (editor && source == allMatchButton) {
-            findAllPerfectMatching();
+            solveAllPerfectMatching();
         } else if (editor && source == nextMatchButton) {
             showNextMatching();
         } else if (editor && source == maxWeightMatchButton) {
-            findMaxWeightMatching();
+            solveMaxWeightMatching();
         }
     }
 
@@ -476,7 +501,7 @@ namespace {
         return handleUnsavedChanges();
     }
 
-    void MatchmakerGUI::findPerfectMatching() {
+    void MatchmakerGUI::solvePerfectMatching() {
         allMatching.reset();
 
         prevMatchButton->setEnabled(false);
@@ -511,20 +536,26 @@ namespace {
         editor->setActive(nullptr);
 
         Set<Pair> matching;
-        // Uncomment this line for the slower implementation that uses copies of sets.
-        // if (hasPerfectMatching(graph, matching)) {
+        bool foundMatching = false;
 
-        PartnerLinks perfectMatchingDLX(graph);
-        if (perfectMatchingDLX.hasPerfectLinks(matching)) {
+        if (solverDropdown->getSelectedItem() == setSolver) {
+            selectedSolver = SET_BASED;
+            foundMatching = hasPerfectMatching(graph, matching);
+        } else if (solverDropdown->getSelectedItem() == dlxSolver) {
+            selectedSolver = DLX_PAIRS;
+            foundMatching = PartnerLinks(graph).hasPerfectLinks(matching);
+        } else {
+            error("something is wrong with the solver dropdown menu. Invalid solver.");
+        }
+
+        if (foundMatching) {
             /* Store this matching. */
             currMatching.reset(new Set<Pair>(matching));
-
             /* We need to redraw. */
             requestRepaint();
         } else {
             currMatching.reset();
             requestRepaint();
-
             GOptionPane::showMessageDialog(&window(), kNoPerfectMatching, kNoPerfectMatchingTitle);
         }
         perfectMatchButton->setEnabled(true);
@@ -550,7 +581,7 @@ namespace {
         }
     }
 
-    void MatchmakerGUI::findAllPerfectMatching() {
+    void MatchmakerGUI::solveAllPerfectMatching() {
         prevMatchButton->setEnabled(false);
         nextMatchButton->setEnabled(false);
         perfectMatchButton->setEnabled(false);
@@ -580,8 +611,19 @@ namespace {
          * existing matching.
          */
         editor->setActive(nullptr);
-        PartnerLinks perfectMatchingDLX(graph);
-        Vector<Set<Pair>> allFoundMatchings = perfectMatchingDLX.getAllPerfectLinks();
+
+        Vector<Set<Pair>> allFoundMatchings = {};
+
+        if (solverDropdown->getSelectedItem() == setSolver) {
+            selectedSolver = SET_BASED;
+            allFoundMatchings = getAllPerfectMatchings(graph);
+        } else if (solverDropdown->getSelectedItem() == dlxSolver) {
+            selectedSolver = DLX_PAIRS;
+            allFoundMatchings = PartnerLinks(graph).getAllPerfectLinks();
+        } else {
+            error("something is wrong with the solver dropdown menu. Invalid solver.");
+        }
+
         if (allFoundMatchings.size()) {
             allMatching.reset(new Vector<Set<Pair>>(allFoundMatchings));
             prevMatchButton->setEnabled(true);
@@ -602,7 +644,7 @@ namespace {
         maxWeightMatchButton->setEnabled(true);
     }
 
-    void MatchmakerGUI::findMaxWeightMatching() {
+    void MatchmakerGUI::solveMaxWeightMatching() {
         allMatching.reset();
         /* For larger graphs this can be a slow function so disable while it thinks. */
         prevMatchButton->setEnabled(false);
@@ -637,13 +679,20 @@ namespace {
          */
         editor->setActive(nullptr);
 
-        // Uncomment this line for the original slower implementation that uses copies of sets.
-        //currMatching.reset(new Set<Pair>(maximumWeightMatching(graph)));
-
         /* Store this matching. */
-        PartnerLinks weightedDLX(graph);
-        currMatching.reset(new Set<Pair>(weightedDLX.getMaxWeightMatching()));
+        Set<Pair> weightedMatches = {};
 
+        if (solverDropdown->getSelectedItem() == setSolver) {
+            selectedSolver = SET_BASED;
+            weightedMatches = maximumWeightMatching(graph);
+        } else if (solverDropdown->getSelectedItem() == dlxSolver) {
+            selectedSolver = DLX_PAIRS;
+            weightedMatches = PartnerLinks(graph).getMaxWeightMatching();
+        } else {
+            error("something is wrong with the solver dropdown menu. Invalid solver.");
+        }
+
+        currMatching.reset(new Set<Pair>(weightedMatches));
 
         /* We need to redraw. */
         requestRepaint();
@@ -652,14 +701,15 @@ namespace {
         maxWeightMatchButton->setEnabled(true);
     }
 
-    const string kMatchedColor   = "#ffd320";     // Slide highlight color
+    const vector<string> kSolverMatchedNodeFillColorOptions = {"#ffb000",  // Set Solver
+                                                               "#dc267f"}; // DLX Solver
     const string kMatchedBorderColor = "#000000"; // Black
 
     const string kUnmatchedColor = "#e0e0e0";       // Gray
     const string kUnmatchedBorderColor = "#c0c0c0"; // Darker Gray
 
 
-    void MatchmakerGUI::drawGraph() {
+    void MatchmakerGUI::drawGraph(const MatchSolver solverUsed) {
         unordered_map<GraphEditor::Node*, GraphEditor::NodeStyle> nodeStyles;
         unordered_map<GraphEditor::Edge*, GraphEditor::EdgeStyle> edgeStyles;
 
@@ -689,7 +739,7 @@ namespace {
             /* Highlight matched nodes and edges. */
             GraphEditor::NodeStyle matchedNodeStyle;
             matchedNodeStyle.borderColor = kMatchedBorderColor;
-            matchedNodeStyle.fillColor   = kMatchedColor;
+            matchedNodeStyle.fillColor   = kSolverMatchedNodeFillColorOptions[solverUsed];
             matchedNodeStyle.lineWidth  *= 2;
 
             GraphEditor::EdgeStyle matchedEdgeStyle;

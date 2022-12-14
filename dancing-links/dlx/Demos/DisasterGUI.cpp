@@ -51,19 +51,19 @@ namespace {
         {
             { "#101010", "#202020", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#A0A0A0") },   // Uncovered
             { "#303060", "#404058", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#C0C0C0") },   // Indirectly covered
-            { "#806030", "#FFDF80", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
+            { "#806030", "#FFB000", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
         },
         /* QUAD_DLX */
         {
             { "#101010", "#202020", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#A0A0A0") },   // Uncovered
             { "#303060", "#404058", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#C0C0C0") },   // Indirectly covered
-            { "#FF00FF", "#F5CBF5", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
+            { "#F5BCD8", "#DC267F", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
         },
         /* TAGGED_DLX */
         {
             { "#101010", "#202020", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#A0A0A0") },   // Uncovered
             { "#303060", "#404058", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#C0C0C0") },   // Indirectly covered
-            { "#00FFFF", "#C5EBEB", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
+            { "#00FFFF", "#648FFF", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
         },
     };
 
@@ -357,31 +357,17 @@ namespace {
         }
     }
 
-
     void solveOptimallyWithQuadDLX(const DisasterTest& test, Set<string>& result) {
-        /* The variable 'low' is the lowest number that might be feasible.
-         * The variable 'high' is the highest number that we know is feasible.
-         */
         int low = 0, high = test.network.size();
-
-        /* Begin with a feasible solution that uses as many cities as we'd like. */
         DisasterLinks network(test.network);
         (void) network.isDisasterReady(high, result);
-
         while (low < high) {
-            /* This line looks weird, but it's designed to avoid integer overflows
-             * on large inputs. The idea that (high + low) can overflow, but
-             * (high - low) / 2 never will.
-             */
             int mid = low + (high - low) / 2;
             Set<string> thisResult;
-
-            /* If this option works, decrease high to it, since we know all is good. */
             if (network.isDisasterReady(mid, thisResult)) {
                 high = mid;
-                result = thisResult; // Remember this result for later.
+                result = thisResult;
             }
-            /* Otherwise, rule out anything less than or equal to it. */
             else {
                 low = mid + 1;
             }
@@ -426,6 +412,7 @@ namespace {
                 low = mid + 1;
             }
         }
+        /* We need a heap allocated vector so we have persistent accessible solutions in the GUI. */
         int optimalSupplies = result.size();
         Set<Set<string>> allFoundConfigs = findAllSupplySchemes(test.network, optimalSupplies);
         for (const auto& found : allFoundConfigs) {

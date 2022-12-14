@@ -452,6 +452,7 @@ std::pair<int,Pair> PartnerLinks::coverWeightedPair(int index) {
 
 /* * * * * * * * * * * * * * *   Constructor to Build the Networks  * * * * * * * * * * * * * * * */
 
+PartnerLinks::PartnerLinks() : dlx({}){}
 
 /**
  * @brief PartnerLinks   the constructor for a world intended to check for Perfect Matching.
@@ -3064,8 +3065,7 @@ PROVIDED_TEST("hasPerfectMatching stress test: positive example (should take und
     }
 
     Set<Pair> matching;
-    PartnerLinks network(fromLinks(links));
-    EXPECT(network.hasPerfectLinks(matching));
+    EXPECT(PartnerLinks(fromLinks(links)).hasPerfectLinks(matching));
     EXPECT(isPerfectMatching(fromLinks(links), matching));
 }
 

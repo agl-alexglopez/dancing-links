@@ -47,6 +47,14 @@ bool hasPerfectMatchRec(const Map<string, Set<string>>& possibleLinks,
                         const HashSet<string> linkKeys,
                         Set<Pair> &perfectMatch);
 
+Vector<Set<Pair>>
+getAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks);
+
+Vector<Set<Pair>>
+fillAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks,
+                        const HashSet<string> toMatch,
+                        const Set<Pair> matching);
+
 // Weighted pairs
 Set<Pair> maximumWeightMatching(const Map<string, Map<string, int>>& possibleLinks);
 Set<Pair> maxWeightRec(const Map<string, Map<string, int>> &possibleLinks,
@@ -99,17 +107,17 @@ bool hasPerfectMatchRec(const Map<string, Set<string>>& possibleLinks,
         return false;
     }
 
-    string needs_match = toMatch.first();
-    Set<string> preferences = possibleLinks[needs_match];
+    string needsMatch = toMatch.first();
+    Set<string> preferences = possibleLinks[needsMatch];
 
     // Much smaller problem if we loop through the preferences not the entire map
     for (const string &preference : preferences) {
         // Someone in these preferences might have been taken out of the matches already during rec
         if (toMatch.contains(preference)) {
-            Pair match (needs_match, preference);
+            Pair match (needsMatch, preference);
 
             if (hasPerfectMatchRec(possibleLinks,
-                                   toMatch - needs_match - preference,
+                                   toMatch - needsMatch - preference,
                                    perfectMatch)) {
 
                 // One extra step for the output parameter.
@@ -121,6 +129,40 @@ bool hasPerfectMatchRec(const Map<string, Set<string>>& possibleLinks,
     // Cleanup our output parameter.
     perfectMatch = {};
     return false;
+}
+
+Vector<Set<Pair>>
+getAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks) {
+    HashSet<string> toMatch = {};
+    for (auto &key : possibleLinks) {
+        toMatch += key;
+    }
+    return fillAllPerfectMatchings(possibleLinks, toMatch, {});
+}
+
+Vector<Set<Pair>>
+fillAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks,
+                        const HashSet<string> toMatch,
+                        const Set<Pair> matching) {
+    if (toMatch.isEmpty()) {
+        return {matching};
+    }
+    if (toMatch.size() == 1) {
+        return {};
+    }
+
+    string needsMatch = toMatch.first();
+
+    Vector<Set<Pair>> result = {};
+    for (const string& preference : possibleLinks[needsMatch]) {
+        if (toMatch.contains(preference)) {
+            Pair match (needsMatch, preference);
+            result += fillAllPerfectMatchings(possibleLinks,
+                                              toMatch - needsMatch - preference,
+                                              matching + match);
+        }
+    }
+    return result;
 }
 
 /**
@@ -971,4 +1013,70 @@ PROVIDED_TEST("maximumWeightMatching: Large stress test (should take at most a s
         /* Must be a possible links. */
         EXPECT_EQUAL(abs(stringToInteger(p.first()) - stringToInteger(p.second())), 1);
     }
+}
+
+
+/* * * * * * * * * * * * *     Bonus: Find All Perfect Matchings        * * * * * * * * * * * * * */
+
+
+/* It would be nice to find a way to cycle through all perfect matchings as an option in the graph
+ * viewer. As of now, there is no way to see the results of this function in any meaningful way.
+ * Need to learn more about how drawing works for this application then possibly add to it.
+ */
+
+PROVIDED_TEST("getAllPerfectMatching works on a square of people, and produces output.") {
+    /* Here's the world:
+     *
+     *               A --- B
+     *               |     |
+     *               |     |
+     *               D --- C
+     *
+     * There are two different perfect matching here: AB / CD, and AC/BC.
+     * Either will work.
+     */
+    auto links = fromLinks({
+        { "A", "B" },
+        { "B", "C" },
+        { "C", "D" },
+        { "D", "A" }
+    });
+    Vector<Set<Pair>> allMatches = {
+        {{"A","D"}, {"B","C"}},
+        {{"A","B"}, {"C","D"}}
+    };
+    EXPECT_EQUAL(getAllPerfectMatchings(links), allMatches);
+}
+
+STUDENT_TEST("All possible pairings is huge, but all perfect matching configs is just 4.") {
+    /* Here's the world:
+     *
+     *               A --- B ---C
+     *             /        \   \
+     *       I----J          E---D
+     *       |     \        /
+     *       H----- G --- F
+     *
+     *
+     *
+     */
+    const Map<std::string, Set<std::string>> provided = {
+        { "A", {"B", "J"} },
+        { "B", {"A", "C", "E"} },
+        { "C", {"B", "D"} },
+        { "D", {"C", "E"} },
+        { "E", {"B", "D", "F"} },
+        { "F", {"E", "G"} },
+        { "G", {"F", "H", "J"} },
+        { "H", {"G", "I"} },
+        { "I", {"H", "J"} },
+        { "J", {"A", "G", "I"} }
+    };
+    Vector<Set<Pair>> allMatches = {
+        {{ "A", "J" }, { "B", "E" }, { "C", "D" }, { "F", "G" }, { "H", "I" }},
+        {{ "A", "J" }, { "B", "C" }, { "D", "E" }, { "F", "G" }, { "H", "I" }},
+        {{ "A", "B" }, { "C", "D" }, { "E", "F" }, { "G", "J" }, { "H", "I" }},
+        {{ "A", "B" }, { "C", "D" }, { "E", "F" }, { "G", "H" }, { "I", "J" }},
+    };
+    EXPECT_EQUAL(getAllPerfectMatchings(provided), allMatches);
 }
