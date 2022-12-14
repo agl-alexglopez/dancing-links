@@ -128,7 +128,6 @@ void DisasterTags::fillConfigurations(int numSupplies,
         fillConfigurations(numSupplies - 1, suppliedCities, allConfigurations);
 
         suppliedCities.remove(supplyLocation);
-        // This cleanup is in case of failed choices. Try another starting supply location.
         uncoverCity(cur);
     }
 }
