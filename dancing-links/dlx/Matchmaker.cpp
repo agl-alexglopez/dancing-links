@@ -131,6 +131,12 @@ bool hasPerfectMatchRec(const Map<string, Set<string>>& possibleLinks,
     return false;
 }
 
+/**
+ * @brief getAllPerfectMatchings  finds all possible perfect matching configurations with the
+ *                                provided map of partners.
+ * @param possibleLinks           the map of people and their partner preferences
+ * @return                        a vector of sets of valid perfect matchings.
+ */
 Vector<Set<Pair>>
 getAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks) {
     HashSet<string> toMatch = {};
@@ -140,6 +146,15 @@ getAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks) 
     return fillAllPerfectMatchings(possibleLinks, toMatch, {});
 }
 
+/**
+ * @brief fillAllPerfectMatchings  recursively finds all perfect matching configurations. This
+ *                                 method uses copies of sets through stack frames to form perfect
+ *                                 matchings and return all that are found. All matches are unique.
+ * @param possibleLinks            the map of people and their preferences.
+ * @param toMatch                  the hashset that helps us know when everyone is matched.
+ * @param matching                 a helper set we build with partners to place in our return.
+ * @return                         a Vector of sets of valid perfect matches.
+ */
 Vector<Set<Pair>>
 fillAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks,
                         const HashSet<string> toMatch,
