@@ -312,18 +312,16 @@ private:
      * @brief hidePersonPairings  hides other options that include the specified person. This only
      *                            hides pairings including a single person. If you want to hide both
      *                            people in a pair, you must use this on both people.
-     * @param start               the starting node of the person we are hide in the selected option
      * @param index               the index of the person we are hiding in the selected option.
      */
-    void hidePersonPairings(personLink& start, int index);
+    void hidePersonPairings(int index);
 
     /**
      * @brief unhidePersonPairings  undoes the work of hidePersonPairings if given the same start
      *                              and index.
-     * @param start                 the node of the person we unhide in the selected option.
      * @param index                 the index of the person we are unhiding in the selected option.
      */
-    void unhidePersonPairings(personLink& start, int index);
+    void unhidePersonPairings(int index);
 
     /**
      * @brief coverWeightedPair  when we cover a weighted pair in Max Weight Matching we should

@@ -16,11 +16,13 @@ ostream& operator<< (ostream& out, const Pair& pair) {
 
 namespace {
 
+    /* Use this type to track the solver selected. It is also index in array to determine color
+     * of the nodes for a matching solution. Different colors distinguish different solvers.
+     */
     enum MatchSolver {
         SET_BASED=0,
         DLX_PAIRS=1
     };
-
 
     const string kUnsavedChanges = "You have unsaved changes.\n\nDo you want to save?";
     const string kUnsavedChangesTitle = "Unsaved Changes";

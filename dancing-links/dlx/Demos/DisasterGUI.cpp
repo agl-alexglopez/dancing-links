@@ -63,7 +63,7 @@ namespace {
         {
             { "#101010", "#202020", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#A0A0A0") },   // Uncovered
             { "#303060", "#404058", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#C0C0C0") },   // Indirectly covered
-            { "#00FFFF", "#648FFF", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
+            { "#00FFFF", "#02D7F7", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
         },
     };
 
@@ -246,7 +246,7 @@ namespace {
                     const Geometry& geo,
                     const DisasterTest& network,
                     const Set<string>& selected,
-                    enum CitySolver solverUsed) {
+                    const enum CitySolver solverUsed) {
 
         /* For simplicity, just make a single oval. */
         GOval oval(0, 0, 2 * kCityRadius, 2 * kCityRadius);
@@ -285,7 +285,7 @@ namespace {
     void visualizeNetwork(GWindow& window,
                           const DisasterTest& network,
                           const Set<string>& selected,
-                          enum CitySolver solverUsed) {
+                          const enum CitySolver solverUsed) {
         clearDisplay(window, kBackgroundColor);
 
         /* Edge case: Don't draw if the window is too small. */
@@ -503,7 +503,7 @@ namespace {
         const string mAllSolutionsMessage = "Solutions Found:";
 
         /* Current network and solution. */
-        DisasterTest    mNetwork;
+        DisasterTest mNetwork;
         Set<string> mSelected;
 
         /* Loads the world with the given name. */
@@ -534,7 +534,7 @@ namespace {
         /* Select the implementation you want to solve the problems, initially sets.*/
         mSolver = Temporary<GComboBox>(solvers, window, "SOUTH");
         mSolverUsed = SET_BASED;
-        mSolve    = Temporary<GButton>(new GButton("Solve"), window, "SOUTH");
+        mSolve = Temporary<GButton>(new GButton("Solve"), window, "SOUTH");
         mPrevSolution = Temporary<GButton>(new GButton("<<"), window, "SOUTH");
         /* These implementations are fast enough to find all optimal solutions in good time. */
         mAllSolutions = Temporary<GButton>(new GButton("All Optimal Solutions"), window, "SOUTH");

@@ -161,7 +161,7 @@ Pair PartnerLinks::coverPairing(int index) {
     dlx.lookupTable[p1.left].right = p1.right;
 
     // p1 needs to dissapear from all other pairings.
-    hidePersonPairings(dlx.links[index], index);
+    hidePersonPairings(index);
 
     // In case I ever apply a selection heuristic, partner might not be to the right.
     index = toPairIndex(index);
@@ -171,7 +171,7 @@ Pair PartnerLinks::coverPairing(int index) {
     dlx.lookupTable[p2.left].right = p2.right;
 
     // p2 needs to dissapear from all other pairings.
-    hidePersonPairings(dlx.links[index], index);
+    hidePersonPairings(index);
 
     return {p1.name, p2.name};
 }
@@ -190,7 +190,7 @@ void PartnerLinks::uncoverPairing(int index) {
     dlx.lookupTable[p1.left].right = dlx.links[index].topOrLen;
     dlx.lookupTable[p1.right].left = dlx.links[index].topOrLen;
 
-    unhidePersonPairings(dlx.links[index], index);
+    unhidePersonPairings(index);
 
     index = toPairIndex(index);
 
@@ -198,7 +198,7 @@ void PartnerLinks::uncoverPairing(int index) {
     dlx.lookupTable[p2.left].right = dlx.links[index].topOrLen;
     dlx.lookupTable[p2.right].left = dlx.links[index].topOrLen;
 
-    unhidePersonPairings(dlx.links[index], index);
+    unhidePersonPairings(index);
 }
 
 /**
@@ -208,23 +208,19 @@ void PartnerLinks::uncoverPairing(int index) {
  * @param start               the starting node of the person we are hide in the selected option
  * @param index               the index of the person we are hiding in the selected option.
  */
-void PartnerLinks::hidePersonPairings(personLink& start, int index) {
-    personLink nextPairing = start;
-    index = start.down;
-    while ((nextPairing = dlx.links[nextPairing.down]) != start) {
+void PartnerLinks::hidePersonPairings(int index) {
+    int start = index;
+    while ((index = dlx.links[index].down) != start) {
         // We need this guard to prevent splicing while on a column header.
         if (index > dlx.lookupTable.size()) {
 
             // In case the other partner is to the left, just decrement index to go left.
-            index = toPairIndex(index);
-
-            personLink cur = dlx.links[index];
+            personLink cur = dlx.links[toPairIndex(index)];
 
             dlx.links[cur.up].down = cur.down;
             dlx.links[cur.down].up = cur.up;
             dlx.links[cur.topOrLen].topOrLen--;
         }
-        index = nextPairing.down;
     }
 }
 
@@ -234,24 +230,21 @@ void PartnerLinks::hidePersonPairings(personLink& start, int index) {
  * @param start                 the node of the person we unhide in the selected option.
  * @param index                 the index of the person we are unhiding in the selected option.
  */
-void PartnerLinks::unhidePersonPairings(personLink& start, int index) {
-    personLink nextPairing = start;
+void PartnerLinks::unhidePersonPairings(int index) {
     // The direction does not truly matter but I distinguish this from hide by going upwards.
-    index = start.up;
-    while ((nextPairing = dlx.links[nextPairing.up]) != start) {
+    int start = index;
+    while ((index = dlx.links[index].up) != start) {
         if (index > dlx.lookupTable.size()) {
 
-            index = toPairIndex(index);
+            int partnerIndex = toPairIndex(index);
 
-            personLink cur = dlx.links[index];
+            personLink cur = dlx.links[partnerIndex];
 
-            dlx.links[cur.up].down = index;
-            dlx.links[cur.down].up = index;
+            dlx.links[cur.up].down = partnerIndex;
+            dlx.links[cur.down].up = partnerIndex;
             dlx.links[cur.topOrLen].topOrLen++;
         }
-        index = nextPairing.up;
     }
-
 }
 
 /**
@@ -377,7 +370,7 @@ void PartnerLinks::hidePerson(int index) {
     dlx.lookupTable[p1.left].right = p1.right;
 
     // Only hide pairings for this person.
-    hidePersonPairings(dlx.links[index], index);
+    hidePersonPairings(index);
 
     index = toPairIndex(index);
     // Partner will only disapear in this instance of the pairing, not all other instances.
@@ -400,7 +393,7 @@ void PartnerLinks::unhidePerson(int index) {
     dlx.lookupTable[p1.left].right = dlx.links[index].topOrLen;
     dlx.lookupTable[p1.right].left = dlx.links[index].topOrLen;
 
-    unhidePersonPairings(dlx.links[index], index);
+    unhidePersonPairings(index);
 
     index = toPairIndex(index);
     personLink cur = dlx.links[index];
@@ -426,7 +419,7 @@ std::pair<int,Pair> PartnerLinks::coverWeightedPair(int index) {
     dlx.lookupTable[p1.left].right = p1.right;
 
     // p1 needs to dissapear from all other pairings.
-    hidePersonPairings(dlx.links[index], index);
+    hidePersonPairings(index);
 
 
     // We can pick up the weight for this pairing in a O(1) sweep to report back.
@@ -443,7 +436,7 @@ std::pair<int,Pair> PartnerLinks::coverWeightedPair(int index) {
     dlx.lookupTable[p2.right].left = p2.left;
     dlx.lookupTable[p2.left].right = p2.right;
     // p2 needs to dissapear from all other pairings.
-    hidePersonPairings(dlx.links[index], index);
+    hidePersonPairings(index);
 
     result.second = {p1.name,p2.name};
     return result;
