@@ -178,7 +178,7 @@ Here are the key details of the above image:
 
 For this small example that has a successful supply scheme with two supplies it might not be clear why this is so useful. However, for large maps it becomes important to know which cities to uncover if a supply location does not work out. While backtracking, these tags help only uncover those cities that were covered when we entered a specific level of recursion.
 
-An added benefit of this approach is that the types are much simpler and we eliminate any traversals of the up-down linked list, other than to try every supply option that covers a city. This implementation is significantly faster than the previous one. However, this speed gain is only noticeable on the scale of milliseconds, so practically the speed difference only grows to noticeable seconds of difference on large maps.
+An added benefit of this approach is that the types are much simpler and we eliminate any traversals of the up-down linked list, other than to try every supply option that covers a city. This implementation is faster than the previous implementation. However, the speed gain only becomes noticeable on larger transportations grids. I can examine this further in the runtime analysis section.
 
 ### Supply Tags Implementation
 
@@ -224,7 +224,7 @@ There are some new details from the above image.
 - The spacer nodes point up to the first element in the previous option and down to the last element in the current option. This helps us visit and tag all cities in an option regardless of which city we start at.
 - The supply tag is `0` by default, telling us a city needs to be covered. It will then take the tag of whatever supply number it is given when covered.
 
-Unfortunately, this implementation is still not fast enough to crack the code on the U.S. Map. It can confirm that the U.S. can be covered with 30 supplies, slightly faster than the other implementation, but gets stuck trying to find the optimal number between 20 and 30 supplies. The usage instructions are the same as for both solvers follows below.
+Unfortunately, this implementation is still not fast enough to crack the code on the U.S. Map. It can confirm that the U.S. can be covered with 30 supplies, slightly faster than the other implementation, but gets stuck trying to find the optimal number between 20 and 30 supplies. The usage instructions are the same for both solvers and follows below.
 
 ## Disaster Planning Usage Instructions
 
@@ -239,7 +239,7 @@ I then included these implementations in the **[`DisasterGUI.cpp`](/dancing-link
 5. Select the implementation that you want to solve the map in the drop down menu: a traditional set based implementation, a quadruple linked dancing links solver, or the supply tag implementation. You can distinguish the solvers by the colors they paint the cities.
 6. Press `Solve` to find the first Optimal Map coverage found or press `All Optimal Solutions` to find all possible supply distributions with the optimal number of supplies. You can cycle through configurations with the next and previous arrows if you find all solutions. 
 
-It is interesting to note which cities have more flexibility with their disaster supplies. For example, Colorado is a slightly larger map than Tokyo. However, all solvers take a noticeable amount of time to tell us that there are 136 configurations with optimal supplies. Then, when asked about Tokyo, all solvers will quickly report that there are 790 viable configurations for the optimal number of supplies. Some maps are more challenging than others and some configurations have more flexibility than others.
+It is interesting to note which cities have more flexibility with their disaster supplies. For example, Colorado is a slightly larger map than Tokyo. However, all solvers take a noticeable amount of time to tell us that Colorado has only 136 configurations with optimal supplies. Then, when asked about Tokyo, all solvers will quickly report that there are 790 viable configurations for the optimal number of supplies. Some maps are more challenging than others but the challenge may not be directly related to the number of configurations that are possible to generate.
 
 ## Dancing Partners
 
@@ -297,7 +297,7 @@ Here are the key details from the above image:
 - To solve a Perfect Matching problem, all options and items must disappear from the world with the last choice.
 - The problem is solved when we have an empty world or matrix.
 
-I am not currently aware of any optimizations for this problem. It is very fast at finding solutions, especially because it only must find one. I added the bonus functionality of finding all possible perfect matching configurations to the graph editor application. To solve that problem, the algorithm requires minimal adjustments and it is remarkably fast. For example, requesting all possible perfect matchings on `Sample3`, a somewhat large network of connections, will yield 630 results immediately. I should try to find the limits of this algorithm in the runtime analysis section. In, contrast max weight matching is much more difficult.
+I am not currently aware of any optimizations for this problem. It is very fast at finding solutions, especially because it only must find one. I added the bonus functionality of finding all possible perfect matching configurations to the graph editor application. To solve that problem, the algorithm requires minimal adjustments and it is remarkably fast. For example, requesting all possible perfect matchings on `Sample3`, a somewhat large network of connections, will yield 630 results immediately. By adding nodes, you can eventually begin generating configurations in the 10 to 100's of thousands in a reasonable amount of time. I should try to find the limits of this algorithm in the runtime analysis section. In, contrast max weight matching is much more difficult.
 
 ### Max Weight Matching
 
