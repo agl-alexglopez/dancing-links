@@ -413,7 +413,8 @@ I then included this implementation in the **[`MatchmakerGUI.cpp`](/dancing-link
 2. Build and run the project.
 3. Select the `Matchmaker` option from the top menu.
 4. Draw a graph or select a premade example from the load option.
-5. Select `Find Perfect Matching`, `Find All Perfect Matchings` or `Find Max-Weight Matching` to solve the appropriate problem.
+5. Select the solver that you want to use for these problems. I have included a solver based on the implementation discussed above and a more traditional implementation that uses sets.
+6. Press `Find Perfect Matching`, `Find All Perfect Matchings` or `Find Max-Weight Matching` to solve the appropriate problem.
 
 ## Runtime Analysis
 
