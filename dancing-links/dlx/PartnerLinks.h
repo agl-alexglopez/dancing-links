@@ -295,33 +295,33 @@ private:
      *                      selections are correct. This selects the option beneath the index given.
      *                      Covering a pair means that both people will dissapear from all other
      *                      partnerships they could have matched with, eliminating those options.
-     * @param index         the index of the pair we want to cover. Chooses option below this.
+     * @param indexInPair   the index of the pair we want to cover.
      * @return              the pair we have created by selecting this option.
      */
-    Pair coverPairing(int index);
+    Pair coverPairing(int indexInPair);
 
     /**
      * @brief uncoverPairing  uncovers a pairing that was hidden in Perfect Matching or Max Weight
      *                        Matching. The uncovering process is identical across both algorithms.
      *                        Be sure to provide the same index as the option you covered.
-     * @param index           the same index as the index that was covered.
+     * @param indexInPair     the same index as the index that was covered.
      */
-    void uncoverPairing(int index);
+    void uncoverPairing(int indexInPair);
 
     /**
      * @brief hidePersonPairings  hides other options that include the specified person. This only
      *                            hides pairings including a single person. If you want to hide both
      *                            people in a pair, you must use this on both people.
-     * @param index               the index of the person we are hiding in the selected option.
+     * @param indexInPair         the index of the person we are hiding in the selected option.
      */
-    void hidePersonPairings(int index);
+    void hidePersonPairings(int indexInPair);
 
     /**
      * @brief unhidePersonPairings  undoes the work of hidePersonPairings if given the same start
      *                              and index.
-     * @param index                 the index of the person we are unhiding in the selected option.
+     * @param indexInPair           the index of the person we are unhiding in the selected option.
      */
-    void unhidePersonPairings(int index);
+    void unhidePersonPairings(int indexInPair);
 
     /**
      * @brief coverWeightedPair  when we cover a weighted pair in Max Weight Matching we should
@@ -329,36 +329,36 @@ private:
      *                           the Pair. This is helpful for proof of correct choices. Covering a
      *                           Pair means that both people disappear from all other possible
      *                           pairings, thus eliminating those options.
-     * @param index              the index of the weighted pair we cover. Chooses option below this.
+     * @param indexInPair        the index of the weighted pair we cover.
      * @return                   an std::pair of the weight of the pair and their names.
      */
-    std::pair<int,Pair> coverWeightedPair(int index);
+    std::pair<int,Pair> coverWeightedPair(int indexInPair);
 
     /**
-     * @brief hidePerson  to generate all possible pairings in any pairing algorithm, we need to
-     *                    include every person in future possible pairings and exclude them. To
-     *                    exclude a person, we will cover only that person. Instead of eliminating
-     *                    every option that includes both people in a Pair, we only eliminate
-     *                    other appearances of this individual in other pairings. It is a subtle
-     *                    but important difference from covering a pairing.
-     * @param index       the index of the person we cover. Chooses option below this index.
+     * @brief hidePerson   to generate all possible pairings in any pairing algorithm, we need to
+     *                     include every person in future possible pairings and exclude them. To
+     *                     exclude a person, we will cover only that person. Instead of eliminating
+     *                     every option that includes both people in a Pair, we only eliminate
+     *                     other appearances of this individual in other pairings. It is a subtle
+     *                     but important difference from covering a pairing.
+     * @param indexInPair  the index of the person we cover.
      */
-    void hidePerson(int index);
+    void hidePerson(int indexInPair);
 
     /**
      * @brief unhidePerson  undoes the work of covering a person, reinstating all possible pairings
      *                      that include this person. Will undo the same option chosen in
      *                      hidePerson() if given the same index.
-     * @param index         the index of the person to uncover. Chooses option below this index.
+     * @param indexInPair   the index of the person to uncover.
      */
-    void unhidePerson(int index);
+    void unhidePerson(int indexInPair);
 
     /**
      * @brief toPairIndex  helper function to increment the index to the next partner. We might
      *                     need to move left or right.
-     * @param index        the index we take by reference to advance.
+     * @param indexInPair  the current partner.
      */
-    inline int toPairIndex(int index);
+    inline int toPairIndex(int indexInPair);
 
 
     /* * * * * * * * * *   Build and Initialize Dancing Links Data Structure    * * * * * * * * * */

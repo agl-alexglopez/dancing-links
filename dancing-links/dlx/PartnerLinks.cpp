@@ -45,7 +45,7 @@ bool PartnerLinks::isPerfectMatching(Set<Pair>& pairs) {
         return false;
     }
 
-    for (int cur = chosenPerson; dlx.links[cur].down != chosenPerson; cur = dlx.links[cur].down) {
+    for (int cur = dlx.links[chosenPerson].down; cur != chosenPerson; cur = dlx.links[cur].down) {
 
         Pair match = coverPairing(cur);
 
@@ -106,7 +106,7 @@ void PartnerLinks::fillPerfectMatchings(Set<Pair>& soFar, Vector<Set<Pair>>& res
      * the output parameter. Some ways might leave loners and we won't include those.
      */
 
-    for (int cur = chosen; dlx.links[cur].down != chosen; cur = dlx.links[cur].down) {
+    for (int cur = dlx.links[chosen].down; cur != chosen; cur = dlx.links[cur].down) {
 
         Pair match = coverPairing(cur);
         soFar += match;
@@ -142,36 +142,32 @@ int PartnerLinks::choosePerson() {
  *                      selections are correct. This selects the option beneath the index given.
  *                      Covering a pair means that both people will dissapear from all other
  *                      partnerships they could have matched with, eliminating those options.
- * @param index         the index of the pair we want to cover. Chooses option below this.
+ * @param indexInPair   the index of the pair we want to cover.
  * @return              the pair we have created by selecting this option.
  */
-Pair PartnerLinks::coverPairing(int index) {
-
-    // We could start on a header so always step down.
-    index = dlx.links[index].down;
-
+Pair PartnerLinks::coverPairing(int indexInPair) {
 
     /* We now must cover the two people in this option in the lookup table. Then go through all
      * other options and eliminate the other pairings in which each appears because they are paired
      * off and therefore no longer accessible to other people that want to pair with them.
      */
 
-    personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
+    personName p1 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
     dlx.lookupTable[p1.right].left = p1.left;
     dlx.lookupTable[p1.left].right = p1.right;
 
     // p1 needs to dissapear from all other pairings.
-    hidePersonPairings(index);
+    hidePersonPairings(indexInPair);
 
     // In case I ever apply a selection heuristic, partner might not be to the right.
-    index = toPairIndex(index);
+    indexInPair = toPairIndex(indexInPair);
 
-    personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
+    personName p2 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
     dlx.lookupTable[p2.right].left = p2.left;
     dlx.lookupTable[p2.left].right = p2.right;
 
     // p2 needs to dissapear from all other pairings.
-    hidePersonPairings(index);
+    hidePersonPairings(indexInPair);
 
     return {p1.name, p2.name};
 }
@@ -180,25 +176,23 @@ Pair PartnerLinks::coverPairing(int index) {
  * @brief uncoverPairing  uncovers a pairing that was hidden in Perfect Matching or Max Weight
  *                        Matching. The uncovering process is identical across both algorithms.
  *                        Be sure to provide the same index as the option you covered.
- * @param index           the same index as the index that was covered.
+ * @param indexInPair     the same index as the index that was covered.
  */
-void PartnerLinks::uncoverPairing(int index) {
+void PartnerLinks::uncoverPairing(int indexInPair) {
 
-    index = dlx.links[index].down;
+    personName p1 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
+    dlx.lookupTable[p1.left].right = dlx.links[indexInPair].topOrLen;
+    dlx.lookupTable[p1.right].left = dlx.links[indexInPair].topOrLen;
 
-    personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
-    dlx.lookupTable[p1.left].right = dlx.links[index].topOrLen;
-    dlx.lookupTable[p1.right].left = dlx.links[index].topOrLen;
+    unhidePersonPairings(indexInPair);
 
-    unhidePersonPairings(index);
+    indexInPair = toPairIndex(indexInPair);
 
-    index = toPairIndex(index);
+    personName p2 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
+    dlx.lookupTable[p2.left].right = dlx.links[indexInPair].topOrLen;
+    dlx.lookupTable[p2.right].left = dlx.links[indexInPair].topOrLen;
 
-    personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
-    dlx.lookupTable[p2.left].right = dlx.links[index].topOrLen;
-    dlx.lookupTable[p2.right].left = dlx.links[index].topOrLen;
-
-    unhidePersonPairings(index);
+    unhidePersonPairings(indexInPair);
 }
 
 /**
@@ -206,16 +200,16 @@ void PartnerLinks::uncoverPairing(int index) {
  *                            hides pairings including a single person. If you want to hide both
  *                            people in a pair, you must use this on both people.
  * @param start               the starting node of the person we are hide in the selected option
- * @param index               the index of the person we are hiding in the selected option.
+ * @param indexInPair         the index of the person we are hiding in the selected option.
  */
-void PartnerLinks::hidePersonPairings(int index) {
-    int start = index;
-    while ((index = dlx.links[index].down) != start) {
+void PartnerLinks::hidePersonPairings(int indexInPair) {
+    int start = indexInPair;
+    while ((indexInPair = dlx.links[indexInPair].down) != start) {
         // We need this guard to prevent splicing while on a column header.
-        if (index > dlx.lookupTable.size()) {
+        if (indexInPair > dlx.lookupTable.size()) {
 
             // In case the other partner is to the left, just decrement index to go left.
-            personLink cur = dlx.links[toPairIndex(index)];
+            personLink cur = dlx.links[toPairIndex(indexInPair)];
 
             dlx.links[cur.up].down = cur.down;
             dlx.links[cur.down].up = cur.up;
@@ -228,15 +222,15 @@ void PartnerLinks::hidePersonPairings(int index) {
  * @brief unhidePersonPairings  undoes the work of hidePersonPairings if given the same start
  *                              and index.
  * @param start                 the node of the person we unhide in the selected option.
- * @param index                 the index of the person we are unhiding in the selected option.
+ * @param indexInPair           the index of the person we are unhiding in the selected option.
  */
-void PartnerLinks::unhidePersonPairings(int index) {
+void PartnerLinks::unhidePersonPairings(int indexInPair) {
     // The direction does not truly matter but I distinguish this from hide by going upwards.
-    int start = index;
-    while ((index = dlx.links[index].up) != start) {
-        if (index > dlx.lookupTable.size()) {
+    int start = indexInPair;
+    while ((indexInPair = dlx.links[indexInPair].up) != start) {
+        if (indexInPair > dlx.lookupTable.size()) {
 
-            int partnerIndex = toPairIndex(index);
+            int partnerIndex = toPairIndex(indexInPair);
 
             personLink cur = dlx.links[partnerIndex];
 
@@ -250,14 +244,14 @@ void PartnerLinks::unhidePersonPairings(int index) {
 /**
  * @brief toPairIndex  helper function to increment the index to the next partner. We might
  *                     need to move left or right.
- * @param index        the index we take by reference to advance.
+ * @param indexInPair  the index we take by reference to advance.
  */
-inline int PartnerLinks::toPairIndex(int index) {
+inline int PartnerLinks::toPairIndex(int indexInPair) {
     // There are only ever two people in an option so this is a safe increment/decrement.
-    if (dlx.links[++index].topOrLen <= 0) {
-        index -= 2;
+    if (dlx.links[++indexInPair].topOrLen <= 0) {
+        indexInPair -= 2;
     }
-    return index;
+    return indexInPair;
 }
 
 
@@ -310,7 +304,7 @@ void PartnerLinks::fillWeights(std::pair<int,Set<Pair>>& soFar, std::pair<int,Se
     unhidePerson(chosen);
 
     // Now loop through every possible option for every combination of people available.
-    for (int cur = chosen; dlx.links[cur].down != chosen; cur = dlx.links[cur].down) {
+    for (int cur = dlx.links[chosen].down; cur != chosen; cur = dlx.links[cur].down) {
 
         // Our cover operation is able to pick up the weight and names of pair in a O(1) operation.
         std::pair<int,Pair> match = coverWeightedPair(cur);
@@ -354,27 +348,27 @@ int PartnerLinks::chooseWeightedPerson() {
 
 
 /**
- * @brief hidePerson  to generate all possible pairings in any pairing algorithm, we need to
- *                    include every person in future possible pairings and exclude them. To
- *                    exclude a person, we will cover only that person. Instead of eliminating
- *                    every option that includes both people in a Pair, we only eliminate
- *                    other appearances of this individual in other pairings. It is a subtle
- *                    but important difference from covering a pairing.
- * @param index       the index of the person we cover. Chooses option below this index.
+ * @brief hidePerson   to generate all possible pairings in any pairing algorithm, we need to
+ *                     include every person in future possible pairings and exclude them. To
+ *                     exclude a person, we will cover only that person. Instead of eliminating
+ *                     every option that includes both people in a Pair, we only eliminate
+ *                     other appearances of this individual in other pairings. It is a subtle
+ *                     but important difference from covering a pairing.
+ * @param indexInPair  the index of the person we cover. Chooses option below this index.
  */
-void PartnerLinks::hidePerson(int index) {
-    index = dlx.links[index].down;
+void PartnerLinks::hidePerson(int indexInPair) {
+    indexInPair = dlx.links[indexInPair].down;
 
-    personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
+    personName p1 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
     dlx.lookupTable[p1.right].left = p1.left;
     dlx.lookupTable[p1.left].right = p1.right;
 
     // Only hide pairings for this person.
-    hidePersonPairings(index);
+    hidePersonPairings(indexInPair);
 
-    index = toPairIndex(index);
+    indexInPair = toPairIndex(indexInPair);
     // Partner will only disapear in this instance of the pairing, not all other instances.
-    personLink cur = dlx.links[index];
+    personLink cur = dlx.links[indexInPair];
     dlx.links[cur.up].down = cur.down;
     dlx.links[cur.down].up = cur.up;
     dlx.links[cur.topOrLen].topOrLen--;
@@ -384,21 +378,20 @@ void PartnerLinks::hidePerson(int index) {
  * @brief unhidePerson  undoes the work of covering a person, reinstating all possible pairings
  *                      that include this person. Will undo the same option chosen in
  *                      hidePerson() if given the same index.
- * @param index         the index of the person to uncover. Chooses option below this index.
+ * @param indexInPair   the index of the person to uncover. Chooses option below this index.
  */
-void PartnerLinks::unhidePerson(int index) {
-    index = dlx.links[index].down;
+void PartnerLinks::unhidePerson(int indexInPair) {
+    indexInPair = dlx.links[indexInPair].down;
+    personName p1 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
+    dlx.lookupTable[p1.left].right = dlx.links[indexInPair].topOrLen;
+    dlx.lookupTable[p1.right].left = dlx.links[indexInPair].topOrLen;
 
-    personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
-    dlx.lookupTable[p1.left].right = dlx.links[index].topOrLen;
-    dlx.lookupTable[p1.right].left = dlx.links[index].topOrLen;
+    unhidePersonPairings(indexInPair);
 
-    unhidePersonPairings(index);
-
-    index = toPairIndex(index);
-    personLink cur = dlx.links[index];
-    dlx.links[cur.up].down = index;
-    dlx.links[cur.down].up = index;
+    indexInPair = toPairIndex(indexInPair);
+    personLink cur = dlx.links[indexInPair];
+    dlx.links[cur.up].down = indexInPair;
+    dlx.links[cur.down].up = indexInPair;
     dlx.links[cur.topOrLen].topOrLen++;
 }
 
@@ -408,35 +401,34 @@ void PartnerLinks::unhidePerson(int index) {
  *                           the Pair. This is helpful for proof of correct choices. Covering a
  *                           Pair means that both people disappear from all other possible
  *                           pairings, thus eliminating those options.
- * @param index              the index of the weighted pair we cover. Chooses option below this.
+ * @param indexInPair        the index of the weighted pair we cover. Chooses option below this.
  * @return                   an std::pair of the weight of the pair and their names.
  */
-std::pair<int,Pair> PartnerLinks::coverWeightedPair(int index) {
-    index = dlx.links[index].down;
+std::pair<int,Pair> PartnerLinks::coverWeightedPair(int indexInPair) {
 
-    personName p1 = dlx.lookupTable[dlx.links[index].topOrLen];
+    personName p1 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
     dlx.lookupTable[p1.right].left = p1.left;
     dlx.lookupTable[p1.left].right = p1.right;
 
     // p1 needs to dissapear from all other pairings.
-    hidePersonPairings(index);
+    hidePersonPairings(indexInPair);
 
 
     // We can pick up the weight for this pairing in a O(1) sweep to report back.
     std::pair<int,Pair> result = {};
-    if (dlx.links[index + 1].topOrLen < 0) {
-        result.first = std::abs(dlx.links[index - 2].topOrLen);
-        index--;
+    if (dlx.links[indexInPair + 1].topOrLen < 0) {
+        result.first = std::abs(dlx.links[indexInPair - 2].topOrLen);
+        indexInPair--;
     } else {
-        result.first = std::abs(dlx.links[index - 1].topOrLen);
-        index++;
+        result.first = std::abs(dlx.links[indexInPair - 1].topOrLen);
+        indexInPair++;
     }
 
-    personName p2 = dlx.lookupTable[dlx.links[index].topOrLen];
+    personName p2 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
     dlx.lookupTable[p2.right].left = p2.left;
     dlx.lookupTable[p2.left].right = p2.right;
     // p2 needs to dissapear from all other pairings.
-    hidePersonPairings(index);
+    hidePersonPairings(indexInPair);
 
     result.second = {p1.name,p2.name};
     return result;
@@ -908,7 +900,7 @@ STUDENT_TEST("Covering a person in weighted will only take that person's pairs o
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    matches.hidePerson(1);
+    matches.hidePerson(5);
 
     Vector<PartnerLinks::personName> lookupCoverA {
         {"",3,2},{"A",0,2},{"B",0,3},{"C",2,0},
@@ -934,13 +926,13 @@ STUDENT_TEST("Covering a person in weighted will only take that person's pairs o
     EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxCoverA);
 
-    matches.unhidePerson(1);
+    matches.unhidePerson(5);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
 }
 
-STUDENT_TEST("All weights are unique so we can no that we report the right weight and pair.") {
+STUDENT_TEST("All weights are unique so we can know that we report the right weight and pair.") {
     /* Here's the world:
      *                  3
      *               A-----B
@@ -985,7 +977,7 @@ STUDENT_TEST("All weights are unique so we can no that we report the right weigh
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     // Cover A, this will select option 2, partners are AB.
-    std::pair<int,Pair> match = matches.coverWeightedPair(1);
+    std::pair<int,Pair> match = matches.coverWeightedPair(6);
     EXPECT_EQUAL(match.first, 3);
     EXPECT_EQUAL(match.second, {"A","B"});
 
@@ -1623,7 +1615,7 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A.") {
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     // Cover A, this will select option 2, partners are AB.
-    Pair match = matches.coverPairing(1);
+    Pair match = matches.coverPairing(6);
     EXPECT_EQUAL(match, {"A","B"});
 
     Vector<PartnerLinks::personName> lookupCoverA {
@@ -1694,7 +1686,7 @@ STUDENT_TEST("There are no perfect pairings, any matching will fail.") {
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPairing(1);
+    Pair match = matches.coverPairing(5);
     EXPECT_EQUAL(match, {"A", "B"});
     Vector<PartnerLinks::personName> lookupA {
         {"",3,3},{"A",0,2},{"B",0,3},{"C",0,0},
@@ -1769,7 +1761,7 @@ STUDENT_TEST("We will quickly learn that A-B is a bad pairing that leaves C out.
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPairing(1);
+    Pair match = matches.coverPairing(6);
     EXPECT_EQUAL(match, {"A", "B"});
     Vector<PartnerLinks::personName> lookupCoverA {
         {"",4,3},{"A",0,2},{"B",0,3},{"C",0,4},{"D",3,0}
@@ -1846,7 +1838,7 @@ STUDENT_TEST("A-D is a good pairing.") {
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPairing(6);
+    Pair match = matches.coverPairing(9);
     EXPECT_EQUAL(match, {"A", "D"});
     Vector<PartnerLinks::personName> lookupCoverA {
         {"",3,2},{"A",0,2},{"B",0,3},{"C",2,0},{"D",3,0}
@@ -1928,7 +1920,7 @@ STUDENT_TEST("Cover A in a world where everyone has two connections.") {
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 
-    Pair match = matches.coverPairing(1);
+    Pair match = matches.coverPairing(8);
     EXPECT_EQUAL(match, {"A","D"});
 
     Vector<PartnerLinks::personName> lookupCoverA {
@@ -2009,7 +2001,7 @@ STUDENT_TEST("A-D then B-C solves the world.") {
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPairing(6);
+    Pair match = matches.coverPairing(9);
     EXPECT_EQUAL(match, {"A", "D"});
     Vector<PartnerLinks::personName> lookupCoverA {
         {"",3,2},{"A",0,2},{"B",0,3},{"C",2,0},{"D",3,0}
@@ -2037,7 +2029,7 @@ STUDENT_TEST("A-D then B-C solves the world.") {
     EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
-    match = matches.coverPairing(2);
+    match = matches.coverPairing(12);
     EXPECT_EQUAL(match, {"B", "C"});
     Vector<PartnerLinks::personName> lookupCoverB {
         {"",0,0},{"A",0,2},{"B",0,3},{"C",0,0},{"D",3,0}
@@ -2115,8 +2107,8 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A then uncover."
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    // Cover A, this will select option 2, partners are AB.
-    Pair match = matches.coverPairing(1);
+    // Cover A, partners are AB.
+    Pair match = matches.coverPairing(6);
     EXPECT_EQUAL(match, {"A","B"});
 
     Vector<PartnerLinks::personName> lookupCoverA {
@@ -2144,7 +2136,7 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A then uncover."
     EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
-    matches.uncoverPairing(1);
+    matches.uncoverPairing(6);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
@@ -2192,7 +2184,7 @@ STUDENT_TEST("There are no perfect pairings, any matching will fail. Cover uncov
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPairing(1);
+    Pair match = matches.coverPairing(5);
     EXPECT_EQUAL(match, {"A", "B"});
     Vector<PartnerLinks::personName> lookupA {
         {"",3,3},{"A",0,2},{"B",0,3},{"C",0,0},
@@ -2220,7 +2212,7 @@ STUDENT_TEST("There are no perfect pairings, any matching will fail. Cover uncov
     EXPECT_EQUAL(lookupA, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
-    matches.uncoverPairing(1);
+    matches.uncoverPairing(5);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 }
@@ -2271,7 +2263,7 @@ STUDENT_TEST("We will quickly learn that A-B is a bad pairing that leaves C out.
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPairing(1);
+    Pair match = matches.coverPairing(6);
     EXPECT_EQUAL(match, {"A", "B"});
     Vector<PartnerLinks::personName> lookupCoverA {
         {"",4,3},{"A",0,2},{"B",0,3},{"C",0,4},{"D",3,0}
@@ -2348,7 +2340,7 @@ STUDENT_TEST("A-D is a good pairing. Cover then uncover.") {
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
-    Pair match = matches.coverPairing(6);
+    Pair match = matches.coverPairing(9);
     EXPECT_EQUAL(match, {"A", "D"});
     Vector<PartnerLinks::personName> lookupCoverA {
         {"",3,2},{"A",0,2},{"B",0,3},{"C",2,0},{"D",3,0}
@@ -2376,7 +2368,7 @@ STUDENT_TEST("A-D is a good pairing. Cover then uncover.") {
     EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
-    matches.uncoverPairing(6);
+    matches.uncoverPairing(9);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 }
@@ -2434,7 +2426,7 @@ STUDENT_TEST("Cover A in a world where everyone has two connections then uncover
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 
-    Pair match = matches.coverPairing(1);
+    Pair match = matches.coverPairing(8);
     EXPECT_EQUAL(match, {"A","D"});
 
     Vector<PartnerLinks::personName> lookupCoverA {
@@ -2468,7 +2460,7 @@ STUDENT_TEST("Cover A in a world where everyone has two connections then uncover
     EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
-    matches.uncoverPairing(1);
+    matches.uncoverPairing(8);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 }
@@ -2526,7 +2518,7 @@ STUDENT_TEST("Depth two cover and uncover. Cover A then B then uncover B.") {
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 
-    Pair match = matches.coverPairing(1);
+    Pair match = matches.coverPairing(8);
     EXPECT_EQUAL(match, {"A","D"});
 
     Vector<PartnerLinks::personName> lookupCoverA {
@@ -2561,7 +2553,7 @@ STUDENT_TEST("Depth two cover and uncover. Cover A then B then uncover B.") {
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
     // Pair B C but that is a bad choice so we will have to uncover.
-    match = matches.coverPairing(2);
+    match = matches.coverPairing(14);
     EXPECT_EQUAL(match, {"B","C"});
 
     Vector<PartnerLinks::personName> lookupCoverB {
@@ -2595,11 +2587,11 @@ STUDENT_TEST("Depth two cover and uncover. Cover A then B then uncover B.") {
     EXPECT_EQUAL(lookupCoverB, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverB, matches.dlx.links);
 
-    matches.uncoverPairing(2);
+    matches.uncoverPairing(14);
     EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
-    matches.uncoverPairing(1);
+    matches.uncoverPairing(8);
     EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 }
