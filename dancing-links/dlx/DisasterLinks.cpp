@@ -63,7 +63,7 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
     /* Try to cover this city by first supplying the most connected city nearby. Try cities with
      * successively fewer connections then if all else fails supply the isolated city itself.
      */
-    for (int cur = chosenIndex; dlx.grid[cur].down != chosenIndex; cur = dlx.grid[cur].down) {
+    for (int cur = dlx.grid[chosenIndex].down; cur != chosenIndex; cur = dlx.grid[cur].down) {
 
         std::string supplyLocation = coverCity(cur);
 
@@ -121,10 +121,8 @@ void DisasterLinks::fillConfigurations(int numSupplies,
         return;
     }
     int chosenIndex = chooseIsolatedCity();
-    if (chosenIndex == -1) {
-        return;
-    }
-    for (int cur = chosenIndex; dlx.grid[cur].down != chosenIndex; cur = dlx.grid[cur].down) {
+
+    for (int cur = dlx.grid[chosenIndex].down; cur != chosenIndex; cur = dlx.grid[cur].down) {
 
         std::string supplyLocation = coverCity(cur);
         suppliedCities.add(supplyLocation);
@@ -147,7 +145,7 @@ void DisasterLinks::fillConfigurations(int numSupplies,
  *                              - If that fails we try the next adjacent city with most connections.
  *                              - Finally, if all other neighbors fail, try to supply the city
  *                                in question, not neighbors.
- * @return            the index of the city we are selecting to attempt to cover.
+ * @return                    the index of the city we are selecting to attempt to cover.
  */
 int DisasterLinks::chooseIsolatedCity() {
     int min = INT_MAX;
@@ -163,58 +161,57 @@ int DisasterLinks::chooseIsolatedCity() {
 }
 
 /**
- * @brief coverCity  covers a city with the option below the specified index. A city in question
- *                   may be covered by supplying a neighbor or supplying the city itself.
- * @param index      the index we start at for an item. We select the option beneath this index.
- * @return           the string name of the option we used to cover a city, neighbor or city.
+ * @brief coverCity      covers a city with the index of option we found it. A city in question
+ *                       may be covered by supplying a neighbor or supplying the city itself.
+ * @param indexInOption  the index we start at for an item in the supply option(row) we found it.
+ * @return               the string name of the option we used to cover a city, neighbor or city.
  */
-std::string DisasterLinks::coverCity(int index) {
+std::string DisasterLinks::coverCity(int indexInOption) {
     /* Be sure to leave the row of the option we supply unchanged. Splice these cities out of all
      * other options in which they can be found above and below the current row.
      */
-    int start = dlx.grid[index].down;
-    index = start;
+    int i = indexInOption;
     std::string result = "";
     do {
-        int top = dlx.grid[index].topOrLen;
+        int top = dlx.grid[i].topOrLen;
         if (top <= 0) {
             /* We are always garunteed to pass the spacer tile so we will collect the name of the
              * city we have chosen to supply to prove our algorithm chose correctly.
             */
             result = dlx.lookupTable[std::abs(top)].name;
         } else {
-            hideCityCol(dlx.grid[index]);
+            hideCityCol(i);
             dlx.lookupTable[dlx.lookupTable[top].left].right = dlx.lookupTable[top].right;
             dlx.lookupTable[dlx.lookupTable[top].right].left = dlx.lookupTable[top].left;
         }
-        index = dlx.grid[index].right;
-    } while (index != start);
+        i = dlx.grid[i].right;
+    } while (i != indexInOption);
 
     return result;
 }
 
 /**
- * @brief uncoverCity  uncovers a city if that choice of option did not lead to a covered
- *                     network. Uncovers the same option that was selected for coverage if given
- *                     the same index.
- * @param index        the index of the item we covered with the option below the index.
+ * @brief uncoverCity    uncovers a city if that choice of option did not lead to a covered
+ *                       network. Uncovers the same option that was selected for coverage if given
+   *                     the same index.
+ * @param indexInOption  the index we start at for an item in the supply option(row) we found it.
  */
-void DisasterLinks::uncoverCity(int index) {
+void DisasterLinks::uncoverCity(int indexInOption) {
     /* To uncover a city we take the supplies away from the option in which we found this city. We
      * then must go up and down for every city covered by this supply location and put the cities
      * back in all the other sets. Original row was not altered so no other restoration necessary.
      */
-    int start = dlx.grid[dlx.grid[index].down].left;
-    index = start;
+    indexInOption = dlx.grid[indexInOption].left;
+    int i = indexInOption;
     do {
-        int top = dlx.grid[index].topOrLen;
+        int top = dlx.grid[i].topOrLen;
         if (top > 0) {
             dlx.lookupTable[dlx.lookupTable[top].left].right = top;
             dlx.lookupTable[dlx.lookupTable[top].right].left = top;
-            unhideCityCol(dlx.grid[index], index);
+            unhideCityCol(i);
         }
-        index = dlx.grid[index].left;
-    } while (index != start);
+        i = dlx.grid[i].left;
+    } while (i != indexInOption);
 }
 
 /**
@@ -222,29 +219,26 @@ void DisasterLinks::uncoverCity(int index) {
  *                     remove these cities from any other sets that contain them to make them
  *                     disappear from the world as uncovered cities. However, we keep them as
  *                     available cities to supply.
- * @param start        the city we start at in a row. We traverse downward to snip city out.
+ * @param indexInCol   the starting index in the option we are in. It is also a city's column.
  */
-void DisasterLinks::hideCityCol(const DisasterLinks::cityItem& start) {
-    cityItem cur = start;
-    while ((cur = dlx.grid[cur.down]) != start) {
+void DisasterLinks::hideCityCol(int indexInCol) {
+    for (int i = dlx.grid[indexInCol].down; i != indexInCol; i = dlx.grid[i].down) {
+        cityItem cur = dlx.grid[i];
         dlx.grid[cur.right].left = cur.left;
         dlx.grid[cur.left].right = cur.right;
-   }
+    }
 }
 
 /**
  * @brief unhideCityCol  when an option fails, we must put the cities it covers back into all
  *                       the sets to which they belong. This puts the cities back in network.
- * @param start          the city in the option we start at. We traverse upward to unhide.
- * @param index          the index we need cities to point to in order to restore network.
+ * @param indexInCol     the starting index in the option we are in. It is also a city's column.
  */
-void DisasterLinks::unhideCityCol(const DisasterLinks::cityItem& start, int index) {
-    cityItem cur = start;
-    index = cur.up;
-    while ((cur = dlx.grid[index]) != start) {
-        dlx.grid[cur.right].left = index;
-        dlx.grid[cur.left].right = index;
-        index = cur.up;
+void DisasterLinks::unhideCityCol(int indexInCol) {
+    for (int i = dlx.grid[indexInCol].up; i != indexInCol; i = dlx.grid[i].up) {
+        cityItem cur = dlx.grid[i];
+        dlx.grid[cur.right].left = i;
+        dlx.grid[cur.left].right = i;
     }
 }
 
@@ -658,7 +652,7 @@ STUDENT_TEST("Supplying A will only cover A and C. C remains available supply lo
     EXPECT_EQUAL(network.dlx.lookupTable, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 
-    std::string supplyLocation = network.coverCity(5);
+    std::string supplyLocation = network.coverCity(9);
 
     EXPECT_EQUAL(supplyLocation, "A");
 
@@ -721,8 +715,7 @@ STUDENT_TEST("Supplying B will only cover B and C. Make sure splicing from looku
     EXPECT_EQUAL(network.dlx.lookupTable, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 
-    // This covers down from index 6 AKA accessing item B with option B.
-    std::string supplyLocation = network.coverCity(6);
+    std::string supplyLocation = network.coverCity(12);
 
     EXPECT_EQUAL(supplyLocation, "B");
 
@@ -787,8 +780,7 @@ STUDENT_TEST("Supplying C will cover all. Make sure splicing from lookupTable wo
     EXPECT_EQUAL(network.dlx.lookupTable, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 
-    // Any item we choose from the header will select option C in the first row of options.
-    std::string supplyLocation = network.coverCity(1);
+    std::string supplyLocation = network.coverCity(5);
 
     EXPECT_EQUAL(supplyLocation, "C");
 
@@ -857,7 +849,7 @@ STUDENT_TEST("Supplying A will only cover A and C with one supply. Uncover to tr
     EXPECT_EQUAL(network.dlx.lookupTable, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 
-    std::string supplyLocation = network.coverCity(5);
+    std::string supplyLocation = network.coverCity(9);
 
     EXPECT_EQUAL(supplyLocation, "A");
 
@@ -888,7 +880,7 @@ STUDENT_TEST("Supplying A will only cover A and C with one supply. Uncover to tr
     EXPECT_EQUAL(network.dlx.grid, dlxCoverA);
 
     // We can just check it against our original array. All state should be returned to normal.
-    network.uncoverCity(5);
+    network.uncoverCity(9);
     EXPECT_EQUAL(network.dlx.lookupTable, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 }
@@ -947,7 +939,7 @@ STUDENT_TEST("Simple Ethene cover B, large item wipe out with D remaining an opt
     EXPECT_EQUAL(network.dlx.lookupTable, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 
-    std::string supplyLocation = network.coverCity(2);
+    std::string supplyLocation = network.coverCity(8);
 
     EXPECT_EQUAL(supplyLocation, "B");
 
@@ -984,7 +976,7 @@ STUDENT_TEST("Simple Ethene cover B, large item wipe out with D remaining an opt
     };
     EXPECT_EQUAL(network.dlx.lookupTable, headersCoverB);
     EXPECT_EQUAL(network.dlx.grid, dlxCoverB);
-    network.uncoverCity(2);
+    network.uncoverCity(8);
     EXPECT_EQUAL(network.dlx.lookupTable, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 }
@@ -1045,7 +1037,7 @@ STUDENT_TEST("Simple Ethene cover A with option D.") {
     EXPECT_EQUAL(network.dlx.lookupTable, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 
-    std::string supplyLocation = network.coverCity(1);
+    std::string supplyLocation = network.coverCity(13);
 
     EXPECT_EQUAL(supplyLocation, "D");
 
@@ -1083,7 +1075,7 @@ STUDENT_TEST("Simple Ethene cover A with option D.") {
     EXPECT_EQUAL(network.dlx.lookupTable, headersCoverD);
     EXPECT_EQUAL(network.dlx.grid, dlxCoverD);
 
-    network.uncoverCity(1);
+    network.uncoverCity(13);
     EXPECT_EQUAL(network.dlx.lookupTable, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 }
@@ -1141,7 +1133,7 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
     EXPECT_EQUAL(network.dlx.lookupTable, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 
-    std::string supplyLocation = network.coverCity(13);
+    std::string supplyLocation = network.coverCity(18);
 
     EXPECT_EQUAL(supplyLocation, "A");
 
@@ -1179,7 +1171,7 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
     EXPECT_EQUAL(network.dlx.lookupTable, headersCoverA);
     EXPECT_EQUAL(network.dlx.grid, dlxCoverA);
 
-    supplyLocation = network.coverCity(15);
+    supplyLocation = network.coverCity(21);
 
     EXPECT_EQUAL(supplyLocation, "C");
 
@@ -1216,10 +1208,10 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
 
     EXPECT_EQUAL(network.dlx.lookupTable, headersCoverC);
     EXPECT_EQUAL(network.dlx.grid, dlxCoverC);
-    network.uncoverCity(15);
+    network.uncoverCity(21);
     EXPECT_EQUAL(network.dlx.lookupTable, headersCoverA);
     EXPECT_EQUAL(network.dlx.grid, dlxCoverA);
-    network.uncoverCity(13);
+    network.uncoverCity(18);
     EXPECT_EQUAL(network.dlx.lookupTable, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 

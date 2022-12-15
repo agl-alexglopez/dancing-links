@@ -254,20 +254,20 @@ private:
     int chooseIsolatedCity();
 
     /**
-     * @brief coverCity  covers a city with the option below the specified index. A city in question
-     *                   may be covered by supplying a neighbor or supplying the city itself.
-     * @param index      the index we start at for an item. We select the option beneath this index.
-     * @return           the string name of the option we used to cover a city, neighbor or city.
+     * @brief coverCity      covers a city in the option indicated by the index. A city in question
+     *                       may be covered by supplying a neighbor or supplying the city itself.
+     * @param indexInOption  the index we start at for item in the supply option(row) we found it.
+     * @return               the string of the option we used to cover a city, neighbor or city.
      */
-    std::string coverCity(int index);
+    std::string coverCity(int indexInOption);
 
     /**
-     * @brief uncoverCity  uncovers a city if that choice of option did not lead to a covered
-     *                     network. Uncovers the same option that was selected for coverage if given
-     *                     the same index.
-     * @param index        the index of the item we covered with the option below the index.
+     * @brief uncoverCity    uncovers a city if that choice of option did not lead to a covered
+     *                       network. Uncovers same option that was selected for coverage if given
+     *                       the same index.
+     * @param indexInOption  the index we start at for item in the supply option(row) we found it.
      */
-    void uncoverCity(int index);
+    void uncoverCity(int indexInOption);
 
     /**
      * @brief hideCityCol  when we supply an option it covers itself and connected cities. We must
@@ -276,7 +276,7 @@ private:
      *                     available cities to supply.
      * @param start        the city we start at in a row. We traverse downward to snip city out.
      */
-    void hideCityCol(const DisasterLinks::cityItem& start);
+    void hideCityCol(int indexInCol);
 
     /**
      * @brief unhideCityCol  when an option fails, we must put the cities it covers back into all
@@ -284,7 +284,7 @@ private:
      * @param start          the city in the option we start at. We traverse upward to unhide.
      * @param index          the index we need cities to point to in order to restore network.
      */
-    void unhideCityCol(const DisasterLinks::cityItem& start, int index);
+    void unhideCityCol(int indexInCol);
 
 
     /* * * * * * * * * * * * * *    Logic to Build the Dancing Links Structure    * * * * * * * * */
