@@ -117,9 +117,7 @@ void DisasterTags::fillConfigurations(int numSupplies,
         return;
     }
     int chosenIndex = chooseIsolatedCity();
-    if (chosenIndex == -1) {
-        return;
-    }
+
     for (int cur = chosenIndex; dlx.grid[cur].down != chosenIndex; cur = dlx.grid[cur].down) {
 
         std::string supplyLocation = coverCity(cur, numSupplies);
