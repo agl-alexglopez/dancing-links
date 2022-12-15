@@ -203,14 +203,11 @@ void PartnerLinks::uncoverPairing(int indexInPair) {
  * @param indexInPair         the index of the person we are hiding in the selected option.
  */
 void PartnerLinks::hidePersonPairings(int indexInPair) {
-    int start = indexInPair;
-    while ((indexInPair = dlx.links[indexInPair].down) != start) {
-        // We need this guard to prevent splicing while on a column header.
-        if (indexInPair > dlx.lookupTable.size()) {
-
+    for (int i = dlx.links[indexInPair].down; i != indexInPair; i = dlx.links[i].down) {
+         // We need this guard to prevent splicing while on a column header.
+        if (i > dlx.lookupTable.size()) {
             // In case the other partner is to the left, just decrement index to go left.
-            personLink cur = dlx.links[toPairIndex(indexInPair)];
-
+            personLink cur = dlx.links[toPairIndex(i)];
             dlx.links[cur.up].down = cur.down;
             dlx.links[cur.down].up = cur.up;
             dlx.links[cur.topOrLen].topOrLen--;
@@ -226,14 +223,10 @@ void PartnerLinks::hidePersonPairings(int indexInPair) {
  */
 void PartnerLinks::unhidePersonPairings(int indexInPair) {
     // The direction does not truly matter but I distinguish this from hide by going upwards.
-    int start = indexInPair;
-    while ((indexInPair = dlx.links[indexInPair].up) != start) {
-        if (indexInPair > dlx.lookupTable.size()) {
-
-            int partnerIndex = toPairIndex(indexInPair);
-
+    for (int i = dlx.links[indexInPair].up; i != indexInPair; i = dlx.links[i].up) {
+        if (i > dlx.lookupTable.size()) {
+            int partnerIndex = toPairIndex(i);
             personLink cur = dlx.links[partnerIndex];
-
             dlx.links[cur.up].down = partnerIndex;
             dlx.links[cur.down].up = partnerIndex;
             dlx.links[cur.topOrLen].topOrLen++;
