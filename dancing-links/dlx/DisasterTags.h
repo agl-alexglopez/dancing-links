@@ -182,6 +182,7 @@ public:
      */
     Set<Set<std::string>> getAllDisasterConfigurations(int numSupplies);
 
+
     /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
 
 
@@ -250,24 +251,24 @@ private:
     int chooseIsolatedCity();
 
     /**
-     * @brief coverCity  covers a city wit supplies and all of its neighbors. All cities are tagged
-     *                   with a supply number equivalent to the current depth of the recursive
-     *                   search. This tells us which cities are now unsafe if distributing that
-     *                   exact supply did not work out and it must be removed later.
-     * @param index      the index for the current city we are trying to cover.
-     * @param supplyTag  uses the number of supplies remaining as a unique tag for recursive depth.
-     * @return           the name of the city holding the supplies.
+     * @brief coverCity      covers a city wit supplies and all of its neighbors. All cities tagged
+     *                       with a supply number equivalent to the current depth of the recursive
+     *                       search. This tells us which cities are now unsafe if distributing that
+     *                       exact supply did not work out and it must be removed later.
+     * @param indexInOption  the index for the current city we are trying to cover.
+     * @param supplyTag      uses number of supplies remaining as a unique tag for recursive depth.
+     * @return               the name of the city holding the supplies.
      */
-    std::string coverCity(int index, const int supplyTag);
+    std::string coverCity(int indexInOption, const int supplyTag);
 
     /**
-     * @brief uncoverCity  uncovers a city if that choice of option did not lead to a covered
-     *                     network. Uncovers the same option that was selected for coverage if given
-     *                     the same index. Will only uncover those cities that were covered by
-     *                     the previously given supply.
-     * @param index        the index of the item we covered with the option below the index.
+     * @brief uncoverCity    uncovers a city if that choice of option did not lead to a covered
+     *                       network. Uncovers same option that was selected for coverage if given
+     *                       the same index. Will only uncover those cities that were covered by
+     *                       the previously given supply.
+     * @param indexInOption  the index of the item we covered with the option below the index.
      */
-    void uncoverCity(int index);
+    void uncoverCity(int indexInOption);
 
 
     /* * * * * * * * * *    Constructors for Dancing Links Building     * * * * * * * * * * * * * */

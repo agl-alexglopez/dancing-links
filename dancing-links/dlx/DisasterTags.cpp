@@ -59,7 +59,7 @@ bool DisasterTags::isDLXCovered(int numSupplies, Set<std::string>& supplyLocatio
     /* Try to cover this city by first supplying the most connected city nearby. Try cities with
      * successively fewer connections then if all else fails supply the isolated city itself.
      */
-    for (int cur = chosenIndex; dlx.grid[cur].down != chosenIndex; cur = dlx.grid[cur].down) {
+    for (int cur = dlx.grid[chosenIndex].down; cur != chosenIndex; cur = dlx.grid[cur].down) {
 
         // Tag every city with the supply number so we know which cities to uncover if this fails.
         std::string supplyLocation = coverCity(cur, numSupplies);
@@ -118,7 +118,7 @@ void DisasterTags::fillConfigurations(int numSupplies,
     }
     int chosenIndex = chooseIsolatedCity();
 
-    for (int cur = chosenIndex; dlx.grid[cur].down != chosenIndex; cur = dlx.grid[cur].down) {
+    for (int cur = dlx.grid[chosenIndex].down; cur != chosenIndex; cur = dlx.grid[cur].down) {
 
         std::string supplyLocation = coverCity(cur, numSupplies);
         suppliedCities.add(supplyLocation);
@@ -156,26 +156,25 @@ int DisasterTags::chooseIsolatedCity() {
 }
 
 /**
- * @brief coverCity  covers a city wit supplies and all of its neighbors. All cities are tagged
- *                   with a supply number equivalent to the current depth of the recursive
- *                   search. This tells us which cities are now unsafe if distributing that
- *                   exact supply did not work out and it must be removed later.
- * @param index      the index for the current city we are trying to cover.
- * @param supplyTag  uses the number of supplies remaining as a unique tag for recursive depth.
- * @return           the name of the city holding the supplies.
+ * @brief coverCity      covers a city wit supplies and all of its neighbors. All cities tagged
+ *                       with a supply number equivalent to the current depth of the recursive
+ *                       search. This tells us which cities are now unsafe if distributing that
+ *                       exact supply did not work out and it must be removed later.
+ * @param indexInOption  the index for the current city we are trying to cover.
+ * @param supplyTag      uses number of supplies remaining as a unique tag for recursive depth.
+ * @return               the name of the city holding the supplies.
  */
-std::string DisasterTags::coverCity(int index, const int supplyTag) {
-    int start = dlx.grid[index].down;
-    index = start;
+std::string DisasterTags::coverCity(int indexInOption, const int supplyTag) {
+    int i = indexInOption;
     std::string result = "";
     do {
-        int top = dlx.grid[index].topOrLen;
+        int top = dlx.grid[i].topOrLen;
         if (top <= 0) {
             /* We are always garunteed to pass the spacer tile so we will collect the name of the
              * city we have chosen to supply to prove our algorithm chose correctly.
             */
-            index = dlx.grid[index].up;
-            result = dlx.table[std::abs(dlx.grid[index - 1].topOrLen)].name;
+            i = dlx.grid[i].up;
+            result = dlx.table[std::abs(dlx.grid[i - 1].topOrLen)].name;
         } else {
             /* Cities are "tagged" at the recursive depth at which they were given supplies, the
              * number of supplies remaining when distributed. Only give supplies to cities that
@@ -186,45 +185,44 @@ std::string DisasterTags::coverCity(int index, const int supplyTag) {
                 dlx.table[dlx.table[top].left].right = dlx.table[top].right;
                 dlx.table[dlx.table[top].right].left = dlx.table[top].left;
             }
-            dlx.grid[index++].supplyTag = supplyTag;
+            dlx.grid[i++].supplyTag = supplyTag;
         }
-    } while (index != start);
+    } while (i != indexInOption);
 
     return result;
 }
 
 /**
- * @brief uncoverCity  uncovers a city if that choice of option did not lead to a covered
- *                     network. Uncovers the same option that was selected for coverage if given
- *                     the same index. Will only uncover those cities that were covered by
- *                     the previously given supply.
- * @param index        the index of the item we covered with the option below the index.
+ * @brief uncoverCity    uncovers a city if that choice of option did not lead to a covered
+ *                       network. Uncovers same option that was selected for coverage if given
+ *                       the same index. Will only uncover those cities that were covered by
+ *                       the previously given supply.
+ * @param indexInOption  the index of the item we covered with the option below the index.
  */
-void DisasterTags::uncoverCity(int index) {
+void DisasterTags::uncoverCity(int indexInOption) {
     /* We must go in the reverse direction we started, fixing the first city we covered in the
      * lookup table last. This a requirement due to leaving the pointers of doubly linked left-right
      * list in place. Otherwise, table will not be fixed correctly.
      */
-    int start = dlx.grid[index].down - 1;
-    index = start;
+    int i = --indexInOption;
     do {
-        int top = dlx.grid[index].topOrLen;
+        int top = dlx.grid[i].topOrLen;
         if (top < 0) {
-            index = dlx.grid[index].down;
+            i = dlx.grid[i].down;
         } else {
             /* This is the key optimization of this algorithm. Only reset a city to uncovered if
              * we know we are taking away the same supply we gave when covering this city. A simple
              * O(1) check beats an up,down,left,right pointer implementation that needs to splice
              * from a left right doubly linked list for an entire column.
              */
-            if (dlx.grid[top].supplyTag == dlx.grid[index].supplyTag) {
+            if (dlx.grid[top].supplyTag == dlx.grid[i].supplyTag) {
                 dlx.grid[top].supplyTag = 0;
                 dlx.table[dlx.table[top].left].right = top;
                 dlx.table[dlx.table[top].right].left = top;
             }
-            dlx.grid[index--].supplyTag = 0;
+            dlx.grid[i--].supplyTag = 0;
         }
-    } while (index != start);
+    } while (i != indexInOption);
 }
 
 
@@ -625,7 +623,7 @@ STUDENT_TEST("Cover uncover A should only cover A and C from header list.") {
     EXPECT_EQUAL(network.dlx.table, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 
-    std::string location = network.coverCity(5,1);
+    std::string location = network.coverCity(9,1);
     EXPECT_EQUAL(location, "A");
     Vector<DisasterTags::cityName> headersCoverA {
         {"",  2, 2},
@@ -647,7 +645,7 @@ STUDENT_TEST("Cover uncover A should only cover A and C from header list.") {
     EXPECT_EQUAL(network.dlx.table, headersCoverA);
     EXPECT_EQUAL(network.dlx.grid, dlxCoverA);
 
-    network.uncoverCity(5);
+    network.uncoverCity(9);
     EXPECT_EQUAL(network.dlx.table, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 }
@@ -700,7 +698,7 @@ STUDENT_TEST("Recursive depth field prevents uncovering cities that should remai
     EXPECT_EQUAL(network.dlx.table, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 
-    std::string location = network.coverCity(1,1);
+    std::string location = network.coverCity(13,1);
     EXPECT_EQUAL(location, "D");
     Vector<DisasterTags::cityName> headersCoverD = {
         {"",  6, 5},
@@ -731,7 +729,7 @@ STUDENT_TEST("Recursive depth field prevents uncovering cities that should remai
     EXPECT_EQUAL(network.dlx.table, headersCoverD);
     EXPECT_EQUAL(network.dlx.grid, dlxCoverD);
 
-    location = network.coverCity(5,2);
+    location = network.coverCity(10,2);
     EXPECT_EQUAL(location, "B");
     Vector<DisasterTags::cityName> headersCoverB = {
         {"",  0, 0},
@@ -762,10 +760,10 @@ STUDENT_TEST("Recursive depth field prevents uncovering cities that should remai
     EXPECT_EQUAL(network.dlx.table, headersCoverB);
     EXPECT_EQUAL(network.dlx.grid, dlxCoverB);
 
-    network.uncoverCity(5);
+    network.uncoverCity(10);
     EXPECT_EQUAL(network.dlx.table, headersCoverD);
     EXPECT_EQUAL(network.dlx.grid, dlxCoverD);
-    network.uncoverCity(1);
+    network.uncoverCity(13);
     EXPECT_EQUAL(network.dlx.table, networkHeaders);
     EXPECT_EQUAL(network.dlx.grid, dlxItems);
 }
