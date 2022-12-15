@@ -439,7 +439,7 @@ namespace {
             }
         }
         int optimalSupplies = result.size();
-        Set<Set<string>> allFoundConfigs = findAllSupplySchemes(test.network, optimalSupplies);
+        Set<Set<string>> allFoundConfigs = network.getAllDisasterConfigurations(optimalSupplies);
         for (const auto& found : allFoundConfigs) {
             (*allSolutions).push_back(found);
         }
@@ -463,7 +463,7 @@ namespace {
             }
         }
         int optimalSupplies = result.size();
-        Set<Set<string>> allFoundConfigs = findAllSupplySchemes(test.network, optimalSupplies);
+        Set<Set<string>> allFoundConfigs = network.getAllDisasterConfigurations(optimalSupplies);
         for (const auto& found : allFoundConfigs) {
             (*allSolutions).push_back(found);
         }

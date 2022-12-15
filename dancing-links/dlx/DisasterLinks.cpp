@@ -1889,3 +1889,43 @@ STUDENT_TEST("All possible configurations of a square.") {
     Set<Set<std::string>> allFound = grid.getAllDisasterConfigurations(2);
     EXPECT_EQUAL(grid.getAllDisasterConfigurations(2),allConfigs);
 }
+
+STUDENT_TEST("All possible configurations with 4 supplies are many.") {
+    /*
+     *
+     *   H--A     E--I
+     *      |     |
+     *      B--D--F
+     *      |     |
+     *      C     G
+     *
+     */
+    const Map<std::string, Set<std::string>> cities = {
+        {"A", {"H","B"}},
+        {"B", {"A","C","D"}},
+        {"C", {"B"}},
+        {"D", {"B","F"}},
+        {"E", {"F","I"}},
+        {"F", {"D","E","G"}},
+        {"G", {"F"}},
+        {"H", {"A"}},
+        {"I", {"E"}},
+    };
+    DisasterLinks grid(cities);
+    Set<Set<std::string>> allFound = grid.getAllDisasterConfigurations(2);
+    Set<Set<std::string>> allConfigs = {
+        {"A", "B", "E", "F"},
+        {"A", "B", "E", "G"},
+        {"A", "B", "F", "I"},
+        {"A", "B", "G", "I"},
+        {"A", "C", "E", "F"},
+        {"A", "C", "F", "I"},
+        {"B", "E", "F", "H"},
+        {"B", "E", "G", "H"},
+        {"B", "F", "H", "I"},
+        {"B", "G", "H", "I"},
+        {"C", "E", "F", "H"},
+        {"C", "F", "H", "I"}
+    };
+    EXPECT_EQUAL(grid.getAllDisasterConfigurations(4),allConfigs);
+}
