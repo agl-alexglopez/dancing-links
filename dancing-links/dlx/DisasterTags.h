@@ -237,6 +237,7 @@ private:
     void fillConfigurations(int numSupplies,
                             Set<std::string>& suppliedCities,
                             Set<Set<std::string>>& allConfigurations);
+
     /**
      * @brief chooseIsolatedCity  selects a city we are trying to cover either by giving it supplies
      *                            or covering an adjacent neighbor. The selection uses the following

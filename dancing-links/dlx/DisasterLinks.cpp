@@ -1879,7 +1879,7 @@ STUDENT_TEST("All possible configurations of a square.") {
     };
     DisasterLinks grid(cities);
     Set<Set<std::string>> allFound = grid.getAllDisasterConfigurations(2);
-    EXPECT_EQUAL(grid.getAllDisasterConfigurations(2),allConfigs);
+    EXPECT_EQUAL(allFound,allConfigs);
 }
 
 STUDENT_TEST("All possible configurations with 4 supplies are many.") {
@@ -1904,7 +1904,7 @@ STUDENT_TEST("All possible configurations with 4 supplies are many.") {
         {"I", {"E"}},
     };
     DisasterLinks grid(cities);
-    Set<Set<std::string>> allFound = grid.getAllDisasterConfigurations(2);
+    Set<Set<std::string>> allFound = grid.getAllDisasterConfigurations(4);
     Set<Set<std::string>> allConfigs = {
         {"A", "B", "E", "F"},
         {"A", "B", "E", "G"},
@@ -1919,5 +1919,5 @@ STUDENT_TEST("All possible configurations with 4 supplies are many.") {
         {"C", "E", "F", "H"},
         {"C", "F", "H", "I"}
     };
-    EXPECT_EQUAL(grid.getAllDisasterConfigurations(4),allConfigs);
+    EXPECT_EQUAL(allFound,allConfigs);
 }

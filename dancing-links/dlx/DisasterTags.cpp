@@ -128,6 +128,7 @@ void DisasterTags::fillConfigurations(int numSupplies,
         suppliedCities.remove(supplyLocation);
         uncoverCity(cur);
     }
+
 }
 
 /**
@@ -1265,5 +1266,123 @@ STUDENT_TEST("All possible configurations of a square.") {
     };
     DisasterTags grid(cities);
     Set<Set<std::string>> allFound = grid.getAllDisasterConfigurations(2);
-    EXPECT_EQUAL(grid.getAllDisasterConfigurations(2),allConfigs);
+    EXPECT_EQUAL(allFound,allConfigs);
+}
+
+STUDENT_TEST("All possible configurations with 4 supplies are many.") {
+    /*
+     *
+     *   H--A     E--I
+     *      |     |
+     *      B--D--F
+     *      |     |
+     *      C     G
+     *
+     */
+    const Map<std::string, Set<std::string>> cities = {
+        {"A", {"H","B"}},
+        {"B", {"A","C","D"}},
+        {"C", {"B"}},
+        {"D", {"B","F"}},
+        {"E", {"F","I"}},
+        {"F", {"D","E","G"}},
+        {"G", {"F"}},
+        {"H", {"A"}},
+        {"I", {"E"}},
+    };
+    DisasterTags grid(cities);
+    Set<Set<std::string>> allFound = grid.getAllDisasterConfigurations(4);
+    Set<Set<std::string>> allConfigs = {
+        {"A", "B", "E", "F"},
+        {"A", "B", "E", "G"},
+        {"A", "B", "F", "I"},
+        {"A", "B", "G", "I"},
+        {"A", "C", "E", "F"},
+        {"A", "C", "F", "I"},
+        {"B", "E", "F", "H"},
+        {"B", "E", "G", "H"},
+        {"B", "F", "H", "I"},
+        {"B", "G", "H", "I"},
+        {"C", "E", "F", "H"},
+        {"C", "F", "H", "I"}
+    };
+    EXPECT_EQUAL(allFound,allConfigs);
+}
+
+STUDENT_TEST("Larger maps are more difficult to filter out duplicates.") {
+    /*
+     * This is a good test for when I am trying to avoid generating duplicates. Put a number
+     * counter in the getAllDisasterConfigurations function and have it count every time a
+     * set is generated. You will see that we generate extra sets and the containing set filters
+     * them for us. I cannot yet figure out how to only generate unique sets.
+     *
+     *                                    /--S-----------
+     *                         T --------   /            \
+     *                          \     ----R               \
+     *                           \   /    |                \
+     *                            -U      Q       L-- K--- J
+     *                            /      /      /  \   |   |
+     *                 A         /      P      O   N   M---I
+     *                  \       /       |     |    |   |  /
+     *                   -----B----C -- E-----F----G---H--
+     *                             \
+     *                              D
+     */
+    const Map<std::string, Set<std::string>> cities = {
+        {"A", {"B"}},
+        {"B", {"A","C","U"}},
+        {"C", {"B","D","E"}},
+        {"D", {"C"}},
+        {"E", {"C","P","F"}},
+        {"F", {"E","O","G"}},
+        {"G", {"F","H","N"}},
+        {"H", {"G","I","M"}},
+        {"I", {"H","J","M"}},
+        {"J", {"I","K","M"}},
+        {"K", {"J","L","M"}},
+        {"L", {"K","N","O"}},
+        {"M", {"H","I","K"}},
+        {"N", {"G","L"}},
+        {"O", {"F","L"}},
+        {"P", {"E","Q"}},
+        {"Q", {"P","R"}},
+        {"R", {"S","Q","U"}},
+        {"S", {"J","R","T"}},
+        {"T", {"S","U"}},
+        {"U", {"B","R","T"}},
+    };
+    DisasterTags grid(cities);
+    Set<Set<std::string>> allFound = grid.getAllDisasterConfigurations(7);
+    Set<Set<std::string>> allConfigs = {
+        {"A", "C", "E", "H", "L", "R", "S"}, {"A", "C", "F", "I", "L", "Q", "T"},
+        {"A", "C", "G", "I", "L", "Q", "T"}, {"A", "C", "G", "J", "L", "Q", "T"},
+        {"A", "C", "G", "J", "O", "Q", "T"}, {"A", "D", "E", "H", "L", "R", "S"},
+        {"A", "D", "F", "I", "L", "Q", "T"}, {"B", "C", "E", "H", "L", "P", "S"},
+        {"B", "C", "E", "H", "L", "Q", "S"}, {"B", "C", "E", "H", "L", "R", "S"},
+        {"B", "C", "F", "H", "L", "P", "S"}, {"B", "C", "F", "H", "L", "Q", "S"},
+        {"B", "C", "F", "I", "L", "P", "S"}, {"B", "C", "F", "I", "L", "Q", "S"},
+        {"B", "C", "F", "I", "L", "Q", "T"}, {"B", "C", "F", "L", "M", "P", "S"},
+        {"B", "C", "F", "L", "M", "Q", "S"}, {"B", "C", "F", "M", "N", "P", "S"},
+        {"B", "C", "F", "M", "N", "Q", "S"}, {"B", "C", "G", "H", "L", "P", "S"},
+        {"B", "C", "G", "H", "L", "Q", "S"}, {"B", "C", "G", "I", "L", "P", "S"},
+        {"B", "C", "G", "I", "L", "Q", "S"}, {"B", "C", "G", "I", "L", "Q", "T"},
+        {"B", "C", "G", "J", "L", "P", "S"}, {"B", "C", "G", "J", "L", "Q", "S"},
+        {"B", "C", "G", "J", "L", "Q", "T"}, {"B", "C", "G", "J", "O", "P", "S"},
+        {"B", "C", "G", "J", "O", "Q", "S"}, {"B", "C", "G", "J", "O", "Q", "T"},
+        {"B", "C", "G", "L", "M", "P", "S"}, {"B", "C", "G", "L", "M", "Q", "S"},
+        {"B", "C", "G", "M", "O", "P", "S"}, {"B", "C", "G", "M", "O", "Q", "S"},
+        {"B", "C", "H", "L", "O", "P", "S"}, {"B", "C", "H", "L", "O", "Q", "S"},
+        {"B", "C", "M", "N", "O", "P", "S"}, {"B", "C", "M", "N", "O", "Q", "S"},
+        {"B", "D", "E", "H", "L", "P", "S"}, {"B", "D", "E", "H", "L", "Q", "S"},
+        {"B", "D", "E", "H", "L", "R", "S"}, {"B", "D", "F", "H", "L", "P", "S"},
+        {"B", "D", "F", "H", "L", "Q", "S"}, {"B", "D", "F", "I", "L", "P", "S"},
+        {"B", "D", "F", "I", "L", "Q", "S"}, {"B", "D", "F", "I", "L", "Q", "T"},
+        {"B", "D", "F", "L", "M", "P", "S"}, {"B", "D", "F", "L", "M", "Q", "S"},
+        {"B", "D", "F", "M", "N", "P", "S"}, {"B", "D", "F", "M", "N", "Q", "S"},
+        {"B", "D", "G", "H", "L", "P", "S"}, {"B", "D", "G", "I", "L", "P", "S"},
+        {"B", "D", "G", "J", "L", "P", "S"}, {"B", "D", "G", "J", "O", "P", "S"},
+        {"B", "D", "G", "L", "M", "P", "S"}, {"B", "D", "G", "M", "O", "P", "S"},
+        {"B", "D", "H", "L", "O", "P", "S"}, {"B", "D", "M", "N", "O", "P", "S"}
+    };
+    EXPECT_EQUAL(allFound,allConfigs);
 }

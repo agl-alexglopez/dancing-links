@@ -4,9 +4,9 @@ RUN_TESTS_MENU_OPTION()
 MENU_ORDER("MatchmakerGUI.cpp",
            "DisasterGUI.cpp")
 
-TEST_ORDER("PerformanceTests.cpp",
+TEST_ORDER("DisasterTags.cpp",
+           "PerformanceTests.cpp",
            "DisasterLinks.cpp",
-           "DisasterPairs.cpp",
            "Matchmaker.cpp",
            "PartnerLinks.cpp",
            "DisasterPlanning.cpp",)
