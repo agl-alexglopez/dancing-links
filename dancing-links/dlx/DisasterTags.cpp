@@ -141,7 +141,7 @@ void DisasterTags::fillConfigurations(int numSupplies,
  *                              - If that fails we try the next adjacent city with most connections.
  *                              - Finally, if all other neighbors fail, try to supply the city
  *                                in question, not neighbors.
- * @return            the index of the city we are selecting to attempt to cover.
+ * @return                    the index of the city we are selecting to attempt to cover.
  */
 int DisasterTags::chooseIsolatedCity() {
     int min = INT_MAX;
