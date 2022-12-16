@@ -46,7 +46,7 @@ namespace {
     const string kNoPerfectMatching = "No perfect matching exists.";
     const string kNoPerfectMatchingTitle = "No Perfect Matching";
     const string kAllMatchesFoundTitle = "Perfect Matches:";
-    const string kNoRothbergAllMatching = "Rothberg Does Not Solve This Problem";
+    const string kNoRothbergAllMatching = "Rothberg Only Solves \"Find Perfect Match\" and \"Find Max-Weight Matching\"";
     const string kNoRothbergTitle = "Sorry: ";
 
     const int kMinWeight = 1;

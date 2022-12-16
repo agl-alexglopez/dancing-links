@@ -1241,6 +1241,35 @@ PROVIDED_TEST("Stress test: 6 x 6 grid, with output. (This should take at most a
     }
 }
 
+PROVIDED_TEST("Stress test: 8 x 8 grid, with output. (This should take at most a few seconds.)") {
+    Map<std::string, Set<std::string>> grid;
+
+    /* Build the grid. */
+    char maxRow = 'G';
+    int  maxCol = 8;
+    for (char row = 'A'; row <= maxRow; row++) {
+        for (int col = 1; col <= maxCol; col++) {
+            if (row != maxRow) {
+                grid[row + std::to_string(col)] += (char(row + 1) + std::to_string(col));
+            }
+            if (col != maxCol) {
+                grid[row + std::to_string(col)] += (char(row) + std::to_string(col + 1));
+            }
+        }
+    }
+    grid = makeMap(grid);
+
+    DisasterTags network(grid);
+    Set<std::string> locations;
+    EXPECT(network.hasDisasterCoverage(14, locations));
+
+    for (char row = 'A'; row <= maxRow; row++) {
+        for (int col = 1; col <= maxCol; col++) {
+            EXPECT(checkCovered(row + std::to_string(col), grid, locations));
+        }
+    }
+}
+
 STUDENT_TEST("All possible configurations of a square.") {
     /*
      *
