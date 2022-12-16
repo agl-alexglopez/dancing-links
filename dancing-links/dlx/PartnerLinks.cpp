@@ -205,7 +205,7 @@ void PartnerLinks::uncoverPairing(int indexInPair) {
 void PartnerLinks::hidePersonPairings(int indexInPair) {
     for (int i = dlx.links[indexInPair].down; i != indexInPair; i = dlx.links[i].down) {
          // We need this guard to prevent splicing while on a column header.
-        if (i > dlx.table.size()) {
+        if (i > dlx.links[indexInPair].topOrLen) {
             // In case the other partner is to the left, just decrement index to go left.
             personLink cur = dlx.links[toPairIndex(i)];
             dlx.links[cur.up].down = cur.down;
@@ -224,7 +224,7 @@ void PartnerLinks::hidePersonPairings(int indexInPair) {
 void PartnerLinks::unhidePersonPairings(int indexInPair) {
     // The direction does not truly matter but I distinguish this from hide by going upwards.
     for (int i = dlx.links[indexInPair].up; i != indexInPair; i = dlx.links[i].up) {
-        if (i > dlx.table.size()) {
+        if (i > dlx.links[indexInPair].topOrLen) {
             int partnerIndex = toPairIndex(i);
             personLink cur = dlx.links[partnerIndex];
             dlx.links[cur.up].down = partnerIndex;
