@@ -136,7 +136,7 @@ public:
      * to this problem.
      */
     typedef struct Network {
-        Vector<cityHeader> lookupTable;
+        Vector<cityHeader> table;
         Vector<cityItem> grid;
         /* In this application, the number of colums equals the number of rows. Cities are both
          * items that need to be covered and cities that can receive supplies.

@@ -152,7 +152,7 @@ public:
      * controls the recursion. The links holds all items and options for recursive backtracking.
      */
     typedef struct Network {
-        Vector<personName> lookupTable;
+        Vector<personName> table;
         Vector<personLink> links;
         int numPeople;                  // Total people in the network.
         int numPairings;                // The number of pairings or rows in the matrix.
