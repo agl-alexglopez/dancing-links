@@ -90,6 +90,7 @@ HEADERS         *=  $$files(*.h, true)
 
 # Gather resource files (image/sound/etc) from res dir, list under "Other files"
 OTHER_FILES     *=  $$files(res/*, true)
+OTHER_FILES     *=  $$files(FastMatching/*,true)
 # Gather text files from root dir or anywhere recursively
 OTHER_FILES     *=  $$files(*.txt, true)
 

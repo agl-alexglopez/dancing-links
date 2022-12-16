@@ -1,9 +1,10 @@
-#include "Matchmaker.h"
 #include "GUI/MiniGUI.h"
 #include "GraphEditor/GraphEditor.h"
 #include <fstream>
 #include <algorithm>
 #include "filelib.h"
+#include "Matchmaker.h"
+#include "FastMatching/FastMatchmaker.h"
 #include "PartnerLinks.h"
 using namespace std;
 using namespace MiniGUI;
@@ -21,7 +22,8 @@ namespace {
      */
     enum MatchSolver {
         SET_BASED=0,
-        DLX_PAIRS=1
+        DLX_PAIRS=1,
+        FAST_ROTHBERG=2
     };
 
     const string kUnsavedChanges = "You have unsaved changes.\n\nDo you want to save?";
@@ -44,6 +46,8 @@ namespace {
     const string kNoPerfectMatching = "No perfect matching exists.";
     const string kNoPerfectMatchingTitle = "No Perfect Matching";
     const string kAllMatchesFoundTitle = "Perfect Matches:";
+    const string kNoRothbergAllMatching = "Rothberg Does Not Solve This Problem";
+    const string kNoRothbergTitle = "Sorry: ";
 
     const int kMinWeight = 1;
     const int kMaxWeight = 10;
@@ -100,7 +104,8 @@ namespace {
         Temporary<GComboBox> solverDropdown;
         const string setSolver = "Solver: Set Based";
         const string dlxSolver = "Solver: DLX Pairs";
-        const vector<string> solverNames = {setSolver, dlxSolver};
+        const string fastRothbergSolver = "Solver: Fast Rothberg";
+        const vector<string> solverNames = {setSolver, dlxSolver, fastRothbergSolver};
         MatchSolver selectedSolver;
 
         GButton* perfectMatchButton;
@@ -546,6 +551,9 @@ namespace {
         } else if (solverDropdown->getSelectedItem() == dlxSolver) {
             selectedSolver = DLX_PAIRS;
             foundMatching = PartnerLinks(graph).hasPerfectLinks(matching);
+        } else if (solverDropdown->getSelectedItem() == fastRothbergSolver){
+            selectedSolver = FAST_ROTHBERG;
+            foundMatching = hasFastPerfectMatching(graph, matching);
         } else {
             error("something is wrong with the solver dropdown menu. Invalid solver.");
         }
@@ -615,6 +623,7 @@ namespace {
         editor->setActive(nullptr);
 
         Vector<Set<Pair>> allFoundMatchings = {};
+        bool usedRothberg = false;
 
         if (solverDropdown->getSelectedItem() == setSolver) {
             selectedSolver = SET_BASED;
@@ -622,6 +631,8 @@ namespace {
         } else if (solverDropdown->getSelectedItem() == dlxSolver) {
             selectedSolver = DLX_PAIRS;
             allFoundMatchings = PartnerLinks(graph).getAllPerfectLinks();
+        } else if (solverDropdown->getSelectedItem() == fastRothbergSolver){
+            usedRothberg = true;
         } else {
             error("something is wrong with the solver dropdown menu. Invalid solver.");
         }
@@ -635,6 +646,11 @@ namespace {
             currMatching.reset(new Set<Pair>((*allMatching)[currMatchingIndex]));
             requestRepaint();
             GOptionPane::showMessageDialog(&window(), to_string((*allMatching).size()), kAllMatchesFoundTitle);
+        } else if (usedRothberg) {
+            allMatching.reset();
+            currMatching.reset();
+            requestRepaint();
+            GOptionPane::showMessageDialog(&window(), kNoRothbergAllMatching, kNoRothbergTitle);
         } else {
             allMatching.reset();
             currMatching.reset();
@@ -690,6 +706,9 @@ namespace {
         } else if (solverDropdown->getSelectedItem() == dlxSolver) {
             selectedSolver = DLX_PAIRS;
             weightedMatches = PartnerLinks(graph).getMaxWeightMatching();
+        } else if (solverDropdown->getSelectedItem() == fastRothbergSolver) {
+            selectedSolver = FAST_ROTHBERG;
+            weightedMatches = fastMaxWeightMatching(graph);
         } else {
             error("something is wrong with the solver dropdown menu. Invalid solver.");
         }
@@ -704,7 +723,8 @@ namespace {
     }
 
     const vector<string> kSolverMatchedNodeFillColorOptions = {"#ffb000",  // Set Solver
-                                                               "#dc267f"}; // DLX Solver
+                                                               "#dc267f",  // DLX Solver
+                                                               "#648fff"}; // Rothberg Solver
     const string kMatchedBorderColor = "#000000"; // Black
 
     const string kUnmatchedColor = "#e0e0e0";       // Gray

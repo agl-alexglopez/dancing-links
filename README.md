@@ -15,7 +15,7 @@
 
 ## Build Note
 
-In order to build this project, you will need a copy of the CS106 C++ library from the Winter of 2022. To the best of my knowledge, newer libraries from Stanford's class websites have some graphics conflicts that prevent this assignment from building. I have included a copy of this library as a `.zip` file in the `/packages/` folder. Unzip the folder in a separate location on your computer because it will need to built as its own Qt project. You can then follow the same instructions to build this library that Stanford normally provides on their course websites [HERE](https://web.stanford.edu/dept/cs_edu/resources/qt/). 
+If you are reading this now you are on `gitfront.io`. If you want to use the programs for this project, you can clone the project with the `clone` button at the top right of the screen when in the root of the repository. In order to build this project, you will need a copy of the CS106 C++ library from the Winter of 2022. To the best of my knowledge, newer libraries from Stanford's class websites have some graphics conflicts that prevent this assignment from building. I have included a copy of this library as a `.zip` file in the `/packages/` folder. Unzip the folder in a separate location on your computer because it will need to built as its own Qt project. You can then follow the same instructions to build this library that Stanford normally provides on their course websites [HERE](https://web.stanford.edu/dept/cs_edu/resources/qt/). 
 
 Instead of building their new libraries, however, you will just build this older version. It will install all the necessary Stanford specific libraries on your system for use with Qt.
 
@@ -413,8 +413,10 @@ I then included this implementation in the **[`MatchmakerGUI.cpp`](/dancing-link
 2. Build and run the project.
 3. Select the `Matchmaker` option from the top menu.
 4. Draw a graph or select a premade example from the load option.
-5. Select the solver that you want to use for these problems. I have included a solver based on the implementation discussed above and a more traditional implementation that uses sets.
+5. Select the solver that you want to use for these problems. I have included a solver based on the implementation discussed above and a more traditional implementation that uses sets. Finally, I included a solver that uses the *Blossom Algorithm* written by Ed Rothberg. This can solve Perfect Matching and Max Weight Matching but Rothberg does not solve the All Perfect Matchings problem.
 6. Press `Find Perfect Matching`, `Find All Perfect Matchings` or `Find Max-Weight Matching` to solve the appropriate problem.
+
+While I think Knuth's dancing links are well suited to Perfect Matching and All Perfect Matchings, I don't think they are the best fit for the Weighted Matchings Problem, at least not as I have currently implemented the solution. To see why, try the DLX solver and Rothberg's solver on the `MaxWeightStress` file. The dancing links solver for that problem is just a creative, efficient approach to a brute-force recursive algorithm. Rothberg's solution, on the other hand, is extremely fast. I will try to explore ways to speed things up.
 
 ## Runtime Analysis
 
