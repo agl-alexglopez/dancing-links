@@ -462,6 +462,7 @@ std::ostream& operator<<(std::ostream&os, const DisasterLinks& network) {
            << item.left << "," << item.right << "}, ";
     }
     os << std::endl;
+    os << "Number of Cities: " << network.dlx.numItemsAndOptions << std::endl;
     return os;
 }
 

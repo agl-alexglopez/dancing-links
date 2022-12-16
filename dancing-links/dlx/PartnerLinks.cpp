@@ -729,6 +729,10 @@ std::ostream& operator<<(std::ostream&os, const PartnerLinks& links) {
         os << "{" << item.topOrLen << "," << item.up << "," << item.down << "},";
     }
     os << std::endl;
+    os << "Number of People: " << links.dlx.numPeople << std::endl;
+    os << "Number of Pairs: " << links.dlx.numPairings << std::endl;
+    os << "Has Singleton: " << links.dlx.hasSingleton << std::endl;
+    os << "Is Weighted: " << links.dlx.isWeighted << std::endl;
     return os;
 }
 

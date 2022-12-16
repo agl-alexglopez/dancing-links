@@ -443,6 +443,7 @@ std::ostream& operator<<(std::ostream&os, const DisasterTags& links) {
         index++;
     }
     os << std::endl;
+    os << "Number of Cities: " << links.dlx.numItemsAndOptions << std::endl;
     return os;
 }
 
