@@ -7,7 +7,7 @@ http://archive.dimacs.rutgers.edu/pub/netflow/matching/weighted/solver-1/
 
 Most of the code here is taken directly from the original.
 
-Update to Attribution by Alex Lopez 16-12-2002:
+Update to Attribution by Alex Lopez 16-12-2022:
 
 I added this to my project as a comparison against Knuth's Algorithm X via Dancing Links. This
 required me to change the names of the functions to avoid naming conflicts with other parts of the
