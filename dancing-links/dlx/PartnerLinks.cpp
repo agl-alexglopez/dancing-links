@@ -36,7 +36,7 @@ bool PartnerLinks::hasPerfectLinks(Set<Pair>& pairs) {
  * @return                   true if the matching is found, false if not.
  */
 bool PartnerLinks::isPerfectMatching(Set<Pair>& pairs) {
-    if (dlx.lookupTable[0].right == 0) {
+    if (dlx.table[0].right == 0) {
         return true;
     }
     // If our previous pairings led to someone that can no longer be reached stop recursion.
@@ -90,7 +90,7 @@ Vector<Set<Pair>> PartnerLinks::getAllPerfectLinks() {
  * @param result                the output parameter we fill with any Perfect Matchings we find.
  */
 void PartnerLinks::fillPerfectMatchings(Set<Pair>& soFar, Vector<Set<Pair>>& result) {
-    if (dlx.lookupTable[0].right == 0) {
+    if (dlx.table[0].right == 0) {
         result.add(soFar);
         return;
     }
@@ -127,13 +127,13 @@ void PartnerLinks::fillPerfectMatchings(Set<Pair>& soFar, Vector<Set<Pair>>& res
  * @return              the index of the next person to pair or -1 if someone is alone.
  */
 int PartnerLinks::choosePerson() {
-    for (int cur = dlx.lookupTable[0].right; cur != 0; cur = dlx.lookupTable[cur].right) {
+    for (int cur = dlx.table[0].right; cur != 0; cur = dlx.table[cur].right) {
         // Someone has become inaccessible due to other matches.
         if (dlx.links[cur].topOrLen == 0) {
             return -1;
         }
     }
-    return dlx.lookupTable[0].right;
+    return dlx.table[0].right;
 }
 
 /**
@@ -152,9 +152,9 @@ Pair PartnerLinks::coverPairing(int indexInPair) {
      * off and therefore no longer accessible to other people that want to pair with them.
      */
 
-    personName p1 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
-    dlx.lookupTable[p1.right].left = p1.left;
-    dlx.lookupTable[p1.left].right = p1.right;
+    personName p1 = dlx.table[dlx.links[indexInPair].topOrLen];
+    dlx.table[p1.right].left = p1.left;
+    dlx.table[p1.left].right = p1.right;
 
     // p1 needs to dissapear from all other pairings.
     hidePersonPairings(indexInPair);
@@ -162,9 +162,9 @@ Pair PartnerLinks::coverPairing(int indexInPair) {
     // In case I ever apply a selection heuristic, partner might not be to the right.
     indexInPair = toPairIndex(indexInPair);
 
-    personName p2 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
-    dlx.lookupTable[p2.right].left = p2.left;
-    dlx.lookupTable[p2.left].right = p2.right;
+    personName p2 = dlx.table[dlx.links[indexInPair].topOrLen];
+    dlx.table[p2.right].left = p2.left;
+    dlx.table[p2.left].right = p2.right;
 
     // p2 needs to dissapear from all other pairings.
     hidePersonPairings(indexInPair);
@@ -180,17 +180,17 @@ Pair PartnerLinks::coverPairing(int indexInPair) {
  */
 void PartnerLinks::uncoverPairing(int indexInPair) {
 
-    personName p1 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
-    dlx.lookupTable[p1.left].right = dlx.links[indexInPair].topOrLen;
-    dlx.lookupTable[p1.right].left = dlx.links[indexInPair].topOrLen;
+    personName p1 = dlx.table[dlx.links[indexInPair].topOrLen];
+    dlx.table[p1.left].right = dlx.links[indexInPair].topOrLen;
+    dlx.table[p1.right].left = dlx.links[indexInPair].topOrLen;
 
     unhidePersonPairings(indexInPair);
 
     indexInPair = toPairIndex(indexInPair);
 
-    personName p2 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
-    dlx.lookupTable[p2.left].right = dlx.links[indexInPair].topOrLen;
-    dlx.lookupTable[p2.right].left = dlx.links[indexInPair].topOrLen;
+    personName p2 = dlx.table[dlx.links[indexInPair].topOrLen];
+    dlx.table[p2.left].right = dlx.links[indexInPair].topOrLen;
+    dlx.table[p2.right].left = dlx.links[indexInPair].topOrLen;
 
     unhidePersonPairings(indexInPair);
 }
@@ -205,7 +205,7 @@ void PartnerLinks::uncoverPairing(int indexInPair) {
 void PartnerLinks::hidePersonPairings(int indexInPair) {
     for (int i = dlx.links[indexInPair].down; i != indexInPair; i = dlx.links[i].down) {
          // We need this guard to prevent splicing while on a column header.
-        if (i > dlx.lookupTable.size()) {
+        if (i > dlx.table.size()) {
             // In case the other partner is to the left, just decrement index to go left.
             personLink cur = dlx.links[toPairIndex(i)];
             dlx.links[cur.up].down = cur.down;
@@ -224,7 +224,7 @@ void PartnerLinks::hidePersonPairings(int indexInPair) {
 void PartnerLinks::unhidePersonPairings(int indexInPair) {
     // The direction does not truly matter but I distinguish this from hide by going upwards.
     for (int i = dlx.links[indexInPair].up; i != indexInPair; i = dlx.links[i].up) {
-        if (i > dlx.lookupTable.size()) {
+        if (i > dlx.table.size()) {
             int partnerIndex = toPairIndex(i);
             personLink cur = dlx.links[partnerIndex];
             dlx.links[cur.up].down = partnerIndex;
@@ -283,7 +283,7 @@ Set<Pair> PartnerLinks::getMaxWeightMatching() {
  * @param winner       the pair of weight and pairs that records the best weight found.
  */
 void PartnerLinks::fillWeights(std::pair<int,Set<Pair>>& soFar, std::pair<int,Set<Pair>>& winner) {
-    if (dlx.lookupTable[0].right == 0) {
+    if (dlx.table[0].right == 0) {
         return;
     }
 
@@ -329,7 +329,7 @@ void PartnerLinks::fillWeights(std::pair<int,Set<Pair>>& soFar, std::pair<int,Se
  */
 int PartnerLinks::chooseWeightedPerson() {
     int head = 0;
-    for (int cur = dlx.lookupTable[0].right; cur != head; cur = dlx.lookupTable[cur].right) {
+    for (int cur = dlx.table[0].right; cur != head; cur = dlx.table[cur].right) {
         // Take the first available person.
         if (dlx.links[cur].topOrLen != 0) {
             return cur;
@@ -352,9 +352,9 @@ int PartnerLinks::chooseWeightedPerson() {
 void PartnerLinks::hidePerson(int indexInPair) {
     indexInPair = dlx.links[indexInPair].down;
 
-    personName p1 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
-    dlx.lookupTable[p1.right].left = p1.left;
-    dlx.lookupTable[p1.left].right = p1.right;
+    personName p1 = dlx.table[dlx.links[indexInPair].topOrLen];
+    dlx.table[p1.right].left = p1.left;
+    dlx.table[p1.left].right = p1.right;
 
     // Only hide pairings for this person.
     hidePersonPairings(indexInPair);
@@ -375,9 +375,9 @@ void PartnerLinks::hidePerson(int indexInPair) {
  */
 void PartnerLinks::unhidePerson(int indexInPair) {
     indexInPair = dlx.links[indexInPair].down;
-    personName p1 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
-    dlx.lookupTable[p1.left].right = dlx.links[indexInPair].topOrLen;
-    dlx.lookupTable[p1.right].left = dlx.links[indexInPair].topOrLen;
+    personName p1 = dlx.table[dlx.links[indexInPair].topOrLen];
+    dlx.table[p1.left].right = dlx.links[indexInPair].topOrLen;
+    dlx.table[p1.right].left = dlx.links[indexInPair].topOrLen;
 
     unhidePersonPairings(indexInPair);
 
@@ -399,9 +399,9 @@ void PartnerLinks::unhidePerson(int indexInPair) {
  */
 std::pair<int,Pair> PartnerLinks::coverWeightedPair(int indexInPair) {
 
-    personName p1 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
-    dlx.lookupTable[p1.right].left = p1.left;
-    dlx.lookupTable[p1.left].right = p1.right;
+    personName p1 = dlx.table[dlx.links[indexInPair].topOrLen];
+    dlx.table[p1.right].left = p1.left;
+    dlx.table[p1.left].right = p1.right;
 
     // p1 needs to dissapear from all other pairings.
     hidePersonPairings(indexInPair);
@@ -417,9 +417,9 @@ std::pair<int,Pair> PartnerLinks::coverWeightedPair(int indexInPair) {
         indexInPair++;
     }
 
-    personName p2 = dlx.lookupTable[dlx.links[indexInPair].topOrLen];
-    dlx.lookupTable[p2.right].left = p2.left;
-    dlx.lookupTable[p2.left].right = p2.right;
+    personName p2 = dlx.table[dlx.links[indexInPair].topOrLen];
+    dlx.table[p2.right].left = p2.left;
+    dlx.table[p2.left].right = p2.right;
     // p2 needs to dissapear from all other pairings.
     hidePersonPairings(indexInPair);
 
@@ -507,22 +507,22 @@ PartnerLinks::PartnerLinks(const Map<std::string, Map<std::string, int>>& possib
 void PartnerLinks::initializeHeaders(const Map<std::string, Set<std::string>>& possibleLinks,
                                      HashMap<std::string,int>& columnBuilder) {
     // Set up the headers first. Lookup table and first N headers in links.
-    dlx.lookupTable.add({"", 0, 1});
+    dlx.table.add({"", 0, 1});
     dlx.links.add({});
     int index = 1;
     for (const auto& p : possibleLinks) {
 
         columnBuilder[p] = index;
 
-        dlx.lookupTable.add({p, index - 1, index + 1});
-        dlx.lookupTable[0].left++;
+        dlx.table.add({p, index - 1, index + 1});
+        dlx.table[0].left++;
         // Add the first headers for the item vector. They need count up and down.
         dlx.links.add({0, index, index});
 
         dlx.numPeople++;
         index++;
     }
-    dlx.lookupTable[dlx.lookupTable.size() - 1].right = 0;
+    dlx.table[dlx.table.size() - 1].right = 0;
 }
 
 /**
@@ -535,22 +535,22 @@ void PartnerLinks::initializeHeaders(const Map<std::string, Set<std::string>>& p
 void PartnerLinks::initializeHeaders(const Map<std::string, Map<std::string,int>>& possibleLinks,
                                      HashMap<std::string,int>& columnBuilder) {
     // Set up the headers first. Lookup table and first N headers in links.
-    dlx.lookupTable.add({"", 0, 1});
+    dlx.table.add({"", 0, 1});
     dlx.links.add({});
     int index = 1;
     for (const auto& p : possibleLinks) {
 
         columnBuilder[p] = index;
 
-        dlx.lookupTable.add({p, index - 1, index + 1});
-        dlx.lookupTable[0].left++;
+        dlx.table.add({p, index - 1, index + 1});
+        dlx.table[0].left++;
         // Add the first headers for the item vector. They need count up and down.
         dlx.links.add({0, index, index});
 
         dlx.numPeople++;
         index++;
     }
-    dlx.lookupTable[dlx.lookupTable.size() - 1].right = 0;
+    dlx.table[dlx.table.size() - 1].right = 0;
 }
 
 /**
@@ -717,7 +717,7 @@ std::ostream& operator<<(std::ostream&os, const Vector<PartnerLinks::personLink>
 
 std::ostream& operator<<(std::ostream&os, const PartnerLinks& links) {
     os << "LOOKUP ARRAY" << std::endl;
-    for (const auto& header : links.dlx.lookupTable) {
+    for (const auto& header : links.dlx.table) {
         os << "{\"" << header.name << "\"," << header.left << "," << header.right << "},";
     }
     os << std::endl;
@@ -756,7 +756,7 @@ STUDENT_TEST("Empty is empty.") {
         {INT_MIN,-1,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 }
 
@@ -804,7 +804,7 @@ STUDENT_TEST("Weighted matching initializes straight line correctly.") {
         /*6*/ {INT_MIN,20,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 }
 
@@ -847,7 +847,7 @@ STUDENT_TEST("Weighted matching does not care about leaving others out.") {
         /*4*/ {INT_MIN,11,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 }
 
@@ -894,7 +894,7 @@ STUDENT_TEST("Covering a person in weighted will only take that person's pairs o
         /*4*/ {INT_MIN,11,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     matches.hidePerson(5);
@@ -920,11 +920,11 @@ STUDENT_TEST("Covering a person in weighted will only take that person's pairs o
         //       13
         /*4*/ {INT_MIN,11,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxCoverA);
 
     matches.unhidePerson(5);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
 }
@@ -970,7 +970,7 @@ STUDENT_TEST("All weights are unique so we can know that we report the right wei
               {INT_MIN,15,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     // Cover A, this will select option 2, partners are AB.
@@ -1000,7 +1000,7 @@ STUDENT_TEST("All weights are unique so we can know that we report the right wei
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 }
 
@@ -1126,7 +1126,7 @@ PROVIDED_TEST("maximumWeightMatching: Odd shap that requires us to pick opposite
 
     EXPECT_EQUAL(weights.getMaxWeightMatching(), {{"A","F"},{"B","C"}});
     EXPECT_EQUAL(weights.dlx.links, dlxItems);
-    EXPECT_EQUAL(weights.dlx.lookupTable, lookup);
+    EXPECT_EQUAL(weights.dlx.table, lookup);
 }
 
 PROVIDED_TEST("maximumWeightMatching: Another permutation of the same shape is failing.") {
@@ -1186,7 +1186,7 @@ PROVIDED_TEST("maximumWeightMatching: Another permutation of the same shape is f
 
     EXPECT_EQUAL(weights.getMaxWeightMatching(), {{"A","F"},{"C","D"}});
     EXPECT_EQUAL(weights.dlx.links, dlxItems);
-    EXPECT_EQUAL(weights.dlx.lookupTable, lookup);
+    EXPECT_EQUAL(weights.dlx.table, lookup);
 }
 
 PROVIDED_TEST("maximumWeightMatching: The network resets after every run.") {
@@ -1251,7 +1251,7 @@ PROVIDED_TEST("maximumWeightMatching: The network resets after every run.") {
     for (int i = 0; i < 11; i++) {
         EXPECT_EQUAL(weights.getMaxWeightMatching(), {{"A","F"},{"B","C"}});
         EXPECT_EQUAL(weights.dlx.links, dlxItems);
-        EXPECT_EQUAL(weights.dlx.lookupTable, lookup);
+        EXPECT_EQUAL(weights.dlx.table, lookup);
     }
 
 }
@@ -1365,7 +1365,7 @@ STUDENT_TEST("Empty is empty perfect matching.") {
         {INT_MIN,-1,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 }
 
@@ -1413,7 +1413,7 @@ STUDENT_TEST("Line of six but tricky due to natural order.") {
         /*6*/ {INT_MIN,20,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 }
 
@@ -1456,7 +1456,7 @@ STUDENT_TEST("We will allow setup of worlds that are impossible to match.") {
         /*4*/ {INT_MIN,11,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 }
 
@@ -1510,7 +1510,7 @@ STUDENT_TEST("Initialize a world that will have matching.") {
         /*7*/ {INT_MIN,23,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 }
 
@@ -1559,7 +1559,7 @@ STUDENT_TEST("Setup works on a disconnected hexagon of people and reportes singl
     };
     PartnerLinks matches(provided);
     EXPECT(matches.dlx.hasSingleton);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 }
 
@@ -1608,7 +1608,7 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A.") {
               {INT_MIN,15,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     // Cover A, this will select option 2, partners are AB.
@@ -1637,7 +1637,7 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A.") {
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 }
 
@@ -1680,7 +1680,7 @@ STUDENT_TEST("There are no perfect pairings, any matching will fail.") {
         /*4*/ {INT_MIN,11,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     Pair match = matches.coverPairing(5);
@@ -1708,7 +1708,7 @@ STUDENT_TEST("There are no perfect pairings, any matching will fail.") {
         //       13
         /*4*/ {INT_MIN,11,INT_MIN},
     };
-    EXPECT_EQUAL(lookupA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 }
 
@@ -1755,7 +1755,7 @@ STUDENT_TEST("We will quickly learn that A-B is a bad pairing that leaves C out.
               {INT_MIN,15,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     Pair match = matches.coverPairing(6);
@@ -1785,7 +1785,7 @@ STUDENT_TEST("We will quickly learn that A-B is a bad pairing that leaves C out.
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 }
 
@@ -1832,7 +1832,7 @@ STUDENT_TEST("A-D is a good pairing.") {
               {INT_MIN,15,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     Pair match = matches.coverPairing(9);
@@ -1860,7 +1860,7 @@ STUDENT_TEST("A-D is a good pairing.") {
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 }
 
@@ -1914,7 +1914,7 @@ STUDENT_TEST("Cover A in a world where everyone has two connections.") {
         /*7*/ {INT_MIN,23,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 
     Pair match = matches.coverPairing(8);
@@ -1948,7 +1948,7 @@ STUDENT_TEST("Cover A in a world where everyone has two connections.") {
         //       25
         /*7*/ {INT_MIN,23,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 }
 
@@ -1995,7 +1995,7 @@ STUDENT_TEST("A-D then B-C solves the world.") {
               {INT_MIN,15,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     Pair match = matches.coverPairing(9);
@@ -2023,7 +2023,7 @@ STUDENT_TEST("A-D then B-C solves the world.") {
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
     match = matches.coverPairing(12);
@@ -2052,7 +2052,7 @@ STUDENT_TEST("A-D then B-C solves the world.") {
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverB, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverB, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverB, matches.dlx.links);
 }
 
@@ -2101,7 +2101,7 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A then uncover."
               {INT_MIN,15,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     // Cover A, partners are AB.
@@ -2130,11 +2130,11 @@ STUDENT_TEST("Simple square any valid partners will work. Cover A then uncover."
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
     matches.uncoverPairing(6);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
 }
@@ -2178,7 +2178,7 @@ STUDENT_TEST("There are no perfect pairings, any matching will fail. Cover uncov
         /*4*/ {INT_MIN,11,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     Pair match = matches.coverPairing(5);
@@ -2206,11 +2206,11 @@ STUDENT_TEST("There are no perfect pairings, any matching will fail. Cover uncov
         //       13
         /*4*/ {INT_MIN,11,INT_MIN},
     };
-    EXPECT_EQUAL(lookupA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
     matches.uncoverPairing(5);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 }
 
@@ -2257,7 +2257,7 @@ STUDENT_TEST("We will quickly learn that A-B is a bad pairing that leaves C out.
               {INT_MIN,15,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     Pair match = matches.coverPairing(6);
@@ -2287,7 +2287,7 @@ STUDENT_TEST("We will quickly learn that A-B is a bad pairing that leaves C out.
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 }
 
@@ -2334,7 +2334,7 @@ STUDENT_TEST("A-D is a good pairing. Cover then uncover.") {
               {INT_MIN,15,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 
     Pair match = matches.coverPairing(9);
@@ -2362,11 +2362,11 @@ STUDENT_TEST("A-D is a good pairing. Cover then uncover.") {
         //       17
               {INT_MIN,15,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
     matches.uncoverPairing(9);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 }
 
@@ -2420,7 +2420,7 @@ STUDENT_TEST("Cover A in a world where everyone has two connections then uncover
         /*7*/ {INT_MIN,23,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 
     Pair match = matches.coverPairing(8);
@@ -2454,11 +2454,11 @@ STUDENT_TEST("Cover A in a world where everyone has two connections then uncover
         //       25
         /*7*/ {INT_MIN,23,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
     matches.uncoverPairing(8);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(matches.dlx.links, dlxItems);
 }
 
@@ -2512,7 +2512,7 @@ STUDENT_TEST("Depth two cover and uncover. Cover A then B then uncover B.") {
         /*7*/ {INT_MIN,23,INT_MIN},
     };
     PartnerLinks matches(provided);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 
     Pair match = matches.coverPairing(8);
@@ -2546,7 +2546,7 @@ STUDENT_TEST("Depth two cover and uncover. Cover A then B then uncover B.") {
         //       25
         /*7*/ {INT_MIN,23,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
     // Pair B C but that is a bad choice so we will have to uncover.
@@ -2581,15 +2581,15 @@ STUDENT_TEST("Depth two cover and uncover. Cover A then B then uncover B.") {
         //       25
         /*7*/ {INT_MIN,23,INT_MIN},
     };
-    EXPECT_EQUAL(lookupCoverB, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverB, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverB, matches.dlx.links);
 
     matches.uncoverPairing(14);
-    EXPECT_EQUAL(lookupCoverA, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookupCoverA, matches.dlx.table);
     EXPECT_EQUAL(dlxCoverA, matches.dlx.links);
 
     matches.uncoverPairing(8);
-    EXPECT_EQUAL(lookup, matches.dlx.lookupTable);
+    EXPECT_EQUAL(lookup, matches.dlx.table);
     EXPECT_EQUAL(dlxItems, matches.dlx.links);
 }
 
@@ -2663,7 +2663,7 @@ STUDENT_TEST("Largest shape I will do by hand. After successive calls the networ
     for (int i = 0; i < 11; i++) {
         Set<Pair> matching = {};
         EXPECT(network.hasPerfectLinks(matching));
-        EXPECT_EQUAL(lookup, network.dlx.lookupTable);
+        EXPECT_EQUAL(lookup, network.dlx.table);
         EXPECT_EQUAL(dlxItems, network.dlx.links);
     }
 }
