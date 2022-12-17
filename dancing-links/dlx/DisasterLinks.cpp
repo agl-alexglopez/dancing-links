@@ -175,7 +175,7 @@ std::string DisasterLinks::coverCity(int indexInOption) {
     do {
         int top = dlx.grid[i].topOrLen;
         if (top <= 0) {
-            /* We are always garunteed to pass the spacer tile so we will collect the name of the
+            /* We are always guaranteed to pass the spacer tile so we will collect the name of the
              * city we have chosen to supply to prove our algorithm chose correctly.
             */
             result = dlx.table[std::abs(top)].name;

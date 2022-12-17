@@ -171,7 +171,7 @@ std::string DisasterTags::coverCity(int indexInOption, const int supplyTag) {
     do {
         int top = dlx.grid[i].topOrLen;
         if (top <= 0) {
-            /* We are always garunteed to pass the spacer tile so we will collect the name of the
+            /* We are always guaranteed to pass the spacer tile so we will collect the name of the
              * city we have chosen to supply to prove our algorithm chose correctly.
             */
             i = dlx.grid[i].up;

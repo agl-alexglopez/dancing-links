@@ -319,8 +319,8 @@ namespace {
         return result;
     }
 
-    /* I wish I could use a function pointer or something but my DLX solvers need instantiation
-     * of their respective classes and I am not sure how that would be united into one function
+    /* Could I use a function pointer or something? My DLX solvers need instantiation of their
+     * respective classes to build the dlx first. Not sure how that would unite into one function
      * with a function pointer. Instead just do the same functions many times.
      */
 

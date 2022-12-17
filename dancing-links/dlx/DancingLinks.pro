@@ -74,8 +74,7 @@ SOURCES         *=  "" \
     DisasterTags.cpp \
     DisasterUtilities.cpp \
     MatchingUtilities.cpp \
-    PartnerLinks.cpp \
-    PerformanceTests.cpp
+    PartnerLinks.cpp
 HEADERS         *=  "" \
     DisasterLinks.h \
     DisasterTags.h \

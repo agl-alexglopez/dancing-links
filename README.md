@@ -11,7 +11,8 @@
 - Matchmaker
 	- Dancing Links Class **([`PartnerLinks.h`](/dancing-links/dlx/PartnerLinks.h))**
 	- Dancing Links Implementation **([`PartnerLinks.cpp`](/dancing-links/dlx/PartnerLinks.cpp))**
-	- Traditional Set Implementation **([`Matchmaker.cpp`](/dancing-links/dlx/Matchmaker.cpp))** 
+	- Traditional Set Implementation **([`Matchmaker.cpp`](/dancing-links/dlx/Matchmaker.cpp))**
+- [Citations](#citations)
 
 ## Build Note
 
@@ -178,7 +179,7 @@ Here are the key details of the above image:
 
 For this small example that has a successful supply scheme with two supplies it might not be clear why this is so useful. However, for large maps it becomes important to know which cities to uncover if a supply location does not work out. While backtracking, these tags help only uncover those cities that were covered when we entered a specific level of recursion.
 
-An added benefit of this approach is that the types are much simpler and we eliminate any traversals of the up-down linked list, other than to try every supply option that covers a city. This implementation is faster than the previous implementation. However, the speed gain only becomes noticeable on larger transportations grids. I can examine this further in the runtime analysis section.
+An added benefit of this approach is that the types are much simpler and we eliminate any traversals of the up-down linked list, other than to try every supply option that covers a city. This implementation is faster than the previous implementation. However, the speed gain only becomes noticeable on larger transportations grids.
 
 ### Supply Tags Implementation
 
@@ -297,7 +298,7 @@ Here are the key details from the above image:
 - To solve a Perfect Matching problem, all options and items must disappear from the world with the last choice.
 - The problem is solved when we have an empty world or matrix.
 
-I am not currently aware of any optimizations for this problem. It is very fast at finding solutions, especially because it only must find one. I added the bonus functionality of finding all possible perfect matching configurations to the graph editor application. To solve that problem, the algorithm requires minimal adjustments and it is remarkably fast. For example, requesting all possible perfect matchings on `Sample3`, a somewhat large network of connections, will yield 630 results immediately. By adding nodes, you can eventually begin generating configurations in the 10 to 100's of thousands in a reasonable amount of time. I should try to find the limits of this algorithm in the runtime analysis section. In, contrast max weight matching is much more difficult.
+I am not currently aware of any optimizations for this problem. It is very fast at finding solutions, especially because it only must find one. I added the bonus functionality of finding all possible perfect matching configurations to the graph editor application. To solve that problem, the algorithm requires minimal adjustments and it is remarkably fast. For example, requesting all possible perfect matchings on `Sample3`, a somewhat large network of connections, will yield 630 results immediately. By adding nodes, you can eventually begin generating configurations in the 10 to 100's of thousands in a reasonable amount of time. In, contrast max weight matching is much more difficult.
 
 ### Max Weight Matching
 
@@ -418,6 +419,26 @@ I then included this implementation in the **[`MatchmakerGUI.cpp`](/dancing-link
 
 While I think Knuth's dancing links are well suited to Perfect Matching and All Perfect Matchings, I don't think they are the best fit for the Weighted Matchings Problem, at least not as I have currently implemented the solution. To see why, try the DLX solver and Rothberg's solver on the `MaxWeightStress` file. The dancing links solver for that problem is just a creative, efficient approach to a brute-force recursive algorithm. Rothberg's solution, on the other hand, is extremely fast. I will try to explore ways to speed things up.
 
-## Runtime Analysis
+## Citations
 
-I am curious how these implementations stack up against the original solutions I wrote to these problems. I will put together a more formal runtime analysis when able.
+This project grew more than I thought it would. I was able to bring in some great tools to help me explore these algorithms. So, it is important to note what I am responsible for in this repository and what I am not. The code that I wrote is contained in the following files.
+
+- `DisasterLinks.h`
+- `DisasterLinks.cpp`
+- `DisasterPlanning.cpp`
+- `DisasterTags.h`
+- `DisasterTags.cpp`
+- `Matchmaker.cpp`
+- `PartnerLinks.h`
+- `PartnerLinks.cpp`
+
+As mentioned in the intro, the core ideas of Algorithm X via Dancing Links belongs to Knuth, I just implemented it a few different ways.
+
+Any other code was rearranged or modified to fit the needs of this project. It might have been starter code provided by Stanford course staff, or applications they wrote. All other work was originally provided by Keith Schwarz and Stanford Course Staff as components of the original assignment that inspired this project.
+
+I made the most significant modifications to the following files to allow me to use different solver algorithms for the problems and change how they displayed to the GUI.
+
+- `DisasterGUI.cpp`
+- `MatchmakerGUI.cpp`
+
+However, Keith Schwarz and Stanford course staff are completely responsible for making those usable applications in the first place. Finally all files in the `FastMatching` folder are written by Ed Rothberg and ported to C++ by Keith Schwarz. These were included out of my own curiosity to see how a fast solution to the `Max Weight Matching` problem would feel to use in the application GUI.
