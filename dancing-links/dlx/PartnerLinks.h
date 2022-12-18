@@ -137,7 +137,7 @@ public:
         int down;
     }personLink;
 
-    /* These nodes control recursion in a seperate array. As partnerships are chosed or individual
+    /* These nodes control recursion in a seperate array. As partnerships are chosen or individual
      * people are chosen their representation in the lookup array is spliced out of a doubly linked
      * list.
      */
@@ -146,6 +146,9 @@ public:
         int left;
         int right;
     }personName;
+
+
+    /* * * * * *   Algorithm X via Dancing Links for Perfect and Max-Weight Matching  * * * * * * */
 
 
     /**
@@ -165,33 +168,7 @@ public:
      *                       does not exist.
      * @param possibleLinks  the map of people and map of partners and weights.
      */
-    PartnerLinks(const Map<std::string, Map<std::string, int>>& possibleLinks);
-
-
-    /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
-
-
-    friend bool operator==(const personLink& lhs, const personLink& rhs);
-
-    friend bool operator!=(const personLink& lhs, const personLink& rhs);
-
-    friend bool operator==(const personName& lhs, const personName& rhs);
-
-    friend bool operator!=(const personName& lhs, const personName& rhs);
-
-    friend std::ostream& operator<<(std::ostream& os, const personLink& city);
-
-    friend std::ostream& operator<<(std::ostream& os, const personName& city);
-
-    friend std::ostream& operator<<(std::ostream&os, const std::vector<personLink>& links);
-
-    friend std::ostream& operator<<(std::ostream&os, const std::vector<personName>& table);
-
-    friend std::ostream& operator<<(std::ostream&os, const PartnerLinks& links);
-
-
-    /* * * * * * * * * * * * *          Matching Solvers        * * * * * * * * * * * * * * * * * */
-
+    explicit PartnerLinks(const Map<std::string, Map<std::string, int>>& possibleLinks);
 
     /**
      * @brief hasPerfectLinks  determines if an instance of a PartnerLinks matrix can solve the
@@ -219,6 +196,29 @@ public:
      */
     Set<Pair> getMaxWeightMatching();
 
+
+    /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
+
+
+    friend bool operator==(const personLink& lhs, const personLink& rhs);
+
+    friend bool operator!=(const personLink& lhs, const personLink& rhs);
+
+    friend bool operator==(const personName& lhs, const personName& rhs);
+
+    friend bool operator!=(const personName& lhs, const personName& rhs);
+
+    friend std::ostream& operator<<(std::ostream& os, const personLink& city);
+
+    friend std::ostream& operator<<(std::ostream& os, const personName& city);
+
+    friend std::ostream& operator<<(std::ostream&os, const std::vector<personLink>& links);
+
+    friend std::ostream& operator<<(std::ostream&os, const std::vector<personName>& table);
+
+    friend std::ostream& operator<<(std::ostream&os, const PartnerLinks& links);
+
+
 private:
 
     /* An instance of a Network can solve either the Perfect Matching or Max Weight Matching
@@ -233,7 +233,7 @@ private:
     bool isWeighted_;                // Must provide weights to ask for max weight matching.
 
 
-    /* * * * * Algorithm X via Dancing Links for Perfect Matching and Max Weight Matching   * * * */
+    /* * * * * * * * * * * *    Core Functionality for Algorithm X     * * *  * * * * * * * * * * */
 
 
     /**
