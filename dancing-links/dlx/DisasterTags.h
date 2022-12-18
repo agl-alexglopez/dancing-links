@@ -104,6 +104,7 @@
 #ifndef DISASTERTAGS_H
 #define DISASTERTAGS_H
 #include <string>
+#include <vector>
 #include "GUI/SimpleTest.h"
 #include "set.h"
 #include "map.h"

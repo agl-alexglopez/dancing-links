@@ -8,6 +8,7 @@
  * Matching. For more details on the concepts behind the algorithm see the mini write up in the
  * PartnerLinks.h file or the full write up in the README.md for the repository.
  */
+#include <limits.h>
 #include "PartnerLinks.h"
 
 

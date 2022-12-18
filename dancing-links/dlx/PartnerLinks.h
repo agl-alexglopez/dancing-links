@@ -112,11 +112,10 @@
 #pragma once
 #ifndef PartnerLinks_H
 #define PartnerLinks_H
-#include <limits.h>
 #include <string>
+#include <vector>
 #include "GUI/SimpleTest.h"
 #include "MatchingUtilities.h"
-#include "vector.h"
 #include "hashmap.h"
 #include "map.h"
 #include "set.h"
