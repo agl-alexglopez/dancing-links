@@ -340,7 +340,6 @@ int PartnerLinks::chooseWeightedPerson() {
     return -1;
 }
 
-
 /**
  * @brief hidePerson   to generate all possible pairings in any pairing algorithm, we need to
  *                     include every person in future possible pairings and exclude them. To

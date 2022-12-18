@@ -424,7 +424,11 @@ std::ostream& operator<<(std::ostream&os, const std::vector<DisasterTags::city>&
         if (item.topOrLen < 0) {
             os << std::endl;
         }
-        os << "{" << item.topOrLen << "," << item.up << "," << item.down << "," << item.supplyTag << "}";
+        os << "{"
+           << item.topOrLen << ","
+           << item.up << ","
+           << item.down << ","
+           << item.supplyTag << "}";
         index++;
     }
     os << std::endl;
@@ -434,7 +438,11 @@ std::ostream& operator<<(std::ostream&os, const std::vector<DisasterTags::city>&
 std::ostream& operator<<(std::ostream&os, const DisasterTags& links) {
     os << "LOOKUP ARRAY" << std::endl;
     for (const auto& header : links.table_) {
-        os << "{\"" << header.name << "\"," << header.left << "," << header.right << "}," << std::endl;
+        os << "{\""
+           << header.name << "\","
+           << header.left << ","
+           << header.right << "},"
+           << std::endl;
     }
     os << "DLX ARRAY" << std::endl;
     int index = 0;
@@ -442,7 +450,11 @@ std::ostream& operator<<(std::ostream&os, const DisasterTags& links) {
         if (index >= links.table_.size() && item.topOrLen < 0) {
             os << std::endl;
         }
-        os << "{" << item.topOrLen << "," << item.up << "," << item.down << "," << item.supplyTag << "},";
+        os << "{"
+           << item.topOrLen << ","
+           << item.up << ","
+           << item.down << ","
+           << item.supplyTag << "},";
         index++;
     }
     os << std::endl;
