@@ -196,16 +196,17 @@ public:
 
 private:
 
+
     /* * * * * * * * * *       Core Dancing Links Implementation        * * * * * * * * * * * * * */
 
 
-    // Use table to control recursion and know when all cities are safe. Table will be empty.
-    std::vector<cityName> table_;
-    /* Contains all dancing links nodes. Cities apear as columns with appearances across rows.
+    /* Use table to control recursion and know when all cities are safe. Table will be empty.
+     * Grid contains cities as nodes. Cities apear as columns with appearances across rows.
      * Rows are the same cities but they indicate which other cities they cover if supplied.
+     * All cities apear as rows and columns so the grid is square.
      */
+    std::vector<cityName> table_;
     std::vector<city> grid_;
-    // All cities apear as rows and columns so the grid is square.
     int numItemsAndOptions_;
 
 
