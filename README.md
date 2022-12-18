@@ -133,14 +133,12 @@ typedef struct cityItem {
 }cityItem;
 ```
 
-I then pack these data structures into a struct. The `numItemsAndOptions` is just the number of cities we must cover. There is an equivalent number of cities as items to cover and cities as supply options.
+I then place vectors of these types as private members of my class. The `numItemsAndOptions` is just the number of cities we must cover. There is an equivalent number of cities as items to cover and cities as supply options.
 
 ```c++
-typedef struct Network {
-    Vector<cityHeader> table;
-    Vector<cityItem> grid;
-    int numItemsAndOptions;
-}Network;
+std::vector<cityHeader> table_;
+std::vector<cityItem> grid_;
+int numItemsAndOptions_;
 ```
 
 Here is a literal representation of the array and how it appears in memory for the example I previously illustrated.
@@ -205,14 +203,12 @@ typedef struct cityName {
 }cityName;
 ```
 
-The network type is also the same.
+The private members of the class remain the same.
 
 ```c++
-typedef struct Network {
-    Vector<cityName> table;
-    Vector<city> grid;
-    int numItemsAndOptions;
-}Network;
+std::vector<cityName> table_;
+std::vector<city> grid_;
+int numItemsAndOptions_;
 ```
 
 The dancing links grid will look slightly different without the left right field.
@@ -377,17 +373,15 @@ typedef struct personLink {
 }personLink;
 ```
 
-I place the two arrays and some extra logic information in a struct called a Network.
+I place the two arrays and some extra logic as private members in my class.
 
 ```c++
-typedef struct Network {
-    Vector<personName> table;
-    Vector<personLink> links;
-    int numPeople;     // Total people in the network.
-    int numPairings;   // The number of pairings or rows in the matrix.
-    bool hasSingleton; // No perfect matching if someone is alone.
-    bool isWeighted;   // Must provide weights for max weight matching.
-}Network;
+std::vector<personName> table_;
+std::vector<personLink> links_;
+int numPeople_;      // Total people in the network.
+int numPairings_;    // The number of pairings or rows in the matrix.
+bool hasSingleton_;  // No perfect matching if someone is alone.
+bool isWeighted_;    // Must provide weights for max weight matching.
 ```
 
 The lookup table is identical to the disaster planning problem.

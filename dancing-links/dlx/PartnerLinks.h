@@ -148,19 +148,7 @@ public:
         int right;
     }personName;
 
-    /* I place all data structures for the dancing links algorithm in one struct. The lookupTable
-     * controls the recursion. The links holds all items and options for recursive backtracking.
-     */
-    typedef struct Network {
-        Vector<personName> table;
-        Vector<personLink> links;
-        int numPeople;                  // Total people in the network.
-        int numPairings;                // The number of pairings or rows in the matrix.
-        bool hasSingleton;              // No perfect matching if someone is alone.
-        bool isWeighted;                // Must provide weights to ask for max weight matching.
-    }Network;
 
-    PartnerLinks();
     /**
      * @brief PartnerLinks   the constructor for a world intended to check for Perfect Matching.
      *                       Provide a map of the person, and the set of people they are willing to
@@ -168,7 +156,7 @@ public:
      *                       future queries.
      * @param possibleLinks  the map of people and partners they are willing to work with.
      */
-    PartnerLinks(const Map<std::string, Set<std::string>>& possibleLinks);
+    explicit PartnerLinks(const Map<std::string, Set<std::string>>& possibleLinks);
 
     /**
      * @brief PartnerLinks   the constructor for a world intended to check for Max Weight Matching.
@@ -196,7 +184,9 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const personName& city);
 
-    friend std::ostream& operator<<(std::ostream&os, const Vector<personLink>& links);
+    friend std::ostream& operator<<(std::ostream&os, const std::vector<personLink>& links);
+
+    friend std::ostream& operator<<(std::ostream&os, const std::vector<personName>& table);
 
     friend std::ostream& operator<<(std::ostream&os, const PartnerLinks& links);
 
@@ -236,7 +226,12 @@ private:
      * problem. However, it must be given the correct information. If a Max Weight Matching is
      * desired, it must have the weights of every partnership in the network.
      */
-    Network dlx;
+    std::vector<personName> table_;
+    std::vector<personLink> links_;
+    int numPeople_;                  // Total people in the network.
+    int numPairings_;                // The number of pairings or rows in the matrix.
+    bool hasSingleton_;              // No perfect matching if someone is alone.
+    bool isWeighted_;                // Must provide weights to ask for max weight matching.
 
 
     /* * * * * Algorithm X via Dancing Links for Perfect Matching and Max Weight Matching   * * * */

@@ -128,29 +128,13 @@ public:
     }cityHeader;
 
 
-    /* This Network is our world. These data structures will remain in place during the recursive
-     * algorithm. We do not need to make any copies, only modify the indices of the cityItems in
-     * the grid in order to find the solution. All backtracking can be accomplished by only
-     * modifying the fields of surrounding nodes and leaving the node in question unchanged.
-     * This is the core concept behind Knuth's Algorithm X via Dancing Links which I have adapted
-     * to this problem.
-     */
-    typedef struct Network {
-        Vector<cityHeader> table;
-        Vector<cityItem> grid;
-        /* In this application, the number of colums equals the number of rows. Cities are both
-         * items that need to be covered and cities that can receive supplies.
-         */
-        int numItemsAndOptions;
-    }Network;
-
     /**
      * @brief DisasterLinks  a custom constructor for this class that can turn a Map representation
      *                       of a transportation grid into a vector grid prepared for exact cover
      *                       search via dancing links.
      * @param roadNetwork    the transportation grid passed in via map form.
      */
-    DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwork);
+    explicit DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwork);
 
     /**
      * @brief isDisasterReady  performs a recursive search to determine if a transportation grid
@@ -193,19 +177,28 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const cityHeader& city);
 
-    friend std::ostream& operator<<(std::ostream&os, const Vector<cityItem>& grid);
+    friend std::ostream& operator<<(std::ostream&os, const std::vector<cityItem>& grid);
+
+    friend std::ostream& operator<<(std::ostream&os, const std::vector<cityHeader>& grid);
 
     friend std::ostream& operator<<(std::ostream&os, const DisasterLinks& network);
 
 
 private:
 
-    /* An instance of this class will produce a Network item that helps us solve the problem. It
-     * will stay in place until the instance is destructed. So you could, for example, run a loop
-     * with decreasing supply amounts to test against this network and it will always restore
-     * itself between tests.
+    /* This is our world. These data structures will remain in place during the recursive
+     * algorithm. We do not need to make any copies, only modify the indices of the cityItems in
+     * the grid in order to find the solution. All backtracking can be accomplished by only
+     * modifying the fields of surrounding nodes and leaving the node in question unchanged.
+     * This is the core concept behind Knuth's Algorithm X via Dancing Links which I have adapted
+     * to this problem.
      */
-    Network dlx;
+    std::vector<cityHeader> table_;
+    std::vector<cityItem> grid_;
+    /* In this application, the number of colums equals the number of rows. Cities are both
+     * items that need to be covered and cities that can receive supplies.
+     */
+    int numItemsAndOptions_;
 
 
     /* * * * * * * * * * * * * *       Modified Algorithm X via Dancing Links     * * * * * * * * */

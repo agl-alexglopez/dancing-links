@@ -29,7 +29,7 @@ bool DisasterLinks::isDisasterReady(int numSupplies, Set<std::string>& suppliedC
     if (numSupplies < 0) {
         error("Negative supply quantity is impossible.");
     }
-    if (dlx.numItemsAndOptions == 0) {
+    if (numItemsAndOptions_ == 0) {
         return true;
     }
     return isCovered(numSupplies, suppliedCities);
@@ -50,7 +50,7 @@ bool DisasterLinks::isDisasterReady(int numSupplies, Set<std::string>& suppliedC
  * @return                true if all cities are safe, false if not.
  */
 bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities) {
-    if (dlx.table[0].right == 0 && numSupplies >= 0) {
+    if (table_[0].right == 0 && numSupplies >= 0) {
         return true;
     }
     if (numSupplies <= 0) {
@@ -63,7 +63,7 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
     /* Try to cover this city by first supplying the most connected city nearby. Try cities with
      * successively fewer connections then if all else fails supply the isolated city itself.
      */
-    for (int cur = dlx.grid[chosenIndex].down; cur != chosenIndex; cur = dlx.grid[cur].down) {
+    for (int cur = grid_[chosenIndex].down; cur != chosenIndex; cur = grid_[cur].down) {
 
         std::string supplyLocation = coverCity(cur);
 
@@ -113,7 +113,7 @@ void DisasterLinks::fillConfigurations(int numSupplies,
                                        Set<std::string>& suppliedCities,
                                        Set<Set<std::string>>& allConfigurations) {
 
-    if (dlx.table[0].right == 0 && numSupplies >= 0) {
+    if (table_[0].right == 0 && numSupplies >= 0) {
         allConfigurations.add(suppliedCities);
         return;
     }
@@ -122,7 +122,7 @@ void DisasterLinks::fillConfigurations(int numSupplies,
     }
     int chosenIndex = chooseIsolatedCity();
 
-    for (int cur = dlx.grid[chosenIndex].down; cur != chosenIndex; cur = dlx.grid[cur].down) {
+    for (int cur = grid_[chosenIndex].down; cur != chosenIndex; cur = grid_[cur].down) {
 
         std::string supplyLocation = coverCity(cur);
         suppliedCities.add(supplyLocation);
@@ -151,10 +151,10 @@ int DisasterLinks::chooseIsolatedCity() {
     int min = INT_MAX;
     int chosenIndex = 0;
     int head = 0;
-    for (int cur = dlx.table[0].right; cur != head; cur = dlx.table[cur].right) {
-        if (dlx.grid[cur].topOrLen < min) {
+    for (int cur = table_[0].right; cur != head; cur = table_[cur].right) {
+        if (grid_[cur].topOrLen < min) {
             chosenIndex = cur;
-            min = dlx.grid[cur].topOrLen;
+            min = grid_[cur].topOrLen;
         }
     }
     return chosenIndex;
@@ -173,18 +173,18 @@ std::string DisasterLinks::coverCity(int indexInOption) {
     int i = indexInOption;
     std::string result = "";
     do {
-        int top = dlx.grid[i].topOrLen;
+        int top = grid_[i].topOrLen;
         if (top <= 0) {
             /* We are always guaranteed to pass the spacer tile so we will collect the name of the
              * city we have chosen to supply to prove our algorithm chose correctly.
             */
-            result = dlx.table[std::abs(top)].name;
+            result = table_[std::abs(top)].name;
         } else {
             hideCityCol(i);
-            dlx.table[dlx.table[top].left].right = dlx.table[top].right;
-            dlx.table[dlx.table[top].right].left = dlx.table[top].left;
+            table_[table_[top].left].right = table_[top].right;
+            table_[table_[top].right].left = table_[top].left;
         }
-        i = dlx.grid[i].right;
+        i = grid_[i].right;
     } while (i != indexInOption);
 
     return result;
@@ -201,16 +201,16 @@ void DisasterLinks::uncoverCity(int indexInOption) {
      * then must go up and down for every city covered by this supply location and put the cities
      * back in all the other sets. Original row was not altered so no other restoration necessary.
      */
-    indexInOption = dlx.grid[indexInOption].left;
+    indexInOption = grid_[indexInOption].left;
     int i = indexInOption;
     do {
-        int top = dlx.grid[i].topOrLen;
+        int top = grid_[i].topOrLen;
         if (top > 0) {
-            dlx.table[dlx.table[top].left].right = top;
-            dlx.table[dlx.table[top].right].left = top;
+            table_[table_[top].left].right = top;
+            table_[table_[top].right].left = top;
             unhideCityCol(i);
         }
-        i = dlx.grid[i].left;
+        i = grid_[i].left;
     } while (i != indexInOption);
 }
 
@@ -222,10 +222,10 @@ void DisasterLinks::uncoverCity(int indexInOption) {
  * @param indexInCol   the starting index in the option we are in. It is also a city's column.
  */
 void DisasterLinks::hideCityCol(int indexInCol) {
-    for (int i = dlx.grid[indexInCol].down; i != indexInCol; i = dlx.grid[i].down) {
-        cityItem cur = dlx.grid[i];
-        dlx.grid[cur.right].left = cur.left;
-        dlx.grid[cur.left].right = cur.right;
+    for (int i = grid_[indexInCol].down; i != indexInCol; i = grid_[i].down) {
+        cityItem cur = grid_[i];
+        grid_[cur.right].left = cur.left;
+        grid_[cur.left].right = cur.right;
     }
 }
 
@@ -235,10 +235,10 @@ void DisasterLinks::hideCityCol(int indexInCol) {
  * @param indexInCol     the starting index in the option we are in. It is also a city's column.
  */
 void DisasterLinks::unhideCityCol(int indexInCol) {
-    for (int i = dlx.grid[indexInCol].up; i != indexInCol; i = dlx.grid[i].up) {
-        cityItem cur = dlx.grid[i];
-        dlx.grid[cur.right].left = i;
-        dlx.grid[cur.left].right = i;
+    for (int i = grid_[indexInCol].up; i != indexInCol; i = grid_[i].up) {
+        cityItem cur = grid_[i];
+        grid_[cur.right].left = i;
+        grid_[cur.left].right = i;
     }
 }
 
@@ -252,8 +252,11 @@ void DisasterLinks::unhideCityCol(int indexInCol) {
  *                       search via dancing links.
  * @param roadNetwork    the transportation grid passed in via map form.
  */
-DisasterLinks::DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwork) {
-    dlx.numItemsAndOptions = 0;
+DisasterLinks::DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwork) :
+                             table_({}),
+                             grid_({}),
+                             numItemsAndOptions_(0) {
+
     // We will set this up for a reverse build of column links for a given item.
     HashMap<std::string,int> columnBuilder = {};
     std::vector<std::pair<std::string,int>> connectionSizes = {};
@@ -279,8 +282,8 @@ DisasterLinks::DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwo
 void DisasterLinks::initializeHeaders(const Map<std::string, Set<std::string>>& roadNetwork,
                                       std::vector<std::pair<std::string,int>>& connectionSizes,
                                       HashMap<std::string,int>& columnBuilder) {
-    dlx.table.add({"", 0, 1});
-    dlx.grid.add({0,0,0,0,1});
+    table_.push_back({"", 0, 1});
+    grid_.push_back({0,0,0,0,1});
     int index = 1;
     // The first pass will set up the name headers and the column headers in the two vectors.
     for (const std::string& city : roadNetwork) {
@@ -291,12 +294,12 @@ void DisasterLinks::initializeHeaders(const Map<std::string, Set<std::string>>& 
         // We need to set up multiple columns, so begin tracking the previous item for a column.
         columnBuilder[city] = index;
 
-        dlx.table.add({city, index - 1, index + 1});
-        dlx.table[0].left++;
-        dlx.grid[0].left++;
+        table_.push_back({city, index - 1, index + 1});
+        table_[0].left++;
+        grid_[0].left++;
         // Add the first headers for the item vector. They need count up and down.
-        dlx.grid.add({0, index, index, index - 1, index + 1});
-        dlx.numItemsAndOptions++;
+        grid_.push_back({0, index, index, index - 1, index + 1});
+        numItemsAndOptions_++;
         index++;
     }
 
@@ -309,8 +312,8 @@ void DisasterLinks::initializeHeaders(const Map<std::string, Set<std::string>>& 
         return left.second > right.second;
     });
 
-    dlx.table[dlx.table.size() - 1].right = 0;
-    dlx.grid[dlx.grid.size() - 1].right = 0;
+    table_[table_.size() - 1].right = 0;
+    grid_[grid_.size() - 1].right = 0;
 }
 
 /**
@@ -325,29 +328,29 @@ void DisasterLinks::initializeHeaders(const Map<std::string, Set<std::string>>& 
 void DisasterLinks::initializeItems(const Map<std::string, Set<std::string>>& roadNetwork,
                                     const std::vector<std::pair<std::string,int>>& connectionSizes,
                                     HashMap<std::string,int>& columnBuilder) {
-    int previousSetSize = dlx.grid.size();
-    int index = dlx.grid.size();
+    int previousSetSize = grid_.size();
+    int index = grid_.size();
 
     for (const auto& [city, connectionSize] : connectionSizes) {
         // This algorithm includes a city in its own set of connections.
         Set<std::string> connections = roadNetwork[city] + city;
 
         /* We will know which supplying city option an item is in by the spacerTitle.
-         * lookupTable[abs(-dlx.grid[columnBuilder[city]].down)] will give us the name of the option
+         * lookupTable[abs(-grid_[columnBuilder[city]].down)] will give us the name of the option
          * of that row. This accesses the last city in a column's down field to get the header.
          */
-        dlx.grid.add({-dlx.grid[columnBuilder[city]].down,  // Negative index of city as option.
-                      index - previousSetSize,              // First item in previous option
-                      index + connections.size(),           // Last item in current option
-                      index,
-                      index + 1});
+        grid_.push_back({-grid_[columnBuilder[city]].down,  // Negative index of city as option.
+                         index - previousSetSize,           // First item in previous option
+                         index + connections.size(),        // Last item in current option
+                         index,
+                         index + 1});
 
         // Manage column pointers for items connected across options. Update index.
         index = initializeColumns(connections, columnBuilder, index);
 
         previousSetSize = connections.size();
     }
-    dlx.grid.add({NOT_PROCESSED, index - previousSetSize, 0, index - 1, NOT_PROCESSED});
+    grid_.push_back({NOT_PROCESSED, index - previousSetSize, 0, index - 1, NOT_PROCESSED});
 }
 
 /**
@@ -366,11 +369,11 @@ int DisasterLinks::initializeColumns(const Set<std::string>& connections,
     int spacerIndex = index;
     for (const auto& c : connections) {
         // Circular lists give us access to header with down field of last city in a column.
-        dlx.grid[dlx.grid[columnBuilder[c]].down].topOrLen++;
+        grid_[grid_[columnBuilder[c]].down].topOrLen++;
         index++;
 
         // A single item in a circular doubly linked list points to itself.
-        dlx.grid.add({dlx.grid[columnBuilder[c]].down, index, index, index - 1, index + 1});
+        grid_.push_back({grid_[columnBuilder[c]].down, index, index, index - 1, index + 1});
 
         /* Now we need to handle building the up and down pointers for a column of items.
          * We also must make sure to keep the most recent element pointing down to the
@@ -379,14 +382,14 @@ int DisasterLinks::initializeColumns(const Set<std::string>& connections,
          */
 
         // This is the necessary adjustment to the column header's up field for a given item.
-        dlx.grid[dlx.grid[columnBuilder[c]].down].up = index;
+        grid_[grid_[columnBuilder[c]].down].up = index;
 
         // The current node is now the new tail in a vertical circular linked list for an item.
-        dlx.grid[index].up = columnBuilder[c];
-        dlx.grid[index].down = dlx.grid[columnBuilder[c]].down;
+        grid_[index].up = columnBuilder[c];
+        grid_[index].down = grid_[columnBuilder[c]].down;
 
         // Update the old tail to reflect the new addition of an item in its option.
-        dlx.grid[columnBuilder[c]].down = index;
+        grid_[columnBuilder[c]].down = index;
 
         // Similar to a previous/current coding pattern but in an above/below column.
         columnBuilder[c] = index;
@@ -396,8 +399,8 @@ int DisasterLinks::initializeColumns(const Set<std::string>& connections,
      * receive supplies to cover other cities as an option. This is how we achieve that. This is
      * a significant variation from Knuth's DLX.
      */
-    dlx.grid[index].right = spacerIndex;
-    dlx.grid[spacerIndex].left = index;
+    grid_[index].right = spacerIndex;
+    grid_[spacerIndex].left = index;
     return ++index;
 }
 
@@ -434,8 +437,8 @@ std::ostream& operator<<(std::ostream& os, const DisasterLinks::cityHeader& city
     return os;
 }
 
-std::ostream& operator<<(std::ostream&os, const Vector<DisasterLinks::cityItem>& grid) {
-    os << std::endl;
+std::ostream& operator<<(std::ostream&os, const std::vector<DisasterLinks::cityItem>& grid) {
+    os << "DLX ARRAY" << std::endl;
     for (const auto& item : grid) {
         if (item.topOrLen < 0) {
             os << std::endl;
@@ -447,14 +450,23 @@ std::ostream& operator<<(std::ostream&os, const Vector<DisasterLinks::cityItem>&
     return os;
 }
 
+std::ostream& operator<<(std::ostream&os, const std::vector<DisasterLinks::cityHeader>& grid) {
+    os << "LOOKUP TABLE" << std::endl;
+    for (const auto& item : grid) {
+        os << "{\"" << item.name << "\"," << item.left << "," << item.right << "}," << std::endl;
+    }
+    os << std::endl;
+    return os;
+}
+
 std::ostream& operator<<(std::ostream&os, const DisasterLinks& network) {
     os << "LOOKUP TABLE:" << std::endl;
-    for (const auto& header : network.dlx.table) {
+    for (const auto& header : network.table_) {
         os << "{\"" << header.name << "\"," << header.left << "," << header.right << "},";
     }
     os << std::endl;
     os << "DLX ARRAY:" << std::endl;
-    for (const auto& item : network.dlx.grid) {
+    for (const auto& item : network.grid_) {
         if (item.topOrLen < 0) {
             os << std::endl;
         }
@@ -462,7 +474,7 @@ std::ostream& operator<<(std::ostream&os, const DisasterLinks& network) {
            << item.left << "," << item.right << "}, ";
     }
     os << std::endl;
-    os << "Number of Cities: " << network.dlx.numItemsAndOptions << std::endl;
+    os << "Number of Cities: " << network.numItemsAndOptions_ << std::endl;
     return os;
 }
 
@@ -488,13 +500,13 @@ STUDENT_TEST("Initialize a small dancing links.") {
         {"B", {"C"}},
         {"C", {"A", "B"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  3, 1},
         {"A", 0, 2},
         {"B", 1, 3},
         {"C", 2, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         //        0               1A             2B            3C
               {0,0,0,3,1},    {2,9,5,0,2}, {2,12,6,1,3},  {3,13,7,2,0},
         //       4A               5A             6B            7C
@@ -506,8 +518,8 @@ STUDENT_TEST("Initialize a small dancing links.") {
               {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
     };
     DisasterLinks network(cities);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 }
 
 STUDENT_TEST("Initialize larger dancing links.") {
@@ -524,7 +536,7 @@ STUDENT_TEST("Initialize larger dancing links.") {
         {"E", {"B", "C"}},
         {"F", {"D"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -533,7 +545,7 @@ STUDENT_TEST("Initialize larger dancing links.") {
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         //        0                 1A             2B               3C               4D              5E             6F
               {0,0,0,6,1},     {2,24,12,0,2},   {3,20,8,1,3},   {3,25,13,2,4},   {3,27,9,3,5},   {3,22,10,4,6},   {2,28,18,5,0},
         /*B*/ {-2,0,10,10,8},                   {2,2,16,7,9},                    {4,4,17,8,10},  {5,5,14,9,7},
@@ -545,8 +557,8 @@ STUDENT_TEST("Initialize larger dancing links.") {
         {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
     };
     DisasterLinks network(cities);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 }
 
 STUDENT_TEST("Simple Ethene Network initialization.") {
@@ -567,7 +579,7 @@ STUDENT_TEST("Simple Ethene Network initialization.") {
         {"E", {"B"}},
         {"F", {"B"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -576,7 +588,7 @@ STUDENT_TEST("Simple Ethene Network initialization.") {
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         /* Network
          *
          *      A  B  C  D  E  F
@@ -611,8 +623,8 @@ STUDENT_TEST("Simple Ethene Network initialization.") {
 
     };
     DisasterLinks network (cities);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 }
 
 
@@ -634,13 +646,13 @@ STUDENT_TEST("Supplying A will only cover A and C. C remains available supply lo
         {"B", {"C"}},
         {"C", {"A", "B"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  3, 1},
         {"A", 0, 2},
         {"B", 1, 3},
         {"C", 2, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         //        0                 1A           2B            3C
               {0,0,0,3,1},     {2,9,5,0,2},  {2,12,6,1,3},  {3,13,7,2,0},
         /*C*/ {-3,0,7,7,5},    {1,1,9,4,6},  {2,2,12,5,7},  {3,3,10,6,4},
@@ -650,20 +662,20 @@ STUDENT_TEST("Supplying A will only cover A and C. C remains available supply lo
     };
     DisasterLinks network (cities);
 
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 
     std::string supplyLocation = network.coverCity(9);
 
     EXPECT_EQUAL(supplyLocation, "A");
 
-    Vector<DisasterLinks::cityHeader> headersCoverA = {
+    std::vector<DisasterLinks::cityHeader> headersCoverA = {
         {"",  2, 2},
         {"A", 0, 2},
         {"B", 0, 0},
         {"C", 2, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxCoverA = {
+    std::vector<DisasterLinks::cityItem> dlxCoverA = {
         /* Smaller network now.
          *       B
          *    B  1
@@ -679,8 +691,8 @@ STUDENT_TEST("Supplying A will only cover A and C. C remains available supply lo
         /*B*/ {-2,9,13,12,12},               {2,6,2,11,11}, {3,10,3,12,11},
               {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
     };
-    EXPECT_EQUAL(network.dlx.table, headersCoverA);
-    EXPECT_EQUAL(network.dlx.grid, dlxCoverA);
+    EXPECT_EQUAL(network.table_, headersCoverA);
+    EXPECT_EQUAL(network.grid_, dlxCoverA);
 }
 
 STUDENT_TEST("Supplying B will only cover B and C. Make sure splicing from lookupTable works.") {
@@ -698,13 +710,13 @@ STUDENT_TEST("Supplying B will only cover B and C. Make sure splicing from looku
         {"B", {"C"}},
         {"C", {"A", "B"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  3, 1},
         {"A", 0, 2},
         {"B", 1, 3},
         {"C", 2, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         //        0                1A             2B            3C
               {0,0,0,3,1},     {2,9,5,0,2},  {2,12,6,1,3},  {3,13,7,2,0},
         /*C*/ {-3,0,7,7,5},    {1,1,9,4,6},  {2,2,12,5,7},  {3,3,10,6,4},
@@ -713,20 +725,20 @@ STUDENT_TEST("Supplying B will only cover B and C. Make sure splicing from looku
         {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
     };
     DisasterLinks network (cities);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 
     std::string supplyLocation = network.coverCity(12);
 
     EXPECT_EQUAL(supplyLocation, "B");
 
-    Vector<DisasterLinks::cityHeader> headersCoverB = {
+    std::vector<DisasterLinks::cityHeader> headersCoverB = {
         {"",  1, 1},
         {"A", 0, 0},
         {"B", 1, 3},
         {"C", 1, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxCoverB = {
+    std::vector<DisasterLinks::cityItem> dlxCoverB = {
         /* Smaller network now.
          *       A
          *    A  1
@@ -743,8 +755,8 @@ STUDENT_TEST("Supplying B will only cover B and C. Make sure splicing from looku
         /*B*/ {-2,9,13,13,12},               {2,6,2,11,13}, {3,10,3,12,11},
               {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
     };
-    EXPECT_EQUAL(network.dlx.table, headersCoverB);
-    EXPECT_EQUAL(network.dlx.grid, dlxCoverB);
+    EXPECT_EQUAL(network.table_, headersCoverB);
+    EXPECT_EQUAL(network.grid_, dlxCoverB);
 }
 
 
@@ -763,13 +775,13 @@ STUDENT_TEST("Supplying C will cover all. Make sure splicing from lookupTable wo
         {"B", {"C"}},
         {"C", {"A", "B"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  3, 1},
         {"A", 0, 2},
         {"B", 1, 3},
         {"C", 2, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         //        0                1A             2B            3C
               {0,0,0,3,1},     {2,9,5,0,2},  {2,12,6,1,3},  {3,13,7,2,0},
         /*C*/ {-3,0,7,7,5},    {1,1,9,4,6},  {2,2,12,5,7},  {3,3,10,6,4},
@@ -778,20 +790,20 @@ STUDENT_TEST("Supplying C will cover all. Make sure splicing from lookupTable wo
               {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
     };
     DisasterLinks network (cities);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 
     std::string supplyLocation = network.coverCity(5);
 
     EXPECT_EQUAL(supplyLocation, "C");
 
-    Vector<DisasterLinks::cityHeader> headersOptionC = {
+    std::vector<DisasterLinks::cityHeader> headersOptionC = {
         {"",  0, 0},
         {"A", 0, 2},
         {"B", 0, 3},
         {"C", 0, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxOptionC = {
+    std::vector<DisasterLinks::cityItem> dlxOptionC = {
         /* Successful empty network.
          *
          *       0
@@ -809,8 +821,8 @@ STUDENT_TEST("Supplying C will cover all. Make sure splicing from lookupTable wo
         /*B*/ {-2,9,13,11,11},               {2,6,2,11,13}, {3,10,3,11,11},
         {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
     };
-    EXPECT_EQUAL(network.dlx.table, headersOptionC);
-    EXPECT_EQUAL(network.dlx.grid, dlxOptionC);
+    EXPECT_EQUAL(network.table_, headersOptionC);
+    EXPECT_EQUAL(network.grid_, dlxOptionC);
 }
 
 
@@ -832,13 +844,13 @@ STUDENT_TEST("Supplying A will only cover A and C with one supply. Uncover to tr
         {"B", {"C"}},
         {"C", {"A", "B"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  3, 1},
         {"A", 0, 2},
         {"B", 1, 3},
         {"C", 2, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         //        0                1A             2B            3C
               {0,0,0,3,1},     {2,9,5,0,2},  {2,12,6,1,3},  {3,13,7,2,0},
         /*C*/ {-3,0,7,7,5},    {1,1,9,4,6},  {2,2,12,5,7},  {3,3,10,6,4},
@@ -847,21 +859,21 @@ STUDENT_TEST("Supplying A will only cover A and C with one supply. Uncover to tr
               {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
     };
     DisasterLinks network (cities);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 
     std::string supplyLocation = network.coverCity(9);
 
     EXPECT_EQUAL(supplyLocation, "A");
 
 
-    Vector<DisasterLinks::cityHeader> headersCoverA = {
+    std::vector<DisasterLinks::cityHeader> headersCoverA = {
         {"",  2, 2},
         {"A", 0, 2},
         {"B", 0, 0},
         {"C", 2, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxCoverA = {
+    std::vector<DisasterLinks::cityItem> dlxCoverA = {
         /* Smaller network now.
          *       B
          *    B  1
@@ -877,13 +889,13 @@ STUDENT_TEST("Supplying A will only cover A and C with one supply. Uncover to tr
         /*B*/ {-2,9,13,12,12},               {2,6,2,11,11}, {3,10,3,12,11},
               {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
     };
-    EXPECT_EQUAL(network.dlx.table, headersCoverA);
-    EXPECT_EQUAL(network.dlx.grid, dlxCoverA);
+    EXPECT_EQUAL(network.table_, headersCoverA);
+    EXPECT_EQUAL(network.grid_, dlxCoverA);
 
     // We can just check it against our original array. All state should be returned to normal.
     network.uncoverCity(9);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 }
 
 STUDENT_TEST("Simple Ethene cover B, large item wipe out with D remaining an option.") {
@@ -904,7 +916,7 @@ STUDENT_TEST("Simple Ethene cover B, large item wipe out with D remaining an opt
         {"E", {"B"}},
         {"F", {"B"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -913,7 +925,7 @@ STUDENT_TEST("Simple Ethene cover B, large item wipe out with D remaining an opt
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         /* Network
          *
          *      A  B  C  D  E  F
@@ -937,14 +949,14 @@ STUDENT_TEST("Simple Ethene cover B, large item wipe out with D remaining an opt
     };
 
     DisasterLinks network (cities);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 
     std::string supplyLocation = network.coverCity(8);
 
     EXPECT_EQUAL(supplyLocation, "B");
 
-    Vector<DisasterLinks::cityHeader> headersCoverB = {
+    std::vector<DisasterLinks::cityHeader> headersCoverB = {
         {"",  3, 1},
         {"A", 0, 3},
         {"B", 1, 3},
@@ -954,7 +966,7 @@ STUDENT_TEST("Simple Ethene cover B, large item wipe out with D remaining an opt
         {"F", 3, 0}
     };
 
-    Vector<DisasterLinks::cityItem> dlxCoverB = {
+    std::vector<DisasterLinks::cityItem> dlxCoverB = {
         /* Network is now smaller but we can supply D option still even though D item is gone.
          *
          *      A  C
@@ -975,11 +987,11 @@ STUDENT_TEST("Simple Ethene cover B, large item wipe out with D remaining an opt
         /*F*/ {-6,24,28,26,26},                 {2,24,2,26,28},                                                  {6,11,6,26,26},
               {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
     };
-    EXPECT_EQUAL(network.dlx.table, headersCoverB);
-    EXPECT_EQUAL(network.dlx.grid, dlxCoverB);
+    EXPECT_EQUAL(network.table_, headersCoverB);
+    EXPECT_EQUAL(network.grid_, dlxCoverB);
     network.uncoverCity(8);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 }
 
 
@@ -1001,7 +1013,7 @@ STUDENT_TEST("Simple Ethene cover A with option D.") {
         {"E", {"B"}},
         {"F", {"B"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -1010,7 +1022,7 @@ STUDENT_TEST("Simple Ethene cover A with option D.") {
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         /* Network
          *
          *      A  B  C  D  E  F
@@ -1035,14 +1047,14 @@ STUDENT_TEST("Simple Ethene cover A with option D.") {
 
     DisasterLinks network (cities);
 
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 
     std::string supplyLocation = network.coverCity(13);
 
     EXPECT_EQUAL(supplyLocation, "D");
 
-    Vector<DisasterLinks::cityHeader> headersCoverD = {
+    std::vector<DisasterLinks::cityHeader> headersCoverD = {
         {"",  6, 5},
         {"A", 0, 2},
         {"B", 0, 3},
@@ -1052,7 +1064,7 @@ STUDENT_TEST("Simple Ethene cover A with option D.") {
         {"F", 5, 0}
     };
 
-    Vector<DisasterLinks::cityItem> dlxCoverD = {
+    std::vector<DisasterLinks::cityItem> dlxCoverD = {
         /* Network is now smaller but we can supply D option still even though D item is gone.
          *
          *      A  C
@@ -1073,12 +1085,12 @@ STUDENT_TEST("Simple Ethene cover A with option D.") {
         /*F*/ {-6,24,28,28,28},                  {2,24,2,26,28},                                                   {6,11,6,26,26},
               {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
     };
-    EXPECT_EQUAL(network.dlx.table, headersCoverD);
-    EXPECT_EQUAL(network.dlx.grid, dlxCoverD);
+    EXPECT_EQUAL(network.table_, headersCoverD);
+    EXPECT_EQUAL(network.grid_, dlxCoverD);
 
     network.uncoverCity(13);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 }
 
 STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers.") {
@@ -1099,7 +1111,7 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
         {"E", {"B"}},
         {"F", {"B"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -1108,7 +1120,7 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         /* Network
          *
          *      A  B  C  D  E  F
@@ -1131,14 +1143,14 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
               {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
     };
     DisasterLinks network (cities);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 
     std::string supplyLocation = network.coverCity(18);
 
     EXPECT_EQUAL(supplyLocation, "A");
 
-    Vector<DisasterLinks::cityHeader> headersCoverA = {
+    std::vector<DisasterLinks::cityHeader> headersCoverA = {
         {"",  6, 2},
         {"A", 0, 2},
         {"B", 0, 3},
@@ -1148,7 +1160,7 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
         {"F", 5, 0}
     };
 
-    Vector<DisasterLinks::cityItem> dlxCoverA = {
+    std::vector<DisasterLinks::cityItem> dlxCoverA = {
         /* Network is now smaller.
          *
          *      B  C  E  F
@@ -1169,14 +1181,14 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
         /*F*/ {-6,24,28,28,27},                 {2,24,2,26,28},                                                  {6,11,6,27,26},
         {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
     };
-    EXPECT_EQUAL(network.dlx.table, headersCoverA);
-    EXPECT_EQUAL(network.dlx.grid, dlxCoverA);
+    EXPECT_EQUAL(network.table_, headersCoverA);
+    EXPECT_EQUAL(network.grid_, dlxCoverA);
 
     supplyLocation = network.coverCity(21);
 
     EXPECT_EQUAL(supplyLocation, "C");
 
-    Vector<DisasterLinks::cityHeader> headersCoverC = {
+    std::vector<DisasterLinks::cityHeader> headersCoverC = {
         {"",  6, 2},
         {"A", 0, 2},
         {"B", 0, 5},
@@ -1186,7 +1198,7 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
         {"F", 5, 0}
     };
 
-    Vector<DisasterLinks::cityItem> dlxCoverC = {
+    std::vector<DisasterLinks::cityItem> dlxCoverC = {
         /* Second cover operation.
          *
          *      B  E  F
@@ -1207,14 +1219,14 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
         {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
     };
 
-    EXPECT_EQUAL(network.dlx.table, headersCoverC);
-    EXPECT_EQUAL(network.dlx.grid, dlxCoverC);
+    EXPECT_EQUAL(network.table_, headersCoverC);
+    EXPECT_EQUAL(network.grid_, dlxCoverC);
     network.uncoverCity(21);
-    EXPECT_EQUAL(network.dlx.table, headersCoverA);
-    EXPECT_EQUAL(network.dlx.grid, dlxCoverA);
+    EXPECT_EQUAL(network.table_, headersCoverA);
+    EXPECT_EQUAL(network.grid_, dlxCoverA);
     network.uncoverCity(18);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 
 }
 
@@ -1261,7 +1273,7 @@ STUDENT_TEST("Simple Ethene cover D and B to succeed.") {
         {"E", {"B"}},
         {"F", {"B"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -1270,7 +1282,7 @@ STUDENT_TEST("Simple Ethene cover D and B to succeed.") {
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         /* Network
          *
          *      A  B  C  D  E  F
@@ -1296,11 +1308,11 @@ STUDENT_TEST("Simple Ethene cover D and B to succeed.") {
     Set<std::string> chosen = {};
     EXPECT(!network.isDisasterReady(1, chosen));
     // Make sure that we cleanup our data structure between calls in case it is tested before destr.
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
     EXPECT(network.isDisasterReady(2, chosen));
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 }
 
 STUDENT_TEST("Make sure data structure returns to original state after many calls in a row.") {
@@ -1321,7 +1333,7 @@ STUDENT_TEST("Make sure data structure returns to original state after many call
         {"E", {"B"}},
         {"F", {"B"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -1330,7 +1342,7 @@ STUDENT_TEST("Make sure data structure returns to original state after many call
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         /* Network
          *
          *      A  B  C  D  E  F
@@ -1362,8 +1374,8 @@ STUDENT_TEST("Make sure data structure returns to original state after many call
         }
         chosen.clear();
         // No matter how many tests we do, the data structure should always restore itself.
-        EXPECT_EQUAL(network.dlx.grid, dlxItems);
-        EXPECT_EQUAL(network.dlx.table, networkHeaders);
+        EXPECT_EQUAL(network.grid_, dlxItems);
+        EXPECT_EQUAL(network.table_, networkHeaders);
     }
 }
 
@@ -1381,7 +1393,7 @@ STUDENT_TEST("The straight line test. This will help us make sure we manage opti
         {"E", {"B", "C"}},
         {"F", {"D"}},
     };
-    Vector<DisasterLinks::cityHeader> networkHeaders = {
+    std::vector<DisasterLinks::cityHeader> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -1390,7 +1402,7 @@ STUDENT_TEST("The straight line test. This will help us make sure we manage opti
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    Vector<DisasterLinks::cityItem> dlxItems = {
+    std::vector<DisasterLinks::cityItem> dlxItems = {
         //        0                 1A             2B               3C               4D              5E             6F
               {0,0,0,6,1},     {2,24,12,0,2},   {3,20,8,1,3},   {3,25,13,2,4},   {3,27,9,3,5},   {3,22,10,4,6},   {2,28,18,5,0},
         /*B*/ {-2,0,10,10,8},                   {2,2,16,7,9},                    {4,4,17,8,10},  {5,5,14,9,7},
@@ -1404,11 +1416,11 @@ STUDENT_TEST("The straight line test. This will help us make sure we manage opti
     DisasterLinks network(cities);
     Set<std::string> chosen = {};
     EXPECT(!network.isDisasterReady(1, chosen));
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
     EXPECT(network.isDisasterReady(2, chosen));
-    EXPECT_EQUAL(network.dlx.grid, dlxItems);
-    EXPECT_EQUAL(network.dlx.table, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
+    EXPECT_EQUAL(network.table_, networkHeaders);
 }
 
 STUDENT_TEST("Do not be greedy with our algorithm in terms of most connected cities.") {

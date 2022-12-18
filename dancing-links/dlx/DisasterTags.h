@@ -136,17 +136,6 @@ public:
         int right;
     }cityName;
 
-    typedef struct Network {
-        // Use table to control recursion and know when all cities are safe. Table will be empty.
-        Vector<cityName> table;
-        /* Contains all dancing links nodes. Cities apear as columns with appearances across rows.
-         * Rows are the same cities but they indicate which other cities they cover if supplied.
-         */
-        Vector<city> grid;
-        // All cities apear as rows and columns so the grid is square.
-        int numItemsAndOptions;
-    }Network;
-
 
     /* * * * * * * * * *    Constructor and Dancing Links Solver        * * * * * * * * * * * * * */
 
@@ -157,7 +146,7 @@ public:
      *                       search via dancing links.
      * @param roadNetwork    the transportation grid passed in via map form.
      */
-    DisasterTags(const Map<std::string, Set<std::string>>& roadNetwork);
+    explicit DisasterTags(const Map<std::string, Set<std::string>>& roadNetwork);
 
      /**
      * @brief hasDisasterCoverage  performs a recursive search to determine if a transportation grid
@@ -198,9 +187,9 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const cityName& city);
 
-    friend std::ostream& operator<<(std::ostream&os, const Vector<city>& grid);
+    friend std::ostream& operator<<(std::ostream&os, const std::vector<city>& grid);
 
-    friend std::ostream& operator<<(std::ostream&os, const Vector<cityName>& links);
+    friend std::ostream& operator<<(std::ostream&os, const std::vector<cityName>& links);
 
     friend std::ostream& operator<<(std::ostream&os, const DisasterTags& network);
 
@@ -209,8 +198,16 @@ private:
 
     /* * * * * * * * * *       Core Dancing Links Implementation        * * * * * * * * * * * * * */
 
-    // I choose to pack all the data structures into a struct. Am I thinking in C?
-    Network dlx;
+
+    // Use table to control recursion and know when all cities are safe. Table will be empty.
+    std::vector<cityName> table_;
+    /* Contains all dancing links nodes. Cities apear as columns with appearances across rows.
+     * Rows are the same cities but they indicate which other cities they cover if supplied.
+     */
+    std::vector<city> grid_;
+    // All cities apear as rows and columns so the grid is square.
+    int numItemsAndOptions_;
+
 
     /**
      * @brief isDLXCovered     performs an in-place recursive search on a dancing links data
