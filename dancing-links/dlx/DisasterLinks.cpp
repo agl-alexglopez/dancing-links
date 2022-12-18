@@ -351,7 +351,7 @@ void DisasterLinks::initializeItems(const Map<std::string, Set<std::string>>& ro
 
         previousSetSize = connections.size();
     }
-    grid_.push_back({NOT_PROCESSED, index - previousSetSize, 0, index - 1, NOT_PROCESSED});
+    grid_.push_back({INT_MIN, index - previousSetSize, 0, index - 1, INT_MIN});
 }
 
 /**
@@ -516,7 +516,7 @@ STUDENT_TEST("Initialize a small dancing links.") {
         /*A*/ {-1,5,10,10,9}, {1,5,1,8,10},               {3,7,13,9,8},
         //       11C                             12B           13C
         /*B*/ {-2,9,13,13,12},             {2,6,2,11,13}, {3,10,3,12,11},
-              {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
+              {INT_MIN,12,0,13,INT_MIN},
     };
     DisasterLinks network(cities);
     EXPECT_EQUAL(network.table_, networkHeaders);
@@ -555,7 +555,7 @@ STUDENT_TEST("Initialize larger dancing links.") {
         /*E*/ {-5,16,22,22,20},                 {2,16,2,19,21}, {3,13,25,20,22},                 {5,14,5,21,19},
         /*A*/ {-1,20,25,25,24}, {1,12,1,23,25},                 {3,21,3,24,23},
         /*F*/ {-6,24,28,28,27},                                                  {4,17,4,26,28},                  {6,18,6,27,26},
-        {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
+        {INT_MIN,27,0,28,INT_MIN},
     };
     DisasterLinks network(cities);
     EXPECT_EQUAL(network.table_, networkHeaders);
@@ -620,7 +620,7 @@ STUDENT_TEST("Simple Ethene Network initialization.") {
 
 
 
-              {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
+              {INT_MIN,27,0,28,INT_MIN},
 
     };
     DisasterLinks network (cities);
@@ -659,7 +659,7 @@ STUDENT_TEST("Supplying A will only cover A and C. C remains available supply lo
         /*C*/ {-3,0,7,7,5},    {1,1,9,4,6},  {2,2,12,5,7},  {3,3,10,6,4},
         /*A*/ {-1,5,10,10,9},  {1,5,1,8,10},                {3,7,13,9,8},
         /*B*/ {-2,9,13,13,12},               {2,6,2,11,13}, {3,10,3,12,11},
-              {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
+              {INT_MIN,12,0,13,INT_MIN},
     };
     DisasterLinks network (cities);
 
@@ -690,7 +690,7 @@ STUDENT_TEST("Supplying A will only cover A and C. C remains available supply lo
         /*A*/ {-1,5,10,10,9},  {1,5,1,8,10},                {3,7,13,9,8},
         //        11                             12A           13C
         /*B*/ {-2,9,13,12,12},               {2,6,2,11,11}, {3,10,3,12,11},
-              {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
+              {INT_MIN,12,0,13,INT_MIN},
     };
     EXPECT_EQUAL(network.table_, headersCoverA);
     EXPECT_EQUAL(network.grid_, dlxCoverA);
@@ -723,7 +723,7 @@ STUDENT_TEST("Supplying B will only cover B and C. Make sure splicing from looku
         /*C*/ {-3,0,7,7,5},    {1,1,9,4,6},  {2,2,12,5,7},  {3,3,10,6,4},
         /*A*/ {-1,5,10,10,9},  {1,5,1,8,10},                {3,7,13,9,8},
         /*B*/ {-2,9,13,13,12},               {2,6,2,11,13}, {3,10,3,12,11},
-        {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
+        {INT_MIN,12,0,13,INT_MIN},
     };
     DisasterLinks network (cities);
     EXPECT_EQUAL(network.table_, networkHeaders);
@@ -754,7 +754,7 @@ STUDENT_TEST("Supplying B will only cover B and C. Make sure splicing from looku
         /*A*/ {-1,5,10,9,9},   {1,5,1,8,8},                 {3,7,13,9,8},
         //        11                               12B           13C
         /*B*/ {-2,9,13,13,12},               {2,6,2,11,13}, {3,10,3,12,11},
-              {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
+              {INT_MIN,12,0,13,INT_MIN},
     };
     EXPECT_EQUAL(network.table_, headersCoverB);
     EXPECT_EQUAL(network.grid_, dlxCoverB);
@@ -788,7 +788,7 @@ STUDENT_TEST("Supplying C will cover all. Make sure splicing from lookupTable wo
         /*C*/ {-3,0,7,7,5},    {1,1,9,4,6},  {2,2,12,5,7},  {3,3,10,6,4},
         /*A*/ {-1,5,10,10,9},  {1,5,1,8,10},                {3,7,13,9,8},
         /*B*/ {-2,9,13,13,12},               {2,6,2,11,13}, {3,10,3,12,11},
-              {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
+              {INT_MIN,12,0,13,INT_MIN},
     };
     DisasterLinks network (cities);
     EXPECT_EQUAL(network.table_, networkHeaders);
@@ -820,7 +820,7 @@ STUDENT_TEST("Supplying C will cover all. Make sure splicing from lookupTable wo
         /*A*/ {-1,5,10,8,8},   {1,5,1,8,10},                {3,7,13,8,8},
         //        11                               12B           13C
         /*B*/ {-2,9,13,11,11},               {2,6,2,11,13}, {3,10,3,11,11},
-        {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
+        {INT_MIN,12,0,13,INT_MIN},
     };
     EXPECT_EQUAL(network.table_, headersOptionC);
     EXPECT_EQUAL(network.grid_, dlxOptionC);
@@ -857,7 +857,7 @@ STUDENT_TEST("Supplying A will only cover A and C with one supply. Uncover to tr
         /*C*/ {-3,0,7,7,5},    {1,1,9,4,6},  {2,2,12,5,7},  {3,3,10,6,4},
         /*A*/ {-1,5,10,10,9},  {1,5,1,8,10},                {3,7,13,9,8},
         /*B*/ {-2,9,13,13,12},               {2,6,2,11,13}, {3,10,3,12,11},
-              {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
+              {INT_MIN,12,0,13,INT_MIN},
     };
     DisasterLinks network (cities);
     EXPECT_EQUAL(network.table_, networkHeaders);
@@ -888,7 +888,7 @@ STUDENT_TEST("Supplying A will only cover A and C with one supply. Uncover to tr
         /*A*/ {-1,5,10,10,9},  {1,5,1,8,10},                {3,7,13,9,8},
         //        11                             12A           13C
         /*B*/ {-2,9,13,12,12},               {2,6,2,11,11}, {3,10,3,12,11},
-              {NOT_PROCESSED,12,0,13,NOT_PROCESSED},
+              {INT_MIN,12,0,13,INT_MIN},
     };
     EXPECT_EQUAL(network.table_, headersCoverA);
     EXPECT_EQUAL(network.grid_, dlxCoverA);
@@ -946,7 +946,7 @@ STUDENT_TEST("Simple Ethene cover B, large item wipe out with D remaining an opt
         /*C*/ {-3,18,22,22,21},                                 {3,15,3,20,22}, {4,19,4,21,20},
         /*E*/ {-5,21,25,25,24},                 {2,14,27,23,25},                                 {5,10,5,24,23},
         /*F*/ {-6,24,28,28,27},                 {2,24,2,26,28},                                                  {6,11,6,27,26},
-              {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
+              {INT_MIN,27,0,28,INT_MIN},
     };
 
     DisasterLinks network (cities);
@@ -986,7 +986,7 @@ STUDENT_TEST("Simple Ethene cover B, large item wipe out with D remaining an opt
         /*C*/ {-3,18,22,21,21},                                  {3,15,3,20,20}, {4,19,4,21,20},
         /*E*/ {-5,21,25,23,23},                 {2,14,27,23,25},                                 {5,10,5,23,23},
         /*F*/ {-6,24,28,26,26},                 {2,24,2,26,28},                                                  {6,11,6,26,26},
-              {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
+              {INT_MIN,27,0,28,INT_MIN},
     };
     EXPECT_EQUAL(network.table_, headersCoverB);
     EXPECT_EQUAL(network.grid_, dlxCoverB);
@@ -1043,7 +1043,7 @@ STUDENT_TEST("Simple Ethene cover A with option D.") {
         /*C*/ {-3,18,22,22,21},                                 {3,15,3,20,22}, {4,19,4,21,20},
         /*E*/ {-5,21,25,25,24},                 {2,14,27,23,25},                                 {5,10,5,24,23},
         /*F*/ {-6,24,28,28,27},                 {2,24,2,26,28},                                                  {6,11,6,27,26},
-              {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
+              {INT_MIN,27,0,28,INT_MIN},
     };
 
     DisasterLinks network (cities);
@@ -1084,7 +1084,7 @@ STUDENT_TEST("Simple Ethene cover A with option D.") {
         /*C*/ {-3,18,22,20,20},                                   {3,15,3,20,22}, {4,19,4,20,20},
         /*E*/ {-5,21,25,25,25},                  {2,14,27,23,25},                                  {5,10,5,23,23},
         /*F*/ {-6,24,28,28,28},                  {2,24,2,26,28},                                                   {6,11,6,26,26},
-              {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
+              {INT_MIN,27,0,28,INT_MIN},
     };
     EXPECT_EQUAL(network.table_, headersCoverD);
     EXPECT_EQUAL(network.grid_, dlxCoverD);
@@ -1141,7 +1141,7 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
         /*C*/ {-3,18,22,22,21},                                 {3,15,3,20,22}, {4,19,4,21,20},
         /*E*/ {-5,21,25,25,24},                 {2,14,27,23,25},                                 {5,10,5,24,23},
         /*F*/ {-6,24,28,28,27},                 {2,24,2,26,28},                                                  {6,11,6,27,26},
-              {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
+              {INT_MIN,27,0,28,INT_MIN},
     };
     DisasterLinks network (cities);
     EXPECT_EQUAL(network.table_, networkHeaders);
@@ -1180,7 +1180,7 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
         /*C*/ {-3,18,22,21,21},                                 {3,15,3,20,20}, {4,19,4,21,20},
         /*E*/ {-5,21,25,25,24},                 {2,14,27,23,25},                                 {5,10,5,24,23},
         /*F*/ {-6,24,28,28,27},                 {2,24,2,26,28},                                                  {6,11,6,27,26},
-        {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
+        {INT_MIN,27,0,28,INT_MIN},
     };
     EXPECT_EQUAL(network.table_, headersCoverA);
     EXPECT_EQUAL(network.grid_, dlxCoverA);
@@ -1217,7 +1217,7 @@ STUDENT_TEST("Test for a depth 2 cover and uncover. Two covers then two uncovers
         /*C*/ {-3,18,22,21,21},                                  {3,15,3,20,20}, {4,19,4,21,20},
         /*E*/ {-5,21,25,25,24},                 {2,14,27,23,25},                                 {5,10,5,24,23},
         /*F*/ {-6,24,28,28,27},                 {2,24,2,26,28},                                                  {6,11,6,27,26},
-        {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
+        {INT_MIN,27,0,28,INT_MIN},
     };
 
     EXPECT_EQUAL(network.table_, headersCoverC);
@@ -1303,7 +1303,7 @@ STUDENT_TEST("Simple Ethene cover D and B to succeed.") {
         /*C*/ {-3,18,22,22,21},                                 {3,15,3,20,22}, {4,19,4,21,20},
         /*E*/ {-5,21,25,25,24},                 {2,14,27,23,25},                                 {5,10,5,24,23},
         /*F*/ {-6,24,28,28,27},                 {2,24,2,26,28},                                                  {6,11,6,27,26},
-              {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
+              {INT_MIN,27,0,28,INT_MIN},
     };
     DisasterLinks network(cities);
     Set<std::string> chosen = {};
@@ -1363,7 +1363,7 @@ STUDENT_TEST("Make sure data structure returns to original state after many call
         /*C*/ {-3,18,22,22,21},                                 {3,15,3,20,22}, {4,19,4,21,20},
         /*E*/ {-5,21,25,25,24},                 {2,14,27,23,25},                                 {5,10,5,24,23},
         /*F*/ {-6,24,28,28,27},                 {2,24,2,26,28},                                                  {6,11,6,27,26},
-              {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
+              {INT_MIN,27,0,28,INT_MIN},
     };
     DisasterLinks network(cities);
     Set<std::string> chosen = {};
@@ -1412,7 +1412,7 @@ STUDENT_TEST("The straight line test. This will help us make sure we manage opti
         /*E*/ {-5,16,22,22,20},                 {2,16,2,19,21}, {3,13,25,20,22},                 {5,14,5,21,19},
         /*A*/ {-1,20,25,25,24}, {1,12,1,23,25},                 {3,21,3,24,23},
         /*F*/ {-6,24,28,28,27},                                                  {4,17,4,26,28},                  {6,18,6,27,26},
-        {NOT_PROCESSED,27,0,28,NOT_PROCESSED},
+        {INT_MIN,27,0,28,INT_MIN},
     };
     DisasterLinks network(cities);
     Set<std::string> chosen = {};

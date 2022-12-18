@@ -94,7 +94,6 @@
 #include "hashmap.h"
 #include "set.h"
 
-#define NOT_PROCESSED INT_MIN
 
 class DisasterLinks {
 
