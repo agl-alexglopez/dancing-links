@@ -127,7 +127,7 @@ void PartnerLinks::fillPerfectMatchings(Set<Pair>& soFar, Vector<Set<Pair>>& res
  *                      has no pairing possibilities.
  * @return              the index of the next person to pair or -1 if someone is alone.
  */
-int PartnerLinks::choosePerson() {
+int PartnerLinks::choosePerson() const {
     for (int cur = table_[0].right; cur != 0; cur = table_[cur].right) {
         // Someone has become inaccessible due to other matches.
         if (links_[cur].topOrLen == 0) {
@@ -328,7 +328,7 @@ void PartnerLinks::fillWeights(std::pair<int,Set<Pair>>& soFar, std::pair<int,Se
  *                              connections, that is ok, but we will return -1 to indicate this.
  * @return                      the index of the next person to pair or -1 if no pairs remain.
  */
-int PartnerLinks::chooseWeightedPerson() {
+int PartnerLinks::chooseWeightedPerson() const {
     int head = 0;
     for (int cur = table_[0].right; cur != head; cur = table_[cur].right) {
         // Take the first available person.

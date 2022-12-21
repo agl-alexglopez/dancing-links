@@ -248,7 +248,7 @@ private:
      *                              - Finally, try actual city in question, not neighbors.
      * @return                    the index of the city we are selecting to attempt to cover.
      */
-    int chooseIsolatedCity();
+    int chooseIsolatedCity() const;
 
     /**
      * @brief coverCity      covers a city wit supplies and all of its neighbors. All cities tagged

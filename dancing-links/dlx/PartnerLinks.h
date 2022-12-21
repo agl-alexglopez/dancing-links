@@ -271,7 +271,7 @@ private:
      *                      has no pairing possibilities.
      * @return              the index of the next person to pair or -1 if someone is alone.
      */
-    int choosePerson();
+    int choosePerson() const;
 
     /**
      * @brief chooseWeightedPerson  choosing a person in Max Weight matching is different than
@@ -281,7 +281,7 @@ private:
      *                              connections, that is ok, but we will return -1 to indicate this.
      * @return                      the index of the next person to pair or -1 if no pairs remain.
      */
-    int chooseWeightedPerson();
+    int chooseWeightedPerson() const;
 
     /**
      * @brief coverPairing  when we cover a pairing in a Perfect Matching we report back the

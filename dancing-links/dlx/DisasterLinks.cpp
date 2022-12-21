@@ -148,7 +148,7 @@ void DisasterLinks::fillConfigurations(int numSupplies,
  *                                in question, not neighbors.
  * @return                    the index of the city we are selecting to attempt to cover.
  */
-int DisasterLinks::chooseIsolatedCity() {
+int DisasterLinks::chooseIsolatedCity() const {
     int min = INT_MAX;
     int chosenIndex = 0;
     int head = 0;
