@@ -70,11 +70,13 @@ DEFINES     +=  main=qMain qMain=studentMain
 # Afterward we glob-add files to SOURCES ourselves. Operator *= will unique
 # entries, so no worries about duplicates
 SOURCES         *=  "" \
+    Demos/PokemonGUI.cpp \
     DisasterLinks.cpp \
     DisasterTags.cpp \
     DisasterUtilities.cpp \
     MatchingUtilities.cpp \
-    PartnerLinks.cpp
+    PartnerLinks.cpp \
+    res/pokemon/htmlToJSON.cpp
 HEADERS         *=  "" \
     DisasterLinks.h \
     DisasterTags.h \

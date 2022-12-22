@@ -2,7 +2,8 @@ WINDOW_TITLE("Dancing Links!")
 
 RUN_TESTS_MENU_OPTION()
 MENU_ORDER("MatchmakerGUI.cpp",
-           "DisasterGUI.cpp")
+           "DisasterGUI.cpp",
+           "PokemonGUI.cpp")
 
 TEST_ORDER("DisasterTags.cpp",
            "DisasterLinks.cpp",
