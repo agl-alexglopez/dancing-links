@@ -1,0 +1,16 @@
+# 6
+# This is a generation 6 map for Kalos (Pokemon X and Y). This is the first generation where all types are
+# available so it is a good test for the QJson Parser to start. Gyms are labelled with a G and the
+# gym number they are meant to be visited in. The elite 4 is labelled E4. The entire game is considered
+# within just the gyms and Elite Four for simplicity. We will eventually be able to select just a certain
+# number of gyms we want to have covered with attack or defense.
+
+G1 (11, 6): E4, G5
+G2 (4, 7): G5, G3
+G3 (3, 4): G2, G4
+G4 (6, 3): G3, G5
+G5 (10, 4): G4, G1, G6
+G6 (10, 2): G5, G7
+G7 (15, 4): G6, G8
+G8 (15, 6): G7, E4
+E4 (13, 5): G1, G8

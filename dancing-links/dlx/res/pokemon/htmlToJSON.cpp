@@ -56,13 +56,13 @@ namespace {
      * but this is more portable. Copy this implementation into any folder in most terminals and
      * and it should work regardless of OS.
      */
-    class Pair {
+    class DualType {
     public:
         /* Creates a pair of two empty strings. */
-        Pair() = default;
+        DualType() = default;
 
         /* Sort the strings. */
-        Pair(const std::string& one, const std::string& two) {
+        DualType(const std::string& one, const std::string& two) {
             if (one < two) {
                 one_ = one;
                 two_ = two;
@@ -98,7 +98,7 @@ namespace {
             }
         }
 
-        bool operator< (const Pair& rhs) const {
+        bool operator< (const DualType& rhs) const {
             /* Compare first components. */
             auto comp = first().compare(rhs.first());
             if (comp != 0) return comp < 0;
@@ -110,20 +110,20 @@ namespace {
             return this->first() != "" || this->second() != "";
         }
 
-        bool operator== (const Pair& rhs) const {
+        bool operator== (const DualType& rhs) const {
             return first() == rhs.first() && second() == rhs.second();
         }
 
-        bool operator> (const Pair& rhs) const {
+        bool operator> (const DualType& rhs) const {
             return rhs < *this;
         }
-        bool operator>= (const Pair& rhs) const {
+        bool operator>= (const DualType& rhs) const {
             return !(*this < rhs);
         }
-        bool operator<= (const Pair& rhs) const {
+        bool operator<= (const DualType& rhs) const {
             return !(*this > rhs);
         }
-        bool operator!= (const Pair& rhs) const {
+        bool operator!= (const DualType& rhs) const {
             return !(*this == rhs);
         }
 
@@ -152,6 +152,8 @@ namespace {
                                                         "Flying","Psychic","Bug",
                                                         "Rock","Ghost","Dragon",
                                                         "Dark","Steel","Fairy"};
+
+    const std::string FUNDAMENTAL_TYPE_DELIM = "<td title=\"";
     const std::string NO_EFFECT = "no effect";
     const std::string NOT_VERY_EFFECTIVE = "not very effective";
     const std::string QUARTER_DAMAGE = "&frac14;";
@@ -164,52 +166,32 @@ namespace {
     const std::string DAMAGE_QUALIFIER_DELIM_END = "<";
     const std::string TYPE_ADVANTAGE_DELIM = " = ";
 
-    typedef enum DamageClass {
+    typedef enum DamageMultiplier {
         IMMUNE=0,
         QUARTER=1,
         HALF=2,
         NORMAL=3,
         DOUBLE=4,
         QUAD=5
-    }DamageClass;
-    const int NUM_DAMAGE_CLASSES = 6;
+    }DamageMultiplier;
+    const int NUM_DAMAGE_MULTIPLIERS = 6;
     const std::vector<std::string> JSON_DAMAGE_KEYS = {"immune","quarter","half",
                                                        "normal","double","quad"};
 
-
-    DamageClass getDamageMultiplier(const std::string& line, std::size_t pos) {
-        // Looking for something like this [>&frac12<], [>&frac14<], [>2<], or [>4<]
-        std::size_t openArrow = line.find_first_of(DAMAGE_QUALIFIER_DELIM_START, pos);
-        if (openArrow == std::string::npos) {
-            std::cerr << "You are not where you think you are. No damage qualifiers found." << std::endl;
-        }
-        openArrow++;
-        std::size_t closeArrow = line.find_first_of(DAMAGE_QUALIFIER_DELIM_END, openArrow);
-
-        std::string fractionalMultiplier = line.substr(openArrow, closeArrow - openArrow);
-        if (fractionalMultiplier == QUARTER_DAMAGE) {
-            return QUARTER;
-        } else if (fractionalMultiplier == HALF_DAMAGE) {
-            return HALF;
-        } else if (fractionalMultiplier == DOUBLE_DAMAGE) {
-            return DOUBLE;
-        } else if (fractionalMultiplier == QUAD_DAMAGE) {
-            return QUAD;
-        } else {
-            std::cerr << "Did not correctly find the damage multiplier, found this: "
-                      << fractionalMultiplier << std::endl;
-            return IMMUNE;
-        }
+    void quitParsing(std::ifstream& htmlTXTFile, std::ofstream& jsonFile) {
+        htmlTXTFile.close();
+        jsonFile.close();
+        std::abort();
     }
 
-
-    std::pair<std::string,std::string> getPokemonType(std::ifstream& htmlTXTFile,
-                                                      std::string& line) {
+    DualType getPokemonType(std::ifstream& htmlTXTFile,
+                            std::string& line) {
         // We know the type info is on the next line.
         std::getline(htmlTXTFile, line);
         std::size_t posStart = line.find(TYPE_FLAG_START);
         if (posStart == std::string::npos) {
             std::cerr << "First type of dual type not found. Wrong line?" << std::endl;
+            return {"",""};
         }
         posStart += TYPE_FLAG_START.length();
         std::size_t posEnd = line.find_first_of(TYPE_FLAG_END, posStart);
@@ -218,6 +200,7 @@ namespace {
         posStart = line.find(TYPE_FLAG_START, posEnd);
         if (posStart == std::string::npos) {
             std::cerr << "Second type--even if null--of dual type not found." << std::endl;
+            return {"",""};
         }
         posStart += TYPE_FLAG_START.length();
         posEnd = line.find_first_of(TYPE_FLAG_END, posStart);
@@ -228,41 +211,105 @@ namespace {
         return {typeOne, typeTwo};
     }
 
+    DamageMultiplier getDamageMultiplier(const std::string& line, std::size_t pos) {
+        // Looking for something like this [>&frac12<], [>&frac14<], [>2<], or [>4<]
+        std::size_t openArrow = line.find_first_of(DAMAGE_QUALIFIER_DELIM_START, pos);
+        if (openArrow == std::string::npos) {
+            std::cerr << "You are not on right line. No damage qualifiers found." << std::endl;
+        }
+        openArrow++;
+        std::size_t closeArrow = line.find_first_of(DAMAGE_QUALIFIER_DELIM_END, openArrow);
+
+        std::string multiplier = line.substr(openArrow, closeArrow - openArrow);
+        if (multiplier == QUARTER_DAMAGE) {
+            return QUARTER;
+        } else if (multiplier == HALF_DAMAGE) {
+            return HALF;
+        } else if (multiplier == DOUBLE_DAMAGE) {
+            return DOUBLE;
+        } else if (multiplier == QUAD_DAMAGE) {
+            return QUAD;
+        } else {
+            std::cerr << "Did not find multiplier, found this: " << multiplier << std::endl;
+            return IMMUNE;
+        }
+    }
+
+    bool isCorrectFundamentalType(const std::string& line,
+                                  std::size_t& posStart, std::size_t& posEnd,
+                                  const std::string& ftype) {
+        posStart = line.find(FUNDAMENTAL_TYPE_DELIM, posEnd);
+        if (posStart == std::string::npos) {
+            std::cerr << "Could not find fundamental type delimiter." << std::endl;
+        }
+        posStart += FUNDAMENTAL_TYPE_DELIM.length();
+        posEnd = line.find_first_of(" ", posStart);
+        std::string foundType = line.substr(posStart, posEnd - posStart);
+        if (foundType != ftype) {
+            std::cerr << "Current type: [" << ftype << "]" << std::endl;
+            std::cerr << "Found: [" << foundType << "]." << std::endl;
+            return false;
+        }
+        return true;
+    }
+
     std::vector<std::vector<std::string>>
     enterTypeAdvantages(const std::string& line) {
         // We will fill these arrays with the types that do their respective damage multipliers.
         std::vector<std::vector<std::string>>
-        damageClasses(NUM_DAMAGE_CLASSES, std::vector<std::string>({}));
+        damageClasses(NUM_DAMAGE_MULTIPLIERS, std::vector<std::string>({}));
 
         // We have a sliding window throughout this huge line to find all the types.
-        std::size_t effectivenessPosStart = 0;
-        std::size_t effectivenessPosEnd = 0;
+        std::size_t posStart = 0;
+        std::size_t posEnd = 0;
         for (const std::string& ftype : FUNDAMENTAL_TYPES) {
 
-            effectivenessPosStart = line.find(TYPE_ADVANTAGE_DELIM, effectivenessPosEnd);
-
-            if (effectivenessPosStart == std::string::npos) {
-                std::cerr << "You may be on the wrong line. No type advantage found." << std::endl;
+            // I will take the position arguments by reference and advance them to save work.
+            if (!isCorrectFundamentalType(line, posStart, posEnd, ftype)) {
+                return {};
             }
-            effectivenessPosStart += TYPE_ADVANTAGE_DELIM.length();
 
-            effectivenessPosEnd = line.find_first_of("\"", effectivenessPosStart);
+            posStart = line.find(TYPE_ADVANTAGE_DELIM, posEnd);
 
-            std::string effectiveness = line.substr(effectivenessPosStart,
-                                                    effectivenessPosEnd - effectivenessPosStart);
+            if (posStart == std::string::npos) {
+                std::cerr << "You may be on the wrong line. No type advantage found." << std::endl;
+                return {};
+            }
+            posStart += TYPE_ADVANTAGE_DELIM.length();
+
+            posEnd = line.find_first_of("\"", posStart);
+
+            std::string effectiveness = line.substr(posStart, posEnd - posStart);
 
             if (effectiveness == NO_EFFECT) {
                 damageClasses[IMMUNE].push_back(ftype);
             } else if (effectiveness == NORMAL_EFFECTIVENESS) {
                 damageClasses[NORMAL].push_back(ftype);
             } else if (effectiveness == SUPER_EFFECTIVE || effectiveness == NOT_VERY_EFFECTIVE) {
-                DamageClass multiple = getDamageMultiplier(line, effectivenessPosEnd);
+                DamageMultiplier multiple = getDamageMultiplier(line, posEnd);
+
+                if (multiple == IMMUNE) {return {};}
+
                 damageClasses[multiple].push_back(ftype);
             } else {
                 std::cerr << "No effectiveness found, found this " << effectiveness << std::endl;
+                return {};
             }
         }
         return damageClasses;
+    }
+
+    void writeTypesInMultiplierToJSON(std::ofstream& jsonFile, std::vector<std::string>& types) {
+        for (int type = 0; type < types.size(); type++) {
+
+            jsonFile << TWELVE_SPACE_INDENT << "\"" << types[type] << "\"";
+
+            // JSON requires no trailing commas so handle edgecase.
+            if (type != types.size() - 1) {
+                jsonFile << ",";
+            }
+            jsonFile << std::endl;
+        }
     }
 
     void writeAdvantagesToJSON(std::ofstream& jsonFile,
@@ -273,16 +320,9 @@ namespace {
             jsonFile << EIGHT_SPACE_INDENT
                      << "\"" << JSON_DAMAGE_KEYS[multiplier] << "\": [" << std::endl;
 
-            std::vector<std::string> typesInMultiplier = typeInteractions[multiplier];
-            for (int type = 0; type < typesInMultiplier.size(); type++) {
-                jsonFile << TWELVE_SPACE_INDENT << "\"" << typesInMultiplier[type] << "\"";
+            writeTypesInMultiplierToJSON(jsonFile, typeInteractions[multiplier]);
 
-                if (type != typesInMultiplier.size() - 1) {
-                    jsonFile << ",";
-                }
-                jsonFile << std::endl;
-            }
-
+            // JSON requires no trailing commas so handle edgecase.
             jsonFile << EIGHT_SPACE_INDENT << "]";
             if (multiplier != JSON_DAMAGE_KEYS.size() - 1) {
                 jsonFile << ",";
@@ -292,39 +332,23 @@ namespace {
     }
 
     void convertToJSON(std::ifstream& htmlTXTFile, std::ofstream& jsonFile) {
-        std::set<Pair> seenTypes = {};
+        std::set<DualType> seenTypes = {};
         for (std::string line; std::getline(htmlTXTFile, line);) {
             if (line == TYPE_BREAK) {
 
-                /* Visually, I want the JSON organized like this:
-                 *
-                 *      "Normal": {
-                 *          ...
-                 *      },
-                 *      "Normal-Fire": {
-                 *          ...
-                 *      }
-                 *      ...
-                 *
-                 * Each type then all of its dual typings should be grouped together because it
-                 * looks good. But this would lead to duplicate dual types later just in another
-                 * order. So, print with the std::pair and organize and track duplicates with
-                 * the Pair that lexographically sorts the strings.
-                 */
-                std::pair<std::string,std::string> newType = getPokemonType(htmlTXTFile, line);
-                Pair newLexographicType = {newType.first, newType.second};
+                DualType newType = getPokemonType(htmlTXTFile, line);
+                if (newType.first() == "" && newType.second() == "") {
+                    quitParsing(htmlTXTFile, jsonFile);
+                }
 
-                if (!seenTypes.count(newLexographicType)) {
-                    seenTypes.insert(newLexographicType);
+                if (!seenTypes.count(newType)) {
+                    seenTypes.insert(newType);
                     jsonFile << FOUR_SPACE_INDENT << "\"";
-                    if (newType.first == "") {
-                        jsonFile << newType.second;
-                    } else if (newType.second == "") {
-                        jsonFile << newType.first;
-                    } else {
-                        jsonFile << newType.first << "-" << newType.second;
+                    // We can cout on the DualType to sort the strings for us "" is always first.
+                    if (newType.first() != "") {
+                        jsonFile << newType.first() << "-";
                     }
-                    jsonFile << "\": {" << std::endl;
+                    jsonFile << newType.second() << "\": {" << std::endl;
 
                     // The type advantages line is always three below this one.
                     std::getline(htmlTXTFile, line);
@@ -333,8 +357,13 @@ namespace {
 
                     std::vector<std::vector<std::string>> typeStats = enterTypeAdvantages(line);
 
+                    if (typeStats.empty()) {
+                        quitParsing(htmlTXTFile, jsonFile);
+                    }
+
                     writeAdvantagesToJSON(jsonFile, typeStats);
 
+                    // JSON requires no trailing commas so handle edgecase.
                     jsonFile << FOUR_SPACE_INDENT << "}";
                     if (seenTypes.size() != NUM_TYPES) {
                         jsonFile << ",";
@@ -345,6 +374,7 @@ namespace {
         }
         if (htmlTXTFile.bad()) {
             std::cerr << "Bad Bit Set. Error reading from file." << std::endl;
+            quitParsing(htmlTXTFile, jsonFile);
         }
     }
 }
@@ -376,6 +406,3 @@ int main(int argc, char *argv[]) {
     }
     return 0;
 }
-
-
-

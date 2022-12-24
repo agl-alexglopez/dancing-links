@@ -31,7 +31,7 @@
         "quad": [
         ]
     },
-    "Normal-Fire": {
+    "Fire-Normal": {
         "immune": [
             "Ghost"
         ],
@@ -95,7 +95,7 @@
         "quad": [
         ]
     },
-    "Normal-Electric": {
+    "Electric-Normal": {
         "immune": [
             "Ghost"
         ],
@@ -127,7 +127,7 @@
         "quad": [
         ]
     },
-    "Normal-Grass": {
+    "Grass-Normal": {
         "immune": [
             "Ghost"
         ],
@@ -159,7 +159,7 @@
         "quad": [
         ]
     },
-    "Normal-Ice": {
+    "Ice-Normal": {
         "immune": [
             "Ghost"
         ],
@@ -191,7 +191,7 @@
             "Fighting"
         ]
     },
-    "Normal-Fighting": {
+    "Fighting-Normal": {
         "immune": [
             "Ghost"
         ],
@@ -255,7 +255,7 @@
         "quad": [
         ]
     },
-    "Normal-Ground": {
+    "Ground-Normal": {
         "immune": [
             "Electric",
             "Ghost"
@@ -287,7 +287,7 @@
         "quad": [
         ]
     },
-    "Normal-Flying": {
+    "Flying-Normal": {
         "immune": [
             "Ground",
             "Ghost"
@@ -351,7 +351,7 @@
         "quad": [
         ]
     },
-    "Normal-Bug": {
+    "Bug-Normal": {
         "immune": [
             "Ghost"
         ],
@@ -415,7 +415,7 @@
             "Fighting"
         ]
     },
-    "Normal-Ghost": {
+    "Ghost-Normal": {
         "immune": [
             "Normal",
             "Fighting",
@@ -447,7 +447,7 @@
         "quad": [
         ]
     },
-    "Normal-Dragon": {
+    "Dragon-Normal": {
         "immune": [
             "Ghost"
         ],
@@ -479,7 +479,7 @@
         "quad": [
         ]
     },
-    "Normal-Dark": {
+    "Dark-Normal": {
         "immune": [
             "Psychic",
             "Ghost"
@@ -543,7 +543,7 @@
             "Fighting"
         ]
     },
-    "Normal-Fairy": {
+    "Fairy-Normal": {
         "immune": [
             "Ghost",
             "Dragon"
@@ -639,7 +639,7 @@
         "quad": [
         ]
     },
-    "Fire-Electric": {
+    "Electric-Fire": {
         "immune": [
         ],
         "quarter": [
@@ -735,7 +735,7 @@
             "Rock"
         ]
     },
-    "Fire-Fighting": {
+    "Fighting-Fire": {
         "immune": [
         ],
         "quarter": [
@@ -895,7 +895,7 @@
         "quad": [
         ]
     },
-    "Fire-Bug": {
+    "Bug-Fire": {
         "immune": [
         ],
         "quarter": [
@@ -991,7 +991,7 @@
         "quad": [
         ]
     },
-    "Fire-Dragon": {
+    "Dragon-Fire": {
         "immune": [
         ],
         "quarter": [
@@ -1023,7 +1023,7 @@
         "quad": [
         ]
     },
-    "Fire-Dark": {
+    "Dark-Fire": {
         "immune": [
             "Psychic"
         ],
@@ -1087,7 +1087,7 @@
             "Ground"
         ]
     },
-    "Fire-Fairy": {
+    "Fairy-Fire": {
         "immune": [
             "Dragon"
         ],
@@ -1151,7 +1151,7 @@
         "quad": [
         ]
     },
-    "Water-Electric": {
+    "Electric-Water": {
         "immune": [
         ],
         "quarter": [
@@ -1183,7 +1183,7 @@
         "quad": [
         ]
     },
-    "Water-Grass": {
+    "Grass-Water": {
         "immune": [
         ],
         "quarter": [
@@ -1215,7 +1215,7 @@
         "quad": [
         ]
     },
-    "Water-Ice": {
+    "Ice-Water": {
         "immune": [
         ],
         "quarter": [
@@ -1247,7 +1247,7 @@
         "quad": [
         ]
     },
-    "Water-Fighting": {
+    "Fighting-Water": {
         "immune": [
         ],
         "quarter": [
@@ -1279,7 +1279,7 @@
         "quad": [
         ]
     },
-    "Water-Poison": {
+    "Poison-Water": {
         "immune": [
         ],
         "quarter": [
@@ -1311,7 +1311,7 @@
         "quad": [
         ]
     },
-    "Water-Ground": {
+    "Ground-Water": {
         "immune": [
             "Electric"
         ],
@@ -1343,7 +1343,7 @@
             "Grass"
         ]
     },
-    "Water-Flying": {
+    "Flying-Water": {
         "immune": [
             "Ground"
         ],
@@ -1375,7 +1375,7 @@
             "Electric"
         ]
     },
-    "Water-Psychic": {
+    "Psychic-Water": {
         "immune": [
         ],
         "quarter": [
@@ -1407,7 +1407,7 @@
         "quad": [
         ]
     },
-    "Water-Bug": {
+    "Bug-Water": {
         "immune": [
         ],
         "quarter": [
@@ -1439,7 +1439,7 @@
         "quad": [
         ]
     },
-    "Water-Rock": {
+    "Rock-Water": {
         "immune": [
         ],
         "quarter": [
@@ -1471,7 +1471,7 @@
             "Grass"
         ]
     },
-    "Water-Ghost": {
+    "Ghost-Water": {
         "immune": [
             "Normal",
             "Fighting"
@@ -1503,7 +1503,7 @@
         "quad": [
         ]
     },
-    "Water-Dragon": {
+    "Dragon-Water": {
         "immune": [
         ],
         "quarter": [
@@ -1535,7 +1535,7 @@
         "quad": [
         ]
     },
-    "Water-Dark": {
+    "Dark-Water": {
         "immune": [
             "Psychic"
         ],
@@ -1567,7 +1567,7 @@
         "quad": [
         ]
     },
-    "Water-Steel": {
+    "Steel-Water": {
         "immune": [
             "Poison"
         ],
@@ -1599,7 +1599,7 @@
         "quad": [
         ]
     },
-    "Water-Fairy": {
+    "Fairy-Water": {
         "immune": [
             "Dragon"
         ],
@@ -1887,7 +1887,7 @@
         "quad": [
         ]
     },
-    "Electric-Bug": {
+    "Bug-Electric": {
         "immune": [
         ],
         "quarter": [
@@ -1983,7 +1983,7 @@
         "quad": [
         ]
     },
-    "Electric-Dragon": {
+    "Dragon-Electric": {
         "immune": [
         ],
         "quarter": [
@@ -2015,7 +2015,7 @@
         "quad": [
         ]
     },
-    "Electric-Dark": {
+    "Dark-Electric": {
         "immune": [
             "Psychic"
         ],
@@ -2175,7 +2175,7 @@
             "Fire"
         ]
     },
-    "Grass-Fighting": {
+    "Fighting-Grass": {
         "immune": [
         ],
         "quarter": [
@@ -2271,7 +2271,7 @@
             "Ice"
         ]
     },
-    "Grass-Flying": {
+    "Flying-Grass": {
         "immune": [
             "Ground"
         ],
@@ -2335,7 +2335,7 @@
             "Bug"
         ]
     },
-    "Grass-Bug": {
+    "Bug-Grass": {
         "immune": [
         ],
         "quarter": [
@@ -2399,7 +2399,7 @@
         "quad": [
         ]
     },
-    "Grass-Ghost": {
+    "Ghost-Grass": {
         "immune": [
             "Normal",
             "Fighting"
@@ -2431,7 +2431,7 @@
         "quad": [
         ]
     },
-    "Grass-Dragon": {
+    "Dragon-Grass": {
         "immune": [
         ],
         "quarter": [
@@ -2463,7 +2463,7 @@
             "Ice"
         ]
     },
-    "Grass-Dark": {
+    "Dark-Grass": {
         "immune": [
             "Psychic"
         ],
@@ -2527,7 +2527,7 @@
             "Fire"
         ]
     },
-    "Grass-Fairy": {
+    "Fairy-Grass": {
         "immune": [
             "Dragon"
         ],
@@ -2591,7 +2591,7 @@
         "quad": [
         ]
     },
-    "Ice-Fighting": {
+    "Fighting-Ice": {
         "immune": [
         ],
         "quarter": [
@@ -2655,7 +2655,7 @@
         "quad": [
         ]
     },
-    "Ice-Ground": {
+    "Ground-Ice": {
         "immune": [
             "Electric"
         ],
@@ -2687,7 +2687,7 @@
         "quad": [
         ]
     },
-    "Ice-Flying": {
+    "Flying-Ice": {
         "immune": [
             "Ground"
         ],
@@ -2751,7 +2751,7 @@
         "quad": [
         ]
     },
-    "Ice-Bug": {
+    "Bug-Ice": {
         "immune": [
         ],
         "quarter": [
@@ -2815,7 +2815,7 @@
             "Steel"
         ]
     },
-    "Ice-Ghost": {
+    "Ghost-Ice": {
         "immune": [
             "Normal",
             "Fighting"
@@ -2847,7 +2847,7 @@
         "quad": [
         ]
     },
-    "Ice-Dragon": {
+    "Dragon-Ice": {
         "immune": [
         ],
         "quarter": [
@@ -2879,7 +2879,7 @@
         "quad": [
         ]
     },
-    "Ice-Dark": {
+    "Dark-Ice": {
         "immune": [
             "Psychic"
         ],
@@ -2943,7 +2943,7 @@
             "Fighting"
         ]
     },
-    "Ice-Fairy": {
+    "Fairy-Ice": {
         "immune": [
             "Dragon"
         ],
@@ -3135,7 +3135,7 @@
         "quad": [
         ]
     },
-    "Fighting-Bug": {
+    "Bug-Fighting": {
         "immune": [
         ],
         "quarter": [
@@ -3231,7 +3231,7 @@
         "quad": [
         ]
     },
-    "Fighting-Dragon": {
+    "Dragon-Fighting": {
         "immune": [
         ],
         "quarter": [
@@ -3263,7 +3263,7 @@
             "Fairy"
         ]
     },
-    "Fighting-Dark": {
+    "Dark-Fighting": {
         "immune": [
             "Psychic"
         ],
@@ -3327,7 +3327,7 @@
         "quad": [
         ]
     },
-    "Fighting-Fairy": {
+    "Fairy-Fighting": {
         "immune": [
             "Dragon"
         ],
@@ -3391,7 +3391,7 @@
         "quad": [
         ]
     },
-    "Poison-Ground": {
+    "Ground-Poison": {
         "immune": [
             "Electric"
         ],
@@ -3423,7 +3423,7 @@
         "quad": [
         ]
     },
-    "Poison-Flying": {
+    "Flying-Poison": {
         "immune": [
             "Ground"
         ],
@@ -3487,7 +3487,7 @@
         "quad": [
         ]
     },
-    "Poison-Bug": {
+    "Bug-Poison": {
         "immune": [
         ],
         "quarter": [
@@ -3551,7 +3551,7 @@
             "Ground"
         ]
     },
-    "Poison-Ghost": {
+    "Ghost-Poison": {
         "immune": [
             "Normal",
             "Fighting"
@@ -3583,7 +3583,7 @@
         "quad": [
         ]
     },
-    "Poison-Dragon": {
+    "Dragon-Poison": {
         "immune": [
         ],
         "quarter": [
@@ -3615,7 +3615,7 @@
         "quad": [
         ]
     },
-    "Poison-Dark": {
+    "Dark-Poison": {
         "immune": [
             "Psychic"
         ],
@@ -3679,7 +3679,7 @@
             "Ground"
         ]
     },
-    "Poison-Fairy": {
+    "Fairy-Poison": {
         "immune": [
             "Dragon"
         ],
@@ -3743,7 +3743,7 @@
         "quad": [
         ]
     },
-    "Ground-Flying": {
+    "Flying-Ground": {
         "immune": [
             "Electric",
             "Ground"
@@ -3807,7 +3807,7 @@
         "quad": [
         ]
     },
-    "Ground-Bug": {
+    "Bug-Ground": {
         "immune": [
             "Electric"
         ],
@@ -3871,7 +3871,7 @@
             "Grass"
         ]
     },
-    "Ground-Ghost": {
+    "Ghost-Ground": {
         "immune": [
             "Normal",
             "Electric",
@@ -3903,7 +3903,7 @@
         "quad": [
         ]
     },
-    "Ground-Dragon": {
+    "Dragon-Ground": {
         "immune": [
             "Electric"
         ],
@@ -3935,7 +3935,7 @@
             "Ice"
         ]
     },
-    "Ground-Dark": {
+    "Dark-Ground": {
         "immune": [
             "Electric",
             "Psychic"
@@ -3999,7 +3999,7 @@
         "quad": [
         ]
     },
-    "Ground-Fairy": {
+    "Fairy-Ground": {
         "immune": [
             "Electric",
             "Dragon"
@@ -4095,7 +4095,7 @@
         "quad": [
         ]
     },
-    "Flying-Bug": {
+    "Bug-Flying": {
         "immune": [
             "Ground"
         ],
@@ -4191,7 +4191,7 @@
         "quad": [
         ]
     },
-    "Flying-Dragon": {
+    "Dragon-Flying": {
         "immune": [
             "Ground"
         ],
@@ -4223,7 +4223,7 @@
             "Ice"
         ]
     },
-    "Flying-Dark": {
+    "Dark-Flying": {
         "immune": [
             "Ground",
             "Psychic"
@@ -4287,7 +4287,7 @@
         "quad": [
         ]
     },
-    "Flying-Fairy": {
+    "Fairy-Flying": {
         "immune": [
             "Ground",
             "Dragon"
@@ -4351,7 +4351,7 @@
         "quad": [
         ]
     },
-    "Psychic-Bug": {
+    "Bug-Psychic": {
         "immune": [
         ],
         "quarter": [
@@ -4415,7 +4415,7 @@
         "quad": [
         ]
     },
-    "Psychic-Ghost": {
+    "Ghost-Psychic": {
         "immune": [
             "Normal",
             "Fighting"
@@ -4447,7 +4447,7 @@
             "Dark"
         ]
     },
-    "Psychic-Dragon": {
+    "Dragon-Psychic": {
         "immune": [
         ],
         "quarter": [
@@ -4479,7 +4479,7 @@
         "quad": [
         ]
     },
-    "Psychic-Dark": {
+    "Dark-Psychic": {
         "immune": [
             "Psychic"
         ],
@@ -4543,7 +4543,7 @@
         "quad": [
         ]
     },
-    "Psychic-Fairy": {
+    "Fairy-Psychic": {
         "immune": [
             "Dragon"
         ],
@@ -4831,7 +4831,7 @@
         "quad": [
         ]
     },
-    "Rock-Ghost": {
+    "Ghost-Rock": {
         "immune": [
             "Normal",
             "Fighting"
@@ -4863,7 +4863,7 @@
         "quad": [
         ]
     },
-    "Rock-Dragon": {
+    "Dragon-Rock": {
         "immune": [
         ],
         "quarter": [
@@ -4895,7 +4895,7 @@
         "quad": [
         ]
     },
-    "Rock-Dark": {
+    "Dark-Rock": {
         "immune": [
             "Psychic"
         ],
@@ -4959,7 +4959,7 @@
             "Ground"
         ]
     },
-    "Rock-Fairy": {
+    "Fairy-Rock": {
         "immune": [
             "Dragon"
         ],
@@ -5023,7 +5023,7 @@
         "quad": [
         ]
     },
-    "Ghost-Dragon": {
+    "Dragon-Ghost": {
         "immune": [
             "Normal",
             "Fighting"
@@ -5055,7 +5055,7 @@
         "quad": [
         ]
     },
-    "Ghost-Dark": {
+    "Dark-Ghost": {
         "immune": [
             "Normal",
             "Fighting",
@@ -5119,7 +5119,7 @@
         "quad": [
         ]
     },
-    "Ghost-Fairy": {
+    "Fairy-Ghost": {
         "immune": [
             "Normal",
             "Fighting",
@@ -5183,7 +5183,7 @@
         "quad": [
         ]
     },
-    "Dragon-Dark": {
+    "Dark-Dragon": {
         "immune": [
             "Psychic"
         ],
@@ -5407,7 +5407,7 @@
         "quad": [
         ]
     },
-    "Steel-Fairy": {
+    "Fairy-Steel": {
         "immune": [
             "Poison",
             "Dragon"
