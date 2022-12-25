@@ -21,14 +21,16 @@ PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typ
 
 void PokemonLinks::buildDefenseLinks(const std::map<std::string,std::set<Resistance>>&
                                      typeInteractions) {
+    // We always must gather all attack types available in this generation before we begin.
     std::set<std::string> generationTypes = {};
     for (const Resistance& res : typeInteractions.begin()->second) {
-        generationTypes.insert(res.type);
+        generationTypes.insert(res.type());
     }
+
     std::unordered_map<std::string,int> columnBuilder = {};
     optionTable_.push_back("");
     itemTable_.push_back({"", 0, 1});
-    pokeLinks_.push_back({0, 0, 0, Resistance::ZERO});
+    pokeLinks_.push_back({0, 0, 0, Resistance::EMPTY_});
     int index = 1;
     for (const std::string& type : generationTypes) {
 
@@ -37,7 +39,7 @@ void PokemonLinks::buildDefenseLinks(const std::map<std::string,std::set<Resista
         itemTable_.push_back({type, index - 1, index + 1});
         itemTable_[0].left++;
 
-        pokeLinks_.push_back({0, index, index, Resistance::ZERO});
+        pokeLinks_.push_back({0, index, index, Resistance::EMPTY_});
 
         numItems_++;
         index++;
@@ -45,8 +47,6 @@ void PokemonLinks::buildDefenseLinks(const std::map<std::string,std::set<Resista
     itemTable_[itemTable_.size() - 1].right = 0;
 
     initializeColumns(typeInteractions, columnBuilder);
-
-
 }
 
 void PokemonLinks::initializeColumns(const std::map<std::string,std::set<Resistance>>&
@@ -62,7 +62,7 @@ void PokemonLinks::initializeColumns(const std::map<std::string,std::set<Resista
         pokeLinks_.push_back({-typeLookupIndex,
                               currentLinksIndex - previousSetSize,
                               currentLinksIndex + setSize,
-                              Resistance::ZERO});
+                              Resistance::EMPTY_});
 
         for (const Resistance& singleType : type.second) {
 
@@ -70,19 +70,19 @@ void PokemonLinks::initializeColumns(const std::map<std::string,std::set<Resista
              * resistances better than normal. So "covered" for a pokemon team means you found at
              * most 6 Pokemon that give you some level of resistance to all types in the game and
              * no pokemon on your team overlap by resisting the same types. You could have Pokemon
-             * with x0.0, x0.25, or x0.5 resistances, but no higher.
+             * with x0.0, x0.25, or x0.5 resistances, but no higher. Maybe we could lessen criteria?
              */
 
-            if (singleType.multiplier < Resistance::ONE) {
+            if (singleType.multiplier() < Resistance::NORMAL) {
                 currentLinksIndex++;
 
-                std::string sType = singleType.type;
+                std::string sType = singleType.type();
                 pokeLinks_[pokeLinks_[columnBuilder[sType]].down].topOrLen++;
 
                 // A single item in a circular doubly linked list points to itself.
                 pokeLinks_.push_back({pokeLinks_[columnBuilder[sType]].down,
                                       currentLinksIndex, currentLinksIndex,
-                                      singleType.multiplier});
+                                      singleType.multiplier()});
 
                 // This is the necessary adjustment to the column header's up field for a given item.
                 pokeLinks_[pokeLinks_[columnBuilder[sType]].down].up = currentLinksIndex;
@@ -99,12 +99,13 @@ void PokemonLinks::initializeColumns(const std::map<std::string,std::set<Resista
         optionTable_.push_back(type.first);
         typeLookupIndex++;
         currentLinksIndex++;
+        numOptions_++;
         previousSetSize = setSize;
     }
     pokeLinks_.push_back({INT_MIN,
                           currentLinksIndex + 1 - previousSetSize,
                           INT_MIN,
-                          Resistance::ZERO});
+                          Resistance::EMPTY_});
 }
 
 void PokemonLinks::buildAttackLinks(const std::map<std::string,std::set<Resistance>>&
@@ -137,20 +138,7 @@ bool operator!=(const PokemonLinks::typeName& lhs, const PokemonLinks::typeName&
 std::ostream& operator<<(std::ostream& os, const PokemonLinks::pokeLink& type) {
     os << "{ topOrLen: " << type.topOrLen
        << ", up: " << type.up << ", down: " << type.down
-       << ", multiplier: ";
-        if (type.multiplier == Resistance::ZERO) {
-            os << "Resistance::ZERO";
-        } else if (type.multiplier == Resistance::ONE_QUARTER) {
-            os << "Resistance::ONE_QUARTER";
-        } else if (type.multiplier == Resistance::ONE_HALF) {
-            os << "Resistance::ONE_HALF";
-        } else if (type.multiplier == Resistance::ONE) {
-            os << "Resistance::ONE";
-        } else if (type.multiplier == Resistance::TWO) {
-            os << "Resistance::TWO";
-        } else if (type.multiplier == Resistance::FOUR) {
-            os << "Resistance::FOUR";
-        }
+       << ", multiplier: " << type.multiplier;
     return os;
 }
 
@@ -183,21 +171,8 @@ std::ostream& operator<<(std::ostream&os, const std::vector<PokemonLinks::pokeLi
         if (item.topOrLen < 0) {
             os << std::endl;
         }
-        os << "{" << item.topOrLen << "," << item.up << "," << item.down << ",";
-        if (item.multiplier == Resistance::ZERO) {
-            os << "Resistance::ZERO";
-        } else if (item.multiplier == Resistance::ONE_QUARTER) {
-            os << "Resistance::ONE_QUARTER";
-        } else if (item.multiplier == Resistance::ONE_HALF) {
-            os << "Resistance::ONE_HALF";
-        } else if (item.multiplier == Resistance::ONE) {
-            os << "Resistance::ONE";
-        } else if (item.multiplier == Resistance::TWO) {
-            os << "Resistance::TWO";
-        } else if (item.multiplier == Resistance::FOUR) {
-            os << "Resistance::FOUR";
-        }
-        os << "}";
+        os << "{" << item.topOrLen << ","
+           << item.up << "," << item.down << "," << item.multiplier << "}";
         index++;
     }
     os << std::endl;
@@ -219,21 +194,8 @@ std::ostream& operator<<(std::ostream&os, const PokemonLinks& links) {
         if (index >= links.itemTable_.size() && item.topOrLen < 0) {
             os << std::endl;
         }
-        os << "{" << item.topOrLen << "," << item.up << "," << item.down << ",";
-        if (item.multiplier == Resistance::ZERO) {
-            os << "Resistance::ZERO";
-        } else if (item.multiplier == Resistance::ONE_QUARTER) {
-            os << "Resistance::ONE_QUARTER";
-        } else if (item.multiplier == Resistance::ONE_HALF) {
-            os << "Resistance::ONE_HALF";
-        } else if (item.multiplier == Resistance::ONE) {
-            os << "Resistance::ONE";
-        } else if (item.multiplier == Resistance::TWO) {
-            os << "Resistance::TWO";
-        } else if (item.multiplier == Resistance::FOUR) {
-            os << "Resistance::FOUR";
-        }
-        os << "},";
+        os << "{" << item.topOrLen << ","
+           << item.up << "," << item.down << "," << item.multiplier << "},";
         index++;
     }
     os << std::endl;
@@ -255,8 +217,8 @@ STUDENT_TEST("Initialize small defensive links") {
      *
      */
     const std::map<std::string,std::set<Resistance>> types {
-        {"Ghost", {{"Fire",Resistance::ONE},{"Normal",Resistance::ZERO}, {"Water",Resistance::ONE}}},
-        {"Water", {{"Fire",Resistance::ONE_HALF},{"Normal",Resistance::ONE}, {"Water",Resistance::ONE_HALF}}},
+        {"Ghost", {{"Fire",Resistance::NORMAL},{"Normal",Resistance::IMMUNE}, {"Water",Resistance::NORMAL}}},
+        {"Water", {{"Fire",Resistance::FRAC12},{"Normal",Resistance::NORMAL}, {"Water",Resistance::FRAC12}}},
     };
 
     std::vector<std::string> optionTable = {"","Ghost","Water"};
@@ -268,15 +230,16 @@ STUDENT_TEST("Initialize small defensive links") {
     };
     std::vector<PokemonLinks::pokeLink> dlx = {
         //     0                          1Fire                       2Normal                   3Water
-        {0,0,0,Resistance::ZERO}, {1,7,7,Resistance::ZERO},    {1,5,5,Resistance::ZERO},{1,8,8,Resistance::ZERO},
+        {0,0,0,Resistance::EMPTY_}, {1,7,7,Resistance::EMPTY_}, {1,5,5,Resistance::EMPTY_}, {1,8,8,Resistance::EMPTY_},
         //     4Ghost                                                 5Zero
-        {-1,0,7,Resistance::ZERO},                             {2,2,2,Resistance::ZERO},
+        {-1,0,7,Resistance::EMPTY_},                            {2,2,2,Resistance::IMMUNE},
         //     6Water                     7Half                                                 8Half
-        {-2,3,9,Resistance::ZERO},{1,1,1,Resistance::ONE_HALF},                         {3,3,3,Resistance::ONE_HALF},
+        {-2,3,9,Resistance::EMPTY_},{1,1,1,Resistance::FRAC12},                             {3,3,3,Resistance::FRAC12},
         //     9
-        {INT_MIN,7,INT_MIN,Resistance::ZERO},
+        {INT_MIN,7,INT_MIN,Resistance::EMPTY_},
     };
     PokemonLinks links(types, PokemonLinks::DEFENSE);
+    std::cout << links << std::endl;
 
     EXPECT_EQUAL(optionTable, links.optionTable_);
     EXPECT_EQUAL(itemTable, links.itemTable_);

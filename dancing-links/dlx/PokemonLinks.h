@@ -77,7 +77,6 @@ private:
     void initializeColumns(const std::map<std::string,std::set<Resistance>>& typeInteractions,
                            std::unordered_map<std::string,int>& columnBuilder);
 
-
     // Dancing links is well suited to internal debugging over just plain unit testing.
     ALLOW_TEST_ACCESS();
 };

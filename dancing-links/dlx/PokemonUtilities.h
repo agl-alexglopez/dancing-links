@@ -10,22 +10,29 @@
 class Resistance {
 public:
     typedef enum Multiplier {
-        ZERO,
-        ONE_QUARTER,
-        ONE_HALF,
-        ONE,
-        TWO,
-        FOUR
+        // The default constructor should initialize our enum with an explicit placeholder.
+        EMPTY_=0,
+        IMMUNE,
+        FRAC12,
+        FRAC14,
+        NORMAL,
+        DOUBLE,
+        QUADRU
     }Multiplier;
 
-    std::string type;
-    Multiplier multiplier=ZERO;
+    Resistance() = default;
+
+    Resistance(const std::string& type, const Multiplier& multiplier);
+
+    std::string type() const;
+    Multiplier multiplier() const;
+
 
     bool operator< (const Resistance& rhs) const {
-        return this->type < rhs.type;
+        return this->type() < rhs.type();
     }
     bool operator== (const Resistance& rhs) const {
-        return this->type == rhs.type && this->multiplier == rhs.multiplier;
+        return this->type() == rhs.type() && this->multiplier() == rhs.multiplier();
     }
     bool operator> (const Resistance& rhs) const {
         return rhs < *this;
@@ -39,10 +46,14 @@ public:
     bool operator!= (const Resistance& rhs) const {
         return !(*this == rhs);
     }
+private:
+    std::string type_;
+    Multiplier multiplier_;
 
 };
 
 std::ostream& operator<<(std::ostream& out, const Resistance& res);
+std::ostream& operator<<(std::ostream& out, const Resistance::Multiplier& mult);
 
 class RankedCover {
 

@@ -18,12 +18,12 @@ namespace {
 
     // Might as well use QStrings if I am parsing with them in the first place.
     const std::map<QString, Resistance::Multiplier> DAMAGE_MULTIPLIERS = {
-        {"immune", Resistance::ZERO},
-        {"quarter", Resistance::ONE_QUARTER},
-        {"half", Resistance::ONE_HALF},
-        {"normal", Resistance::ONE},
-        {"double", Resistance::TWO},
-        {"quad", Resistance::FOUR},
+        {"immune", Resistance::IMMUNE},
+        {"quarter", Resistance::FRAC14},
+        {"half", Resistance::FRAC12},
+        {"normal", Resistance::NORMAL},
+        {"double", Resistance::DOUBLE},
+        {"quad", Resistance::QUADRU},
     };
 
 
