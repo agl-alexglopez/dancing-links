@@ -211,14 +211,14 @@ std::ostream& operator<<(std::ostream&os, const PokemonLinks& links) {
 STUDENT_TEST("Initialize small defensive links") {
     /*
      *
-     *         Normal   Fire    Water   <-Attack
-     *  Ghost   x0.0                    <-Defense
-     *  Water           x0.5    x0.5
+     *          Fire   Normal    Water   <-Attack
+     *  Ghost          x0.0              <-Defense
+     *  Water   x0.5             x0.5
      *
      */
     const std::map<std::string,std::set<Resistance>> types {
-        {"Ghost", {{"Fire",Resistance::NORMAL},{"Normal",Resistance::IMMUNE}, {"Water",Resistance::NORMAL}}},
-        {"Water", {{"Fire",Resistance::FRAC12},{"Normal",Resistance::NORMAL}, {"Water",Resistance::FRAC12}}},
+        {"Ghost", {{"Fire",Resistance::NORMAL},{"Normal",Resistance::IMMUNE},{"Water",Resistance::NORMAL}}},
+        {"Water", {{"Fire",Resistance::FRAC12},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
     };
 
     std::vector<std::string> optionTable = {"","Ghost","Water"};
@@ -239,8 +239,91 @@ STUDENT_TEST("Initialize small defensive links") {
         {INT_MIN,7,INT_MIN,Resistance::EMPTY_},
     };
     PokemonLinks links(types, PokemonLinks::DEFENSE);
-    std::cout << links << std::endl;
+    EXPECT_EQUAL(optionTable, links.optionTable_);
+    EXPECT_EQUAL(itemTable, links.itemTable_);
+    EXPECT_EQUAL(dlx, links.pokeLinks_);
+}
 
+STUDENT_TEST("Initialize a world where there are only single types.") {
+    /*
+     *
+     *            Electric  Fire  Grass  Ice   Normal  Water
+     *  Dragon     x0.5     x0.5  x0.5                 x0.5
+     *  Electric   x0.5
+     *  Ghost                                  x0.0
+     *  Ice                              x0.5
+     *
+     */
+    const std::map<std::string,std::set<Resistance>> types {
+        {"Dragon", {{"Normal",Resistance::NORMAL},{"Fire",Resistance::FRAC12},{"Water",Resistance::FRAC12},{"Electric",Resistance::FRAC12},{"Grass",Resistance::FRAC12},{"Ice",Resistance::DOUBLE}}},
+        {"Electric", {{"Normal",Resistance::NORMAL},{"Fire",Resistance::NORMAL},{"Water",Resistance::NORMAL},{"Electric",Resistance::FRAC12},{"Grass",Resistance::NORMAL},{"Ice",Resistance::NORMAL}}},
+        {"Ghost", {{"Normal",Resistance::IMMUNE},{"Fire",Resistance::NORMAL},{"Water",Resistance::NORMAL},{"Electric",Resistance::NORMAL},{"Grass",Resistance::NORMAL},{"Ice",Resistance::NORMAL}}},
+        {"Ice", {{"Normal",Resistance::NORMAL},{"Fire",Resistance::NORMAL},{"Water",Resistance::NORMAL},{"Electric",Resistance::NORMAL},{"Grass",Resistance::NORMAL},{"Ice",Resistance::FRAC12}}},
+    };
+
+    std::vector<std::string> optionTable = {"","Dragon","Electric","Ghost","Ice"};
+    std::vector<PokemonLinks::typeName> itemTable = {
+        {"",6,1},
+        {"Electric",0,2},
+        {"Fire",1,3},
+        {"Grass",2,4},
+        {"Ice",3,5},
+        {"Normal",4,6},
+        {"Water",5,0},
+    };
+    std::vector<PokemonLinks::pokeLink> dlx = {
+        //       0                             1Electric                  2Fire                     3Grass                        4Ice                          5Normal                      6Water
+        {0,0,0,Resistance::EMPTY_},   {2,13,8,Resistance::EMPTY_},{1,9,9,Resistance::EMPTY_},{1,10,10,Resistance::EMPTY_},{1,17,17,Resistance::EMPTY_},{1,15,15,Resistance::EMPTY_},{1,11,11,Resistance::EMPTY_},
+        //       7Dragon                       8half                      9half                     10half                                                                                   11half
+        {-1,0,13,Resistance::EMPTY_}, {1,1,13,Resistance::FRAC12},{2,2,2,Resistance::FRAC12},{3,3,3,Resistance::FRAC12},                                                            {6,6,6,Resistance::FRAC12},
+        //       12Electric                    13half
+        {-2,6,18,Resistance::EMPTY_}, {1,8,1,Resistance::FRAC12},
+        //       14Ghost                                                                                                                                        15immune
+        {-3,8,20,Resistance::EMPTY_},                                                                                                                  {5,5,5,Resistance::IMMUNE},
+        //       16Ice                                                                                                            17half
+        {-4,10,22,Resistance::EMPTY_},                                                                                    {4,4,4,Resistance::FRAC12},
+        //       18
+        {INT_MIN,13,INT_MIN,Resistance::EMPTY_},
+    };
+    PokemonLinks links(types, PokemonLinks::DEFENSE);
+    EXPECT_EQUAL(optionTable, links.optionTable_);
+    EXPECT_EQUAL(itemTable, links.itemTable_);
+    EXPECT_EQUAL(dlx, links.pokeLinks_);
+}
+
+
+/* * * * * * * * * * * * * * * * * *   Defense Links Tests  * * * * * * * * * * * * * * * * * * * */
+
+
+STUDENT_TEST("Choose Ghost to shrink the problem.") {
+    /*
+     *          Fire   Normal    Water   <-Attack
+     *  Ghost          x0.0              <-Defense
+     *  Water   x0.5             x0.5
+     *
+     */
+    const std::map<std::string,std::set<Resistance>> types {
+        {"Ghost", {{"Fire",Resistance::NORMAL},{"Normal",Resistance::IMMUNE},{"Water",Resistance::NORMAL}}},
+        {"Water", {{"Fire",Resistance::FRAC12},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
+    };
+    std::vector<std::string> optionTable = {"","Ghost","Water"};
+    std::vector<PokemonLinks::typeName> itemTable = {
+        {"",3,1},
+        {"Fire",0,2},
+        {"Normal",1,3},
+        {"Water",2,0},
+    };
+    std::vector<PokemonLinks::pokeLink> dlx = {
+        //     0                          1Fire                       2Normal                   3Water
+        {0,0,0,Resistance::EMPTY_}, {1,7,7,Resistance::EMPTY_}, {1,5,5,Resistance::EMPTY_}, {1,8,8,Resistance::EMPTY_},
+        //     4Ghost                                                 5Zero
+        {-1,0,7,Resistance::EMPTY_},                            {2,2,2,Resistance::IMMUNE},
+        //     6Water                     7Half                                                 8Half
+        {-2,3,9,Resistance::EMPTY_},{1,1,1,Resistance::FRAC12},                             {3,3,3,Resistance::FRAC12},
+        //     9
+        {INT_MIN,7,INT_MIN,Resistance::EMPTY_},
+    };
+    PokemonLinks links(types, PokemonLinks::DEFENSE);
     EXPECT_EQUAL(optionTable, links.optionTable_);
     EXPECT_EQUAL(itemTable, links.itemTable_);
     EXPECT_EQUAL(dlx, links.pokeLinks_);
