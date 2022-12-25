@@ -8,7 +8,7 @@
  */
 #include <limits.h>
 #include "DisasterTags.h"
-#include "DisasterUtilities.h"
+#include "Utilities/DisasterUtilities.h"
 
 
 /* * * * * * * * * * * * *  Algorithm X via Dancing Links with Depth Tags * * * * * * * * * * * * */

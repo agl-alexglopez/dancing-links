@@ -3,7 +3,7 @@
 #include <ostream>
 #include "map.h"
 #include "set.h"
-#include "MatchingUtilities.h"
+#include "Utilities/MatchingUtilities.h"
 
 bool hasFastPerfectMatching(const Map<std::string, Set<std::string>>& possibleLinks, Set<Pair>& matching);
 Set<Pair> fastMaxWeightMatching(const Map<std::string, Map<std::string, int>>& possibleLinks);

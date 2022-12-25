@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include "DisasterParser.h"
-#include "PokemonUtilities.h"
+#include "Utilities/PokemonUtilities.h"
 
 /* Leave a comment at the first line of the Pokemon Generation .dst file you want to construct with
  * the pokemon generation in base 10 numbers. This will determine the types availabe for the given

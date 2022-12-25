@@ -74,21 +74,15 @@ SOURCES         *=  "" \
     Demos/PokemonParser.cpp \
     DisasterLinks.cpp \
     DisasterTags.cpp \
-    DisasterUtilities.cpp \
-    MatchingUtilities.cpp \
     PartnerLinks.cpp \
     PokemonLinks.cpp \
-    PokemonUtilities.cpp \
     res/pokemon/htmlToJSON.cpp
 HEADERS         *=  "" \
     Demos/PokemonParser.h \
     DisasterLinks.h \
     DisasterTags.h \
-    DisasterUtilities.h \
-    MatchingUtilities.h \
     PartnerLinks.h \
     PokemonLinks.h \
-    PokemonUtilities.h
 
 # Gather any .cpp or .h files within the project folder (student/starter code).
 # Second argument true makes search recursive
@@ -98,6 +92,7 @@ HEADERS         *=  $$files(*.h, true)
 # Gather resource files (image/sound/etc) from res dir, list under "Other files"
 OTHER_FILES     *=  $$files(res/*, true)
 OTHER_FILES     *=  $$files(FastMatching/*,true)
+OTHER_FILES     *=  $$files(Utilities/*,true)
 # Gather text files from root dir or anywhere recursively
 OTHER_FILES     *=  $$files(*.txt, true)
 

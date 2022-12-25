@@ -8,7 +8,7 @@
 #include <utility>
 #include <vector>
 #include "GUI/SimpleTest.h"
-#include "PokemonUtilities.h"
+#include "Utilities/PokemonUtilities.h"
 
 
 class PokemonLinks {

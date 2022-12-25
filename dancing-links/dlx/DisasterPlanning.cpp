@@ -45,7 +45,7 @@
  */
 #include <climits>
 #include "DisasterPlanning.h"
-#include "DisasterUtilities.h"
+#include "Utilities/DisasterUtilities.h"
 using namespace std;
 
 /* Function Prototypes */

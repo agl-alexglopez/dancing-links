@@ -1,6 +1,6 @@
 #include "GUI/MiniGUI.h"
 #include "PokemonParser.h"
-#include "PokemonUtilities.h"
+#include "Utilities/PokemonUtilities.h"
 #include <fstream>
 #include <memory>
 #include <cmath>
