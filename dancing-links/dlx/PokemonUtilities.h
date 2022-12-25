@@ -18,19 +18,14 @@ public:
         FOUR
     }Multiplier;
 
-    explicit Resistance();
-    explicit Resistance(const std::string& type, const Multiplier& multiplier);
-
-    Multiplier multiplier() const;
-    std::string type() const;
-
-    friend std::ostream& operator<<(std::ostream& out, const Resistance& res);
+    std::string type;
+    Multiplier multiplier=ZERO;
 
     bool operator< (const Resistance& rhs) const {
-        return this->type_ < rhs.type_;
+        return this->type < rhs.type;
     }
     bool operator== (const Resistance& rhs) const {
-        return this->type_ == rhs.type_ && this->multiplier_ == rhs.multiplier_;
+        return this->type == rhs.type && this->multiplier == rhs.multiplier;
     }
     bool operator> (const Resistance& rhs) const {
         return rhs < *this;
@@ -45,11 +40,9 @@ public:
         return !(*this == rhs);
     }
 
-private:
-    std::string type_;
-    Multiplier multiplier_;
 };
 
+std::ostream& operator<<(std::ostream& out, const Resistance& res);
 
 class RankedCover {
 

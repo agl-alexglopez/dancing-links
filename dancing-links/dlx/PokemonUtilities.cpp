@@ -4,23 +4,9 @@
 /* * * * * * * * * * * * *     Resistance Helper Class      * * * * * * * * * * * * * * * * * * * */
 
 
-Resistance::Resistance() : type_(""), multiplier_(ZERO){}
-
-Resistance::Resistance(const std::string& type, const Multiplier& multiplier) :
-                       type_(type),
-                       multiplier_(multiplier){}
-
-Resistance::Multiplier Resistance::multiplier() const {
-    return multiplier_;
-}
-
-std::string Resistance::type() const {
-    return type_;
-}
-
 std::ostream& operator<<(std::ostream& out, const Resistance& res) {
-    out << res.type_ << "x";
-    switch(res.multiplier_) {
+    out << res.type << "x";
+    switch(res.multiplier) {
         case Resistance::ZERO:
             out << "0.0";
         break;

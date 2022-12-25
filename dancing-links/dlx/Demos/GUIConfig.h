@@ -9,7 +9,8 @@ TEST_ORDER("DisasterTags.cpp",
            "DisasterLinks.cpp",
            "Matchmaker.cpp",
            "PartnerLinks.cpp",
-           "DisasterPlanning.cpp",)
+           "DisasterPlanning.cpp",
+           "PokemonLinks.cpp")
 
 TEST_BARRIER("MatchmakerGUI.cpp", "PartnerLinks.cpp")
 TEST_BARRIER("DisasterGUI.cpp",   "DisasterLinks.cpp")

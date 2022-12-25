@@ -76,7 +76,7 @@ namespace {
                      * {"Flying", {"Fighting x2.0","Ground x0.0"...}
                      *
                      */
-                    result[newType].insert(Resistance(tString.toStdString(), multiplierTag));
+                    result[newType].insert({tString.toStdString(), multiplierTag});
                 }
             }
         }

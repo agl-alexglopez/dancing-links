@@ -19,6 +19,18 @@ public:
         ATTACK
     }CoverageType;
 
+    typedef struct pokeLink {
+        int topOrLen;
+        int up;
+        int down;
+        Resistance::Multiplier multiplier;
+    }pokeLink;
+
+    typedef struct typeName {
+        std::string name;
+        int left;
+        int right;
+    }typeName;
     explicit PokemonLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions,
                           const CoverageType requestedCoverSolution);
 
@@ -26,20 +38,31 @@ public:
 
     std::priority_queue<RankedCover> getAllAttackCoverages();
 
+
+    /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
+
+
+    friend bool operator==(const pokeLink& lhs, const pokeLink& rhs);
+
+    friend bool operator!=(const pokeLink& lhs, const pokeLink& rhs);
+
+    friend bool operator==(const typeName& lhs, const typeName& rhs);
+
+    friend bool operator!=(const typeName& lhs, const typeName& rhs);
+
+    friend std::ostream& operator<<(std::ostream& os, const pokeLink& pokeLink);
+
+    friend std::ostream& operator<<(std::ostream& os, const typeName& pokeLink);
+
+    friend std::ostream& operator<<(std::ostream& os, const std::vector<pokeLink>& links);
+
+    friend std::ostream& operator<<(std::ostream& os, const std::vector<typeName>& items);
+
+    friend std::ostream& operator<<(std::ostream& os, const std::vector<std::string>& options);
+
+    friend std::ostream& operator<<(std::ostream& os, const PokemonLinks& links);
+
 private:
-
-    typedef struct pokeLink {
-        int topOrLen;
-        int up;
-        int down;
-        Resistance::Multiplier multiplier;
-    }defenseLink;
-
-    typedef struct typeName {
-        std::string name;
-        int left;
-        int right;
-    }typeName;
 
     std::vector<std::string> optionTable_;
     std::vector<typeName> itemTable_;
