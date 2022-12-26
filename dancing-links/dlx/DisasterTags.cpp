@@ -6,6 +6,7 @@
  * calling Supply Tags. For more information, see the mini-writeup in the .h file or the detailed
  * write up in the README.md.
  */
+#include <cmath>
 #include <limits.h>
 #include "DisasterTags.h"
 #include "Utilities/DisasterUtilities.h"

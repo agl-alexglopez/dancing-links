@@ -115,7 +115,7 @@
 #include <string>
 #include <vector>
 #include "GUI/SimpleTest.h"
-#include "MatchingUtilities.h"
+#include "Utilities/MatchingUtilities.h"
 #include "hashmap.h"
 #include "map.h"
 #include "set.h"

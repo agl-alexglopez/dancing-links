@@ -34,7 +34,7 @@ public:
     explicit PokemonLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions,
                           const CoverageType requestedCoverSolution);
 
-    std::priority_queue<RankedCover> getAllCoveredTeams();
+    std::priority_queue<RankedCover,std::vector<RankedCover>,std::greater<RankedCover>> getAllCoveredTeams();
 
     std::priority_queue<RankedCover> getAllAttackCoverages();
 
@@ -64,12 +64,26 @@ public:
 
 private:
 
+    const int MAX_TEAM_SIZE=6;
+
     std::vector<std::string> optionTable_;
     std::vector<typeName> itemTable_;
-    std::vector<pokeLink> pokeLinks_;
+    std::vector<pokeLink> links_;
     int numItems_;
     int numOptions_;
+    const int teamSize_;
     CoverageType requestedCoverSolution_;
+
+
+    void fillCoverages(std::priority_queue<RankedCover,std::vector<RankedCover>,std::greater<RankedCover>>& exactCoverages,
+                       RankedCover& coverage,
+                       int teamPicks);
+    int chooseItem() const;
+
+    std::pair<int,std::string> coverAttackType(int indexInOption);
+    void uncoverAttackType(int indexInOption);
+    void hideOptions(int indexInOption);
+    void unhideOptions(int indexInOption);
 
     void buildDefenseLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions);
     void buildAttackLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions);
