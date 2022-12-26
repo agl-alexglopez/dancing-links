@@ -325,7 +325,7 @@ namespace {
         /* Current network and solution. */
         PokemonTest mGeneration;
         Set<string> mSelected;
-        unique_ptr<priority_queue<RankedCover, vector<RankedCover>, greater<RankedCover>>> mAllDefenseCoverages;
+        unique_ptr<priority_queue<RankedCover>> mAllDefenseCoverages;
         unique_ptr<priority_queue<RankedCover>> mAllAttackCoverages;
 
         /* Loads the world with the given name. */
@@ -399,14 +399,14 @@ namespace {
         }
 
         mAllDefenseCoverages.reset(
-            new priority_queue<RankedCover, vector<RankedCover>, greater<RankedCover>>(
+            new priority_queue<RankedCover>(
                 PokemonLinks(
                     mGeneration.typeInteractions, PokemonLinks::DEFENSE
                 ).getAllCoveredTeams()
             )
         );
         *mSolutionsDisplay << "Found " << (*mAllDefenseCoverages).size()
-                           << " Pokemon teams [SCORE,TEAM]. LOWER score is better." << endl;
+                           << " Pokemon teams [SCORE,TEAM]. Negative score closer to zero is better." << endl;
         while (!(*mAllDefenseCoverages).empty()) {
             *mSolutionsDisplay << (*mAllDefenseCoverages).top().rank() << " | ";
             for (const std::string& type : (*mAllDefenseCoverages).top()) {

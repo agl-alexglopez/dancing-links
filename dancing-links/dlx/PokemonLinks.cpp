@@ -4,17 +4,17 @@
 
 
 
-std::priority_queue<RankedCover,std::vector<RankedCover>,std::greater<RankedCover>> PokemonLinks::getAllCoveredTeams() {
+std::priority_queue<RankedCover> PokemonLinks::getAllCoveredTeams() {
     if (requestedCoverSolution_ == ATTACK) {
         error("Requested ATTACK solution on DEFENSE links. Instantiate ATTACK links to proceed.");
     }
-    std::priority_queue<RankedCover,std::vector<RankedCover>,std::greater<RankedCover>> exactCoverages = {};
+    std::priority_queue<RankedCover> exactCoverages = {};
     RankedCover coverage = {};
     fillCoverages(exactCoverages, coverage, teamSize_);
     return exactCoverages;
 }
 
-void PokemonLinks::fillCoverages(std::priority_queue<RankedCover,std::vector<RankedCover>,std::greater<RankedCover>>& exactCoverages,
+void PokemonLinks::fillCoverages(std::priority_queue<RankedCover>& exactCoverages,
                                  RankedCover& coverage,
                                  int teamPicks) {
     if (itemTable_[0].right == 0 && teamPicks >= 0) {
@@ -71,7 +71,7 @@ std::pair<int,std::string> PokemonLinks::coverAttackType(int indexInOption) {
             itemTable_[cur.left].right = cur.right;
             itemTable_[cur.right].left = cur.left;
             hideOptions(i);
-            result.first += links_[i++].multiplier;
+            result.first -= links_[i++].multiplier;
         }
     } while (i != indexInOption);
     return result;
@@ -512,7 +512,7 @@ STUDENT_TEST("Cover Electric with Dragon eliminates Electric Option. Uncover res
     };
 
     std::pair<int,std::string> pick = links.coverAttackType(8);
-    EXPECT_EQUAL(pick.first,12);
+    EXPECT_EQUAL(pick.first,-12);
     EXPECT_EQUAL(pick.second,"Dragon");
     EXPECT_EQUAL(itemCoverElectric, links.itemTable_);
     EXPECT_EQUAL(dlxCoverElectric, links.links_);
@@ -608,7 +608,7 @@ STUDENT_TEST("Cover Electric with Electric to cause hiding of many options.") {
     };
 
     std::pair<int,std::string> pick = links.coverAttackType(8);
-    EXPECT_EQUAL(pick.first,6);
+    EXPECT_EQUAL(pick.first,-6);
     EXPECT_EQUAL(pick.second,"Electric");
     EXPECT_EQUAL(headersCoverElectric, links.itemTable_);
     EXPECT_EQUAL(dlxCoverElectric, links.links_);
@@ -646,15 +646,13 @@ STUDENT_TEST("There are two exact covers for this typing combo.") {
         {"Water", {{"Electric",Resistance::NORMAL},{"Grass",Resistance::DOUBLE},{"Ice",Resistance::FRAC12},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
     };
     PokemonLinks links(types, PokemonLinks::DEFENSE);
-    std::priority_queue<RankedCover,
-                        std::vector<RankedCover>,
-                        std::greater<RankedCover>> cover = links.getAllCoveredTeams();
-    RankedCover firstPlace = {11,{"Ghost","Ground","Poison","Water"}};
+    std::priority_queue<RankedCover> cover = links.getAllCoveredTeams();
+    RankedCover firstPlace = {-11,{"Ghost","Ground","Poison","Water"}};
     EXPECT_EQUAL(cover.top(), firstPlace);
     cover.pop();
     // Higher numbers are worst for defense. More damage is possible.
-    RankedCover secondPlace = {13,{"Electric","Ghost","Poison","Water"}};
-    EXPECT_EQUAL(cover.top(), firstPlace);
+    RankedCover secondPlace = {-13,{"Electric","Ghost","Poison","Water"}};
+    EXPECT_EQUAL(cover.top(), secondPlace);
     cover.pop();
     EXPECT(cover.empty());
 }
