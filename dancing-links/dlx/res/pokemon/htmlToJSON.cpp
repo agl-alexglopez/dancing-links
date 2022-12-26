@@ -132,8 +132,8 @@ namespace {
         std::string two_;
     };
 
-    // As of December 2022 there are 171 unique type combinations.
-    const int NUM_TYPES = 171;
+    // As of December 2022 there are 162 unique type combinations.
+    const int NUM_TYPES = 162;
     const std::string TYPE_BREAK = "<div class=\"cell-dual-type\">\r";
     const std::string TYPE_FLAG_START = "type-cell\">";
     const std::string TYPE_FLAG_END = "<";
@@ -162,8 +162,8 @@ namespace {
     const std::string SUPER_EFFECTIVE = "super-effective";
     const std::string DOUBLE_DAMAGE = "2";
     const std::string QUAD_DAMAGE = "4";
-    const std::string DAMAGE_QUALIFIER_DELIM_START = ">";
-    const std::string DAMAGE_QUALIFIER_DELIM_END = "<";
+    const std::string ARROW_DELIM_START = ">";
+    const std::string ARROW_DELIM_END = "<";
     const std::string TYPE_ADVANTAGE_DELIM = " = ";
 
     typedef enum DamageMultiplier {
@@ -213,12 +213,12 @@ namespace {
 
     DamageMultiplier getDamageMultiplier(const std::string& line, std::size_t pos) {
         // Looking for something like this [>&frac12<], [>&frac14<], [>2<], or [>4<]
-        std::size_t openArrow = line.find_first_of(DAMAGE_QUALIFIER_DELIM_START, pos);
+        std::size_t openArrow = line.find_first_of(ARROW_DELIM_START, pos);
         if (openArrow == std::string::npos) {
             std::cerr << "You are not on right line. No damage qualifiers found." << std::endl;
         }
         openArrow++;
-        std::size_t closeArrow = line.find_first_of(DAMAGE_QUALIFIER_DELIM_END, openArrow);
+        std::size_t closeArrow = line.find_first_of(ARROW_DELIM_END, openArrow);
 
         std::string multiplier = line.substr(openArrow, closeArrow - openArrow);
         if (multiplier == QUARTER_DAMAGE) {
@@ -331,6 +331,15 @@ namespace {
         }
     }
 
+    bool noPokemonWithType(const std::string& line) {
+        std::size_t posStart = line.find_first_of(ARROW_DELIM_START);
+        posStart++;
+        std::size_t posEnd = line.find_first_of(ARROW_DELIM_END, posStart);
+        std::string numWithType = line.substr(posStart, posEnd - posStart);
+        int count = std::stoi(numWithType);
+        return count == 0;
+    }
+
     void convertToJSON(std::ifstream& htmlTXTFile, std::ofstream& jsonFile) {
         std::set<DualType> seenTypes = {};
         for (std::string line; std::getline(htmlTXTFile, line);) {
@@ -340,8 +349,10 @@ namespace {
                 if (newType.first() == "" && newType.second() == "") {
                     quitParsing(htmlTXTFile, jsonFile);
                 }
-
-                if (!seenTypes.count(newType)) {
+                // Must progress two lines to see count of real pokemon with this type.
+                std::getline(htmlTXTFile, line);
+                std::getline(htmlTXTFile, line);
+                if (!seenTypes.count(newType) && !noPokemonWithType(line)) {
                     seenTypes.insert(newType);
                     jsonFile << FOUR_SPACE_INDENT << "\"";
                     // We can cout on the DualType to sort the strings for us "" is always first.
@@ -351,8 +362,6 @@ namespace {
                     jsonFile << newType.second() << "\": {" << std::endl;
 
                     // The type advantages line is always three below this one.
-                    std::getline(htmlTXTFile, line);
-                    std::getline(htmlTXTFile, line);
                     std::getline(htmlTXTFile, line);
 
                     std::vector<std::vector<std::string>> typeStats = enterTypeAdvantages(line);

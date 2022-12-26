@@ -1,5 +1,6 @@
 #include "GUI/MiniGUI.h"
 #include "PokemonParser.h"
+#include "PokemonLinks.h"
 #include "Utilities/PokemonUtilities.h"
 #include <fstream>
 #include <memory>
@@ -300,12 +301,6 @@ namespace {
         return result;
     }
 
-    void solveTypeCoverage(const map<string,std::set<Resistance>>& typeInteractions,
-                           unique_ptr<priority_queue<RankedCover>>& allCoverages) {
-        allCoverages.reset();
-        (void) typeInteractions;
-    }
-
     class PokemonGUI: public ProblemHandler {
     public:
         PokemonGUI(GWindow& window);
@@ -319,20 +314,26 @@ namespace {
     private:
         /* Dropdown of all the problems to choose from. */
         Temporary<GComboBox> mProblems;
+        Temporary<GColorConsole> mSolutionsDisplay;
+        const double DISPLAY_WIDTH = 800.0;
+        //const double DISPLAY_HEIGHT = 200;
 
         /* Button to trigger the solver. */
-        Temporary<GButton> mSolve;
+        Temporary<GButton> mSolveDefense;
+        Temporary<GButton> mSolveAttack;
 
         /* Current network and solution. */
         PokemonTest mGeneration;
         Set<string> mSelected;
-        unique_ptr<priority_queue<RankedCover>> mAllCoverages;
+        unique_ptr<priority_queue<RankedCover, vector<RankedCover>, greater<RankedCover>>> mAllDefenseCoverages;
+        unique_ptr<priority_queue<RankedCover>> mAllAttackCoverages;
 
         /* Loads the world with the given name. */
         void loadWorld(const string& filename);
 
         /* Computes an optimal solution. */
-        void solve();
+        void solveDefense();
+        //void solveAttack();
     };
 
     PokemonGUI::PokemonGUI(GWindow& window) : ProblemHandler(window) {
@@ -343,7 +344,10 @@ namespace {
         choices->setEditable(false);
 
         mProblems = Temporary<GComboBox>(choices, window, "SOUTH");
-        mSolve = Temporary<GButton>(new GButton("Solve"), window, "SOUTH");
+        mSolutionsDisplay = Temporary<GColorConsole>(new GColorConsole(), window, "SOUTH");
+        mSolutionsDisplay->setWidth(DISPLAY_WIDTH);
+        mSolveDefense = Temporary<GButton>(new GButton("Solve Defense"), window, "SOUTH");
+        mSolveAttack = Temporary<GButton>(new GButton("Solve Attack"), window, "SOUTH");
         loadWorld(choices->getSelectedItem());
     }
 
@@ -354,8 +358,10 @@ namespace {
     }
 
     void PokemonGUI::actionPerformed(GObservable* source) {
-        if (source == mSolve) {
-            solve();
+        if (source == mSolveDefense) {
+            solveDefense();
+        } else if (source == mSolveAttack) {
+            //solveAttack();
         }
     }
     void PokemonGUI::repaint() {
@@ -368,23 +374,51 @@ namespace {
         if (!input) error("Cannot open file.");
 
         mGeneration = loadPokemonGeneration(input);
-        mAllCoverages.reset();
+        mAllDefenseCoverages.reset();
+        mAllAttackCoverages.reset();
         mSelected.clear();
+        mSolutionsDisplay->clearDisplay();
         requestRepaint();
     }
 
-    void PokemonGUI::solve() {
+    void PokemonGUI::solveDefense() {
         /* Clear out any old solution. We're going to get a new one. */
         mSelected.clear();
+        mAllAttackCoverages.reset();
+        mSolutionsDisplay->clearDisplay();
 
         /* Disable all controls until the operation finishes. */
-        mSolve->setEnabled(false);
+        mSolveDefense->setEnabled(false);
+        mSolveAttack->setEnabled(false);
         mProblems->setEnabled(false);
 
-        solveTypeCoverage(mGeneration.typeInteractions, mAllCoverages);
+        if (mSelected.isEmpty()) {
+            for (const auto& s : mGeneration.pokemonGenerationMap.network) {
+                mSelected.add(s);
+            }
+        }
+
+        mAllDefenseCoverages.reset(
+            new priority_queue<RankedCover, vector<RankedCover>, greater<RankedCover>>(
+                PokemonLinks(
+                    mGeneration.typeInteractions, PokemonLinks::DEFENSE
+                ).getAllCoveredTeams()
+            )
+        );
+        *mSolutionsDisplay << "Found " << (*mAllDefenseCoverages).size()
+                           << " Pokemon teams [SCORE,TEAM]. LOWER score is better." << endl;
+        while (!(*mAllDefenseCoverages).empty()) {
+            *mSolutionsDisplay << (*mAllDefenseCoverages).top().rank() << " | ";
+            for (const std::string& type : (*mAllDefenseCoverages).top()) {
+                *mSolutionsDisplay << type << " | ";
+            }
+            *mSolutionsDisplay << endl;
+            (*mAllDefenseCoverages).pop();
+        }
 
         /* Enable controls. */
-        mSolve->setEnabled(true);
+        mSolveDefense->setEnabled(true);
+        mSolveAttack->setEnabled(true);
         mProblems->setEnabled(true);
 
         requestRepaint();

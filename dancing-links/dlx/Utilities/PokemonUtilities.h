@@ -13,8 +13,8 @@ public:
         // The default constructor should initialize our enum with an explicit placeholder.
         EMPTY_=0,
         IMMUNE,
-        FRAC12,
         FRAC14,
+        FRAC12,
         NORMAL,
         DOUBLE,
         QUADRU
@@ -59,8 +59,9 @@ class RankedCover {
 
 public:
 
-    explicit RankedCover();
-    explicit RankedCover(int rank, const  std::set<std::string>& coverage);
+    RankedCover() = default;
+
+    RankedCover(const int& rank, const std::set<std::string>& cover);
 
     std::size_t size() const;
     int rank() const;
@@ -68,6 +69,15 @@ public:
     void remove(const std::string& pokemonType);
     void add(const int rankChange);
     void subtract(const int rankChange);
+
+
+    using container = std::set<std::string>;
+    using iterator = container::iterator;
+    using const_iterator = container::const_iterator;
+    iterator begin();
+    const_iterator begin() const;
+    iterator end();
+    const_iterator end() const;
 
     friend std::ostream& operator<<(std::ostream& out, const RankedCover& rc);
 

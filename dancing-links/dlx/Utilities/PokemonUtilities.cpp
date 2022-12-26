@@ -3,10 +3,9 @@
 
 /* * * * * * * * * * * * *     Resistance Helper Class      * * * * * * * * * * * * * * * * * * * */
 
-Resistance::Resistance(const std::string& type, const Multiplier& multiplier) {
-    type_ = type;
-    multiplier_ = multiplier;
-}
+Resistance::Resistance(const std::string& type, const Multiplier& multiplier) :
+                       type_(type),
+                       multiplier_(multiplier){}
 
 std::string Resistance::type() const {
     return type_;
@@ -76,11 +75,8 @@ std::ostream& operator<<(std::ostream& out, const Resistance::Multiplier& mult) 
 /* * * * * * * * * * * * *     Ranked Cover Helper Class    * * * * * * * * * * * * * * * * * * * */
 
 
-RankedCover::RankedCover() : rank_(0), cover_({}){}
-
-RankedCover::RankedCover(int rank, const std::set<std::string>& coverage) :
-                               rank_(rank),
-                               cover_(coverage) {}
+RankedCover::RankedCover(const int& rank, const std::set<std::string>& cover) : rank_(rank),
+                                                                                cover_(cover){}
 
 std::size_t RankedCover::size() const {
     return cover_.size();
@@ -106,11 +102,27 @@ void RankedCover::subtract(const int rankChange) {
     rank_ -= rankChange;
 }
 
+RankedCover::iterator RankedCover::begin() {
+    return cover_.begin();
+}
+
+RankedCover::const_iterator RankedCover::begin() const {
+    return cover_.begin();
+}
+
+RankedCover::iterator RankedCover::end() {
+    return cover_.end();
+}
+
+RankedCover::const_iterator RankedCover::end() const {
+    return cover_.end();
+}
+
 std::ostream& operator<<(std::ostream& out, const RankedCover& rc) {
     out << "{" << rc.rank_ << ",{";
     for (const auto& s : rc.cover_) {
         out << "\"" << s << "\",";
     }
-    out << std::endl;
+    out << "}}" << std::endl;
     return out;
 }
