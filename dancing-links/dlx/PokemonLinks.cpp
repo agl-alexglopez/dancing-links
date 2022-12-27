@@ -4,24 +4,22 @@
 
 
 
-std::multiset<RankedSet<std::string>> PokemonLinks::getAllCoveredTeams() {
-    if (requestedCoverSolution_ == ATTACK) {
-        error("Requested ATTACK solution on DEFENSE links. Instantiate ATTACK links to proceed.");
-    }
-    std::multiset<RankedSet<std::string>> exactCoverages = {};
+std::set<RankedSet<std::string>> PokemonLinks::getExactTypeCoverage() {
+    std::set<RankedSet<std::string>> exactCoverages = {};
     RankedSet<std::string> coverage = {};
-    fillCoverages(exactCoverages, coverage, teamSize_);
+    int depthLimit = requestedCoverSolution_ == DEFENSE ? MAX_TEAM_SIZE : MAX_ATTACK_SLOTS;
+    fillCoverages(exactCoverages, coverage, depthLimit);
     return exactCoverages;
 }
 
-void PokemonLinks::fillCoverages(std::multiset<RankedSet<std::string>>& exactCoverages,
+void PokemonLinks::fillCoverages(std::set<RankedSet<std::string>>& exactCoverages,
                                  RankedSet<std::string>& coverage,
-                                 int teamPicks) {
-    if (itemTable_[0].right == 0 && teamPicks >= 0) {
+                                 int depthLimit) {
+    if (itemTable_[0].right == 0 && depthLimit >= 0) {
         exactCoverages.insert(coverage);
         return;
     }
-    if (teamPicks <= 0) {
+    if (depthLimit <= 0) {
         return;
     }
     int attackType = chooseItem();
@@ -32,7 +30,7 @@ void PokemonLinks::fillCoverages(std::multiset<RankedSet<std::string>>& exactCov
         std::pair<int,std::string> typeStrength = coverAttackType(cur);
         coverage.insert(typeStrength.first, typeStrength.second);
 
-        fillCoverages(exactCoverages, coverage, teamPicks - 1);
+        fillCoverages(exactCoverages, coverage, depthLimit - 1);
 
         coverage.remove(typeStrength.first, typeStrength.second);
         uncoverAttackType(cur);
@@ -141,7 +139,6 @@ PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typ
                            links_({}),
                            numItems_(0),
                            numOptions_(0),
-                           teamSize_(MAX_TEAM_SIZE),
                            requestedCoverSolution_(requestedCoverSolution){
     if (requestedCoverSolution == DEFENSE) {
         buildDefenseLinks(typeInteractions);
@@ -156,6 +153,7 @@ PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typ
 void PokemonLinks::buildDefenseLinks(const std::map<std::string,std::set<Resistance>>&
                                      typeInteractions) {
     // We always must gather all attack types available in this generation before we begin.
+    requestedCoverSolution_ = DEFENSE;
     std::set<std::string> generationTypes = {};
     for (const Resistance& res : typeInteractions.begin()->second) {
         generationTypes.insert(res.type());
@@ -180,12 +178,13 @@ void PokemonLinks::buildDefenseLinks(const std::map<std::string,std::set<Resista
     }
     itemTable_[itemTable_.size() - 1].right = 0;
 
-    initializeColumns(typeInteractions, columnBuilder);
+    initializeColumns(typeInteractions, columnBuilder, requestedCoverSolution_);
 }
 
 void PokemonLinks::initializeColumns(const std::map<std::string,std::set<Resistance>>&
                                      typeInteractions,
-                                     std::unordered_map<std::string,int>& columnBuilder) {
+                                     std::unordered_map<std::string,int>& columnBuilder,
+                                     CoverageType requestedCoverage) {
     int previousSetSize = links_.size();
     int currentLinksIndex = links_.size();
     int typeLookupIndex = 1;
@@ -206,9 +205,12 @@ void PokemonLinks::initializeColumns(const std::map<std::string,std::set<Resista
              * most 6 Pokemon that give you some level of resistance to all types in the game and
              * no pokemon on your team overlap by resisting the same types. You could have Pokemon
              * with x0.0, x0.25, or x0.5 resistances, but no higher. Maybe we could lessen criteria?
+             * Also, just flip this condition for the ATTACK version. We want damage better than
+             * Normal, meaining x2 or x4.
              */
 
-            if (singleType.multiplier() < Resistance::NORMAL) {
+            if ((requestedCoverage == DEFENSE ? singleType.multiplier() < Resistance::NORMAL :
+                                                Resistance::NORMAL < singleType.multiplier())) {
                 currentLinksIndex++;
                 links_[typeTitle].down++;
                 setSize++;
@@ -248,7 +250,34 @@ void PokemonLinks::initializeColumns(const std::map<std::string,std::set<Resista
 
 void PokemonLinks::buildAttackLinks(const std::map<std::string,std::set<Resistance>>&
                                     typeInteractions) {
-    (void) typeInteractions;
+    // We need two passes. The first pass will gather all types as options in the itemTable/headers
+    requestedCoverSolution_ = ATTACK;
+    optionTable_.push_back("");
+    itemTable_.push_back({"", 0, 1});
+    links_.push_back({0, 0, 0, Resistance::EMPTY_});
+    int index = 1;
+    std::map<std::string,std::set<Resistance>> invertedMap = {};
+    std::unordered_map<std::string,int> columnBuilder = {};
+    for (const auto& interaction : typeInteractions) {
+        std::string defenseType = interaction.first;
+
+        columnBuilder[defenseType] = index;
+        itemTable_.push_back({defenseType, index - 1, index + 1});
+        itemTable_[0].left++;
+
+        links_.push_back({0, index, index, Resistance::EMPTY_});
+
+        numItems_++;
+        index++;
+
+        for (const Resistance& attack : interaction.second) {
+            invertedMap[attack.type()].insert({defenseType, attack.multiplier()});
+        }
+    }
+    itemTable_[itemTable_.size() - 1].right = 0;
+    // Second Pass iterate through this inverted map like you normally would. Use same helpers!
+    initializeColumns(invertedMap, columnBuilder, requestedCoverSolution_);
+
 }
 
 
@@ -342,7 +371,7 @@ std::ostream& operator<<(std::ostream&os, const PokemonLinks& links) {
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const std::multiset<RankedSet<std::string>>& solution) {
+std::ostream& operator<<(std::ostream& os, const std::set<RankedSet<std::string>>& solution) {
     for (const auto& s : solution) {
         os << s;
     }
@@ -652,6 +681,80 @@ STUDENT_TEST("There are two exact covers for this typing combo.") {
         {"Water", {{"Electric",Resistance::NORMAL},{"Grass",Resistance::DOUBLE},{"Ice",Resistance::FRAC12},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
     };
     PokemonLinks links(types, PokemonLinks::DEFENSE);
-    std::multiset<RankedSet<std::string>> correct = {{11,{"Ghost","Ground","Poison","Water"}}, {13,{"Electric","Ghost","Poison","Water"}}};
-    EXPECT_EQUAL(links.getAllCoveredTeams(), correct);
+    std::set<RankedSet<std::string>> correct = {{11,{"Ghost","Ground","Poison","Water"}}, {13,{"Electric","Ghost","Poison","Water"}}};
+    EXPECT_EQUAL(links.getExactTypeCoverage(), correct);
+}
+
+
+/* * * * * * * * * * * * * * * * * *   Attack Links Init    * * * * * * * * * * * * * * * * * * * */
+
+/* The good news about this section is that we only have to test that we can correctly initialize
+ * the network by inverting the attack types and defense types. Then, the algorithm runs
+ * identically and we can use the same functions for this problem.
+ */
+
+STUDENT_TEST("Initialization of ATTACK dancing links.") {
+    /*
+     *
+     *                    Fire-Flying   Ground-Grass   Ground-Rock   <-Defense
+     *         Electric       2X
+     *         Fire                         2x
+     *         Water          2x                         4x          <-Attack
+     *
+     */
+    const std::map<std::string,std::set<Resistance>> types {
+        {"Ground-Rock", {{"Electric",Resistance::IMMUNE},{"Fire",Resistance::NORMAL},{"Water",Resistance::QUADRU}}},
+        {"Ground-Grass", {{"Electric",Resistance::IMMUNE},{"Fire",Resistance::DOUBLE},{"Water",Resistance::NORMAL}}},
+        {"Fire-Flying", {{"Electric",Resistance::DOUBLE},{"Fire",Resistance::FRAC12},{"Water",Resistance::DOUBLE}}},
+    };
+    const std::vector<std::string> optionTable = {"","Electric","Fire","Water"};
+    const std::vector<PokemonLinks::typeName> itemTable = {
+        {"",3,1},
+        {"Fire-Flying",0,2},
+        {"Ground-Grass",1,3},
+        {"Ground-Rock",2,0},
+    };
+    const std::vector<PokemonLinks::pokeLink> dlx {
+        //       0                       1Fire-Flying                 2Ground-Grass              3Ground-Rock
+        {0,0,0,Resistance::EMPTY_},  {2,9,5,Resistance::EMPTY_},{1,7,7,Resistance::EMPTY_},{1,10,10,Resistance::EMPTY_},
+        //       4Electric               5Double
+        {-1,0,5,Resistance::EMPTY_}, {1,1,9,Resistance::DOUBLE},
+        //       6Fire                                                7Double
+        {-2,5,7,Resistance::EMPTY_},                            {2,2,2,Resistance::DOUBLE},
+        //       8Water                  9Double                                                 10Quadru
+        {-3,7,10,Resistance::EMPTY_},{1,5,1,Resistance::DOUBLE},                           {3,3,3,Resistance::QUADRU},
+        {INT_MIN,9,INT_MIN,Resistance::EMPTY_},
+    };
+    PokemonLinks links(types, PokemonLinks::ATTACK);
+    EXPECT_EQUAL(links.optionTable_, optionTable);
+    EXPECT_EQUAL(links.itemTable_, itemTable);
+    EXPECT_EQUAL(links.links_, dlx);
+}
+
+STUDENT_TEST("At least test that we can recognize a successful attack coverage") {
+    /*
+     *
+     *               Normal   Fire   Water   Electric   Grass   Ice     <- Defensive Types
+     *    Fighting     x2                                        x2
+     *    Grass                       x2                                <- Attack Types
+     *    Ground               x2               x2
+     *    Ice                                            x2
+     *    Poison                                         x2
+     *
+     * There are two attack coverage schemes:
+     *      Fighting, Grass, Ground, Ice
+     *      Fighting, Grass, Ground, Poison
+     */
+    const std::map<std::string,std::set<Resistance>> types = {
+        {"Electric", {{"Ground",Resistance::DOUBLE}}},
+        {"Fire", {{"Ground",Resistance::DOUBLE}}},
+        {"Grass", {{"Ice",Resistance::DOUBLE},{"Poison",Resistance::DOUBLE}}},
+        {"Ice", {{"Fighting",Resistance::DOUBLE}}},
+        {"Normal", {{"Fighting",Resistance::DOUBLE}}},
+        {"Water", {{"Grass",Resistance::DOUBLE}}},
+    };
+    std::set<RankedSet<std::string>> solutions = {{30, {"Fighting","Grass","Ground","Ice"}},
+                                                  {30,{"Fighting","Grass","Ground","Poison"}}};
+    PokemonLinks links(types, PokemonLinks::ATTACK);
+    EXPECT_EQUAL(links.getExactTypeCoverage(), solutions);
 }

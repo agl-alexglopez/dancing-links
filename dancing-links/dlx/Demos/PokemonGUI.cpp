@@ -326,15 +326,15 @@ namespace {
         /* Current network and solution. */
         PokemonTest mGeneration;
         Set<string> mSelected;
-        unique_ptr<multiset<RankedSet<std::string>>> mAllDefenseCoverages;
-        unique_ptr<multiset<RankedSet<std::string>>> mAllAttackCoverages;
+        unique_ptr<set<RankedSet<std::string>>> mAllDefenseCoverages;
+        unique_ptr<set<RankedSet<std::string>>> mAllAttackCoverages;
 
         /* Loads the world with the given name. */
         void loadWorld(const string& filename);
 
         /* Computes an optimal solution. */
         void solveDefense();
-        //void solveAttack();
+        void solveAttack();
     };
 
     PokemonGUI::PokemonGUI(GWindow& window) : ProblemHandler(window) {
@@ -362,7 +362,7 @@ namespace {
         if (source == mSolveDefense) {
             solveDefense();
         } else if (source == mSolveAttack) {
-            //solveAttack();
+            solveAttack();
         }
     }
     void PokemonGUI::repaint() {
@@ -401,10 +401,10 @@ namespace {
         }
 
         mAllDefenseCoverages.reset(
-            new multiset<RankedSet<std::string>>(
+            new set<RankedSet<std::string>>(
                 PokemonLinks(
                     mGeneration.typeInteractions, PokemonLinks::DEFENSE
-                ).getAllCoveredTeams()
+                ).getExactTypeCoverage()
             )
         );
         *mSolutionsDisplay << "Found " << (*mAllDefenseCoverages).size()
@@ -415,6 +415,57 @@ namespace {
                 *mSolutionsDisplay << type << " | ";
             }
             *mSolutionsDisplay << endl;
+        }
+
+        if ((*mAllDefenseCoverages).empty()) {
+            mSelected.clear();
+        }
+
+        /* Enable controls. */
+        mSolveDefense->setEnabled(true);
+        mSolveAttack->setEnabled(true);
+        mProblems->setEnabled(true);
+
+        requestRepaint();
+    }
+
+    void PokemonGUI::solveAttack() {
+        /* Clear out any old solution. We're going to get a new one. */
+        mSelected.clear();
+        mAllDefenseCoverages.reset();
+        mAllAttackCoverages.reset();
+        mSolutionsDisplay->clearDisplay();
+
+        /* Disable all controls until the operation finishes. */
+        mSolveDefense->setEnabled(false);
+        mSolveAttack->setEnabled(false);
+        mProblems->setEnabled(false);
+
+        if (mSelected.isEmpty()) {
+            for (const auto& s : mGeneration.pokemonGenerationMap.network) {
+                mSelected.add(s);
+            }
+        }
+
+        mAllAttackCoverages.reset(
+            new set<RankedSet<std::string>>(
+                PokemonLinks(
+                    mGeneration.typeInteractions, PokemonLinks::ATTACK
+                ).getExactTypeCoverage()
+            )
+        );
+        *mSolutionsDisplay << "Found " << (*mAllAttackCoverages).size()
+                           << " attack types [SCORE,TEAM]. Higher score is better." << endl;
+        for (const RankedSet<std::string>& cov : (*mAllAttackCoverages)) {
+            *mSolutionsDisplay << cov.rank() << " | ";
+            for (const std::string& type : cov) {
+                *mSolutionsDisplay << type << " | ";
+            }
+            *mSolutionsDisplay << endl;
+        }
+
+        if ((*mAllAttackCoverages).empty()) {
+            mSelected.clear();
         }
 
         /* Enable controls. */

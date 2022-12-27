@@ -10,8 +10,8 @@ class RankedSet {
 public:
     RankedSet() = default;
 
-    RankedSet(const int& rank, const std::set<valueType>& set) : rank_(rank),
-                                                                 set_(set) {}
+    RankedSet(const int rank, const std::set<valueType>& set) : rank_(rank),
+                                                                set_(set) {}
 
     std::size_t size() const {
         return set_.size();
@@ -77,7 +77,7 @@ public:
     }
 
     bool operator< (const RankedSet& rhs) const {
-        return this->rank_ < rhs.rank_;
+        return rhs.rank_ == rank_ ? this->set_ < rhs.set_ : this->rank_ < rhs.rank_;
     }
     explicit operator bool() const {
         return this->rank_ != 0 || this->cover_.size() != 0;

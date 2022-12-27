@@ -34,9 +34,7 @@ public:
     explicit PokemonLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions,
                           const CoverageType requestedCoverSolution);
 
-    std::multiset<RankedSet<std::string>> getAllCoveredTeams();
-
-    std::multiset<RankedSet<std::string>> getAllAttackCoverages();
+    std::set<RankedSet<std::string>> getExactTypeCoverage();
 
 
     /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
@@ -60,26 +58,26 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const std::vector<std::string>& options);
 
-    friend std::ostream& operator<<(std::ostream& os, const std::multiset<RankedSet<std::string>>& solution);
+    friend std::ostream& operator<<(std::ostream& os, const std::set<RankedSet<std::string>>& solution);
 
     friend std::ostream& operator<<(std::ostream& os, const PokemonLinks& links);
 
 private:
 
     const int MAX_TEAM_SIZE=6;
+    const int MAX_ATTACK_SLOTS=24;
 
     std::vector<std::string> optionTable_;
     std::vector<typeName> itemTable_;
     std::vector<pokeLink> links_;
     int numItems_;
     int numOptions_;
-    const int teamSize_;
     CoverageType requestedCoverSolution_;
 
 
-    void fillCoverages(std::multiset<RankedSet<std::string>>& exactCoverages,
+    void fillCoverages(std::set<RankedSet<std::string>>& exactCoverages,
                        RankedSet<std::string>& team,
-                       int teamPicks);
+                       int depthLimit);
     int chooseItem() const;
 
     std::pair<int,std::string> coverAttackType(int indexInOption);
@@ -91,7 +89,8 @@ private:
     void buildAttackLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions);
 
     void initializeColumns(const std::map<std::string,std::set<Resistance>>& typeInteractions,
-                           std::unordered_map<std::string,int>& columnBuilder);
+                           std::unordered_map<std::string,int>& columnBuilder,
+                           CoverageType requestedCoverage);
 
     // Dancing links is well suited to internal debugging over just plain unit testing.
     ALLOW_TEST_ACCESS();
