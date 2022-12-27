@@ -4,7 +4,6 @@
 #include <string>
 #include <set>
 #include <unordered_map>
-#include <queue>
 #include <utility>
 #include <vector>
 #include "GUI/SimpleTest.h"
@@ -35,9 +34,9 @@ public:
     explicit PokemonLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions,
                           const CoverageType requestedCoverSolution);
 
-    std::priority_queue<RankedSet<std::string>> getAllCoveredTeams();
+    std::multiset<RankedSet<std::string>> getAllCoveredTeams();
 
-    std::priority_queue<RankedSet<std::string>> getAllAttackCoverages();
+    std::multiset<RankedSet<std::string>> getAllAttackCoverages();
 
 
     /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
@@ -61,6 +60,8 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const std::vector<std::string>& options);
 
+    friend std::ostream& operator<<(std::ostream& os, const std::multiset<RankedSet<std::string>>& solution);
+
     friend std::ostream& operator<<(std::ostream& os, const PokemonLinks& links);
 
 private:
@@ -76,7 +77,7 @@ private:
     CoverageType requestedCoverSolution_;
 
 
-    void fillCoverages(std::priority_queue<RankedSet<std::string>>& exactCoverages,
+    void fillCoverages(std::multiset<RankedSet<std::string>>& exactCoverages,
                        RankedSet<std::string>& team,
                        int teamPicks);
     int chooseItem() const;

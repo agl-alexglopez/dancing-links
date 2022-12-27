@@ -4,21 +4,21 @@
 
 
 
-std::priority_queue<RankedSet<std::string>> PokemonLinks::getAllCoveredTeams() {
+std::multiset<RankedSet<std::string>> PokemonLinks::getAllCoveredTeams() {
     if (requestedCoverSolution_ == ATTACK) {
         error("Requested ATTACK solution on DEFENSE links. Instantiate ATTACK links to proceed.");
     }
-    std::priority_queue<RankedSet<std::string>> exactCoverages = {};
+    std::multiset<RankedSet<std::string>> exactCoverages = {};
     RankedSet<std::string> coverage = {};
     fillCoverages(exactCoverages, coverage, teamSize_);
     return exactCoverages;
 }
 
-void PokemonLinks::fillCoverages(std::priority_queue<RankedSet<std::string>>& exactCoverages,
+void PokemonLinks::fillCoverages(std::multiset<RankedSet<std::string>>& exactCoverages,
                                  RankedSet<std::string>& coverage,
                                  int teamPicks) {
     if (itemTable_[0].right == 0 && teamPicks >= 0) {
-        exactCoverages.push(coverage);
+        exactCoverages.insert(coverage);
         return;
     }
     if (teamPicks <= 0) {
@@ -69,7 +69,7 @@ std::pair<int,std::string> PokemonLinks::coverAttackType(int indexInOption) {
             itemTable_[cur.left].right = cur.right;
             itemTable_[cur.right].left = cur.left;
             hideOptions(i);
-            result.first -= links_[i++].multiplier;
+            result.first += links_[i++].multiplier;
         }
     } while (i != indexInOption);
     return result;
@@ -342,6 +342,14 @@ std::ostream& operator<<(std::ostream&os, const PokemonLinks& links) {
     return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const std::multiset<RankedSet<std::string>>& solution) {
+    for (const auto& s : solution) {
+        os << s;
+    }
+    os << std::endl;
+    return os;
+}
+
 
 /* * * * * * * * * * * * * * * * * *   Defense Links Init   * * * * * * * * * * * * * * * * * * * */
 
@@ -510,7 +518,7 @@ STUDENT_TEST("Cover Electric with Dragon eliminates Electric Option. Uncover res
     };
 
     std::pair<int,std::string> pick = links.coverAttackType(8);
-    EXPECT_EQUAL(pick.first,-12);
+    EXPECT_EQUAL(pick.first,12);
     EXPECT_EQUAL(pick.second,"Dragon");
     EXPECT_EQUAL(itemCoverElectric, links.itemTable_);
     EXPECT_EQUAL(dlxCoverElectric, links.links_);
@@ -606,7 +614,7 @@ STUDENT_TEST("Cover Electric with Electric to cause hiding of many options.") {
     };
 
     std::pair<int,std::string> pick = links.coverAttackType(8);
-    EXPECT_EQUAL(pick.first,-6);
+    EXPECT_EQUAL(pick.first,6);
     EXPECT_EQUAL(pick.second,"Electric");
     EXPECT_EQUAL(headersCoverElectric, links.itemTable_);
     EXPECT_EQUAL(dlxCoverElectric, links.links_);
@@ -644,13 +652,6 @@ STUDENT_TEST("There are two exact covers for this typing combo.") {
         {"Water", {{"Electric",Resistance::NORMAL},{"Grass",Resistance::DOUBLE},{"Ice",Resistance::FRAC12},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
     };
     PokemonLinks links(types, PokemonLinks::DEFENSE);
-    std::priority_queue<RankedSet<std::string>> cover = links.getAllCoveredTeams();
-    RankedSet<std::string> firstPlace = {-11,{"Ghost","Ground","Poison","Water"}};
-    EXPECT_EQUAL(cover.top(), firstPlace);
-    cover.pop();
-    // Higher numbers are worst for defense. More damage is possible.
-    RankedSet<std::string> secondPlace = {-13,{"Electric","Ghost","Poison","Water"}};
-    EXPECT_EQUAL(cover.top(), secondPlace);
-    cover.pop();
-    EXPECT(cover.empty());
+    std::multiset<RankedSet<std::string>> correct = {{11,{"Ghost","Ground","Poison","Water"}}, {13,{"Electric","Ghost","Poison","Water"}}};
+    EXPECT_EQUAL(links.getAllCoveredTeams(), correct);
 }

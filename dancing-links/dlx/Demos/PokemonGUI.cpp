@@ -326,8 +326,8 @@ namespace {
         /* Current network and solution. */
         PokemonTest mGeneration;
         Set<string> mSelected;
-        unique_ptr<priority_queue<RankedSet<std::string>>> mAllDefenseCoverages;
-        unique_ptr<priority_queue<RankedSet<std::string>>> mAllAttackCoverages;
+        unique_ptr<multiset<RankedSet<std::string>>> mAllDefenseCoverages;
+        unique_ptr<multiset<RankedSet<std::string>>> mAllAttackCoverages;
 
         /* Loads the world with the given name. */
         void loadWorld(const string& filename);
@@ -385,6 +385,7 @@ namespace {
     void PokemonGUI::solveDefense() {
         /* Clear out any old solution. We're going to get a new one. */
         mSelected.clear();
+        mAllDefenseCoverages.reset();
         mAllAttackCoverages.reset();
         mSolutionsDisplay->clearDisplay();
 
@@ -400,21 +401,20 @@ namespace {
         }
 
         mAllDefenseCoverages.reset(
-            new priority_queue<RankedSet<std::string>>(
+            new multiset<RankedSet<std::string>>(
                 PokemonLinks(
                     mGeneration.typeInteractions, PokemonLinks::DEFENSE
                 ).getAllCoveredTeams()
             )
         );
         *mSolutionsDisplay << "Found " << (*mAllDefenseCoverages).size()
-                           << " Pokemon teams [SCORE,TEAM]. Negative score closer to zero is better." << endl;
-        while (!(*mAllDefenseCoverages).empty()) {
-            *mSolutionsDisplay << (*mAllDefenseCoverages).top().rank() << " | ";
-            for (const std::string& type : (*mAllDefenseCoverages).top()) {
+                           << " Pokemon teams [SCORE,TEAM]. Lower score is better." << endl;
+        for (const RankedSet<std::string>& cov : (*mAllDefenseCoverages)) {
+            *mSolutionsDisplay << cov.rank() << " | ";
+            for (const std::string& type : cov) {
                 *mSolutionsDisplay << type << " | ";
             }
             *mSolutionsDisplay << endl;
-            (*mAllDefenseCoverages).pop();
         }
 
         /* Enable controls. */
