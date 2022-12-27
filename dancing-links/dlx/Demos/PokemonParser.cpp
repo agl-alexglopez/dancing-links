@@ -1,5 +1,7 @@
 #include "PokemonParser.h"
 #include "DisasterParser.h"
+#include <map>
+#include <set>
 #include <iostream>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -9,12 +11,25 @@
 namespace {
 
     const int GEN_ONE = 1;
-    const std::set<std::string> GEN_TWO_ADDITIONS = {"Dark", "Steel"};
-    const int GEN_TWO = 2;
-    const int GEN_SIX = 6;
-    const std::set<std::string> GET_SIX_ADDITIONS = {"Fairy"};
+    const int GEN_2 = 2;
+    const int GEN_6 = 6;
+    const int GEN_8 = 8;
+    const int GEN_9 = 9;
     const int MAX_GEN_COMMENT_LEN = 4;
     const QString JSON_ALL_TYPES_FILE = "res/pokemon/all-types.json";
+
+    const std::set<std::string> ADDED_GEN_9 = {"Bug-Dark","Fire-Grass","Poison-Steel",
+                                               "Electric-Fighting","Normal-Poison","Fighting-Ground",
+                                               "Fairy-Fighting"};
+
+    const std::set<std::string> ADDED_GEN_6 = {"Fairy"};
+
+    const std::set<std::string> ADDED_GEN_2 = {"Dark", "Steel","Dragon-Normal","Dragon-Fire",
+                                               "Dragon-Water","Dragon-Electric","Dragon-Grass",
+                                               "Dragon-Ice","Dragon-Fighting","Dragon-Poison",
+                                               "Dragon-Ground","Dragon-Psychic","Dragon-Rock",
+                                               "Dragon-Ghost","Dragon-Dark","Dragon-Steel"};
+    const std::string DUAL_TYPE_DELIM = "-";
 
     // Might as well use QStrings if I am parsing with them in the first place.
     const std::map<QString, Resistance::Multiplier> DAMAGE_MULTIPLIERS = {
@@ -83,18 +98,104 @@ namespace {
         return result;
     }
 
+    bool isGenOneType(const std::string& type) {
+        if (ADDED_GEN_9.count(type) || ADDED_GEN_2.count(type) || ADDED_GEN_6.count(type)) {
+            return false;
+        }
+        std::size_t typeDelim = type.find_first_of(DUAL_TYPE_DELIM);
+        if (typeDelim != std::string::npos) {
+            std::string firstType = type.substr(0, typeDelim);
+            std::string secondType = type.substr(typeDelim + 1);
+            if (ADDED_GEN_2.count(firstType) || ADDED_GEN_6.count(firstType)
+                    || ADDED_GEN_2.count(secondType) || ADDED_GEN_6.count(secondType)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    std::map<std::string,std::set<Resistance>> loadGenOne() {
+        QJsonObject pokemonData;
+        getQJsonObject(pokemonData);
+        std::map<std::string,std::set<Resistance>> result = {};
+        for (const QString& type : pokemonData.keys()) {
+            std::string newType = type.toStdString();
+            if (!isGenOneType(newType)) {
+                continue;
+            }
+            result.insert({newType, {}});
+            QJsonObject damageMultipliers = pokemonData[type].toObject();
+            for (const QString& mult : damageMultipliers.keys()) {
+                Resistance::Multiplier multiplierTag = DAMAGE_MULTIPLIERS.at(mult);
+
+                QJsonArray typesInMultipliers = damageMultipliers[mult].toArray();
+                for (const QJsonValueRef& t : typesInMultipliers) {
+                    std::string type = QString(t.toString()).toStdString();
+                    if (isGenOneType(type)) {
+                        result[newType].insert({type, multiplierTag});
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    bool isGenTwoToFive(std::string& type) {
+        if (ADDED_GEN_6.count(type)) {
+            return false;
+        }
+        std::size_t typeDelim = type.find_first_of(DUAL_TYPE_DELIM);
+        if (typeDelim != std::string::npos) {
+            std::string firstType = type.substr(0, typeDelim);
+            std::string secondType = type.substr(typeDelim + 1);
+            if (ADDED_GEN_6.count(firstType) || ADDED_GEN_6.count(secondType)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    std::map<std::string,std::set<Resistance>> loadGensTwoToFive() {
+        QJsonObject pokemonData;
+        getQJsonObject(pokemonData);
+        std::map<std::string,std::set<Resistance>> result = {};
+        for (const QString& type : pokemonData.keys()) {
+            std::string newType = type.toStdString();
+            if (!isGenTwoToFive(newType)) {
+                continue;
+            }
+            result.insert({newType, {}});
+            QJsonObject damageMultipliers = pokemonData[type].toObject();
+            for (const QString& mult : damageMultipliers.keys()) {
+                Resistance::Multiplier multiplierTag = DAMAGE_MULTIPLIERS.at(mult);
+
+                QJsonArray typesInMultipliers = damageMultipliers[mult].toArray();
+                for (const QJsonValueRef& t : typesInMultipliers) {
+                    std::string type = QString(t.toString()).toStdString();
+                    if (isGenTwoToFive(type)) {
+                        result[newType].insert({type, multiplierTag});
+                    }
+                }
+            }
+        }
+        return result;
+
+    }
+
     std::map<std::string,std::set<Resistance>> setTypeInteractions(std::istream& source) {
         // We need to check the first line of the pokemon map file for the generation info.
         std::string line;
         std::getline(source, line);
         std::string afterHashtag = line.substr(1, line.length() - 1);
         int generation = std::stoi(afterHashtag);
-        if (line.length() > MAX_GEN_COMMENT_LEN || generation >= GEN_SIX) {
+        if (line.length() > MAX_GEN_COMMENT_LEN || generation >= GEN_9) {
             return loadAllTypes();
         } else if (generation == GEN_ONE) {
-            //return loadGenOne();
-        } else if (generation < GEN_SIX) {
-            //return loadGensTwoToFive();
+            return loadGenOne();
+        } else if (generation < GEN_6) {
+            return loadGensTwoToFive();
+        } else {
+            // return loadGensSixToEight();
         }
         std::cerr << "Could not pick a Pokemon Generation to load." << std::endl;
         return {};

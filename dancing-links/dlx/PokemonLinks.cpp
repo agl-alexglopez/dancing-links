@@ -4,18 +4,18 @@
 
 
 
-std::priority_queue<RankedCover> PokemonLinks::getAllCoveredTeams() {
+std::priority_queue<RankedSet<std::string>> PokemonLinks::getAllCoveredTeams() {
     if (requestedCoverSolution_ == ATTACK) {
         error("Requested ATTACK solution on DEFENSE links. Instantiate ATTACK links to proceed.");
     }
-    std::priority_queue<RankedCover> exactCoverages = {};
-    RankedCover coverage = {};
+    std::priority_queue<RankedSet<std::string>> exactCoverages = {};
+    RankedSet<std::string> coverage = {};
     fillCoverages(exactCoverages, coverage, teamSize_);
     return exactCoverages;
 }
 
-void PokemonLinks::fillCoverages(std::priority_queue<RankedCover>& exactCoverages,
-                                 RankedCover& coverage,
+void PokemonLinks::fillCoverages(std::priority_queue<RankedSet<std::string>>& exactCoverages,
+                                 RankedSet<std::string>& coverage,
                                  int teamPicks) {
     if (itemTable_[0].right == 0 && teamPicks >= 0) {
         exactCoverages.push(coverage);
@@ -30,13 +30,11 @@ void PokemonLinks::fillCoverages(std::priority_queue<RankedCover>& exactCoverage
     }
     for (int cur = links_[attackType].down; cur != attackType; cur = links_[cur].down) {
         std::pair<int,std::string> typeStrength = coverAttackType(cur);
-        coverage.add(typeStrength.first);
-        coverage.insert(typeStrength.second);
+        coverage.insert(typeStrength.first, typeStrength.second);
 
         fillCoverages(exactCoverages, coverage, teamPicks - 1);
 
-        coverage.subtract(typeStrength.first);
-        coverage.remove(typeStrength.second);
+        coverage.remove(typeStrength.first, typeStrength.second);
         uncoverAttackType(cur);
     }
 }
@@ -646,12 +644,12 @@ STUDENT_TEST("There are two exact covers for this typing combo.") {
         {"Water", {{"Electric",Resistance::NORMAL},{"Grass",Resistance::DOUBLE},{"Ice",Resistance::FRAC12},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
     };
     PokemonLinks links(types, PokemonLinks::DEFENSE);
-    std::priority_queue<RankedCover> cover = links.getAllCoveredTeams();
-    RankedCover firstPlace = {-11,{"Ghost","Ground","Poison","Water"}};
+    std::priority_queue<RankedSet<std::string>> cover = links.getAllCoveredTeams();
+    RankedSet<std::string> firstPlace = {-11,{"Ghost","Ground","Poison","Water"}};
     EXPECT_EQUAL(cover.top(), firstPlace);
     cover.pop();
     // Higher numbers are worst for defense. More damage is possible.
-    RankedCover secondPlace = {-13,{"Electric","Ghost","Poison","Water"}};
+    RankedSet<std::string> secondPlace = {-13,{"Electric","Ghost","Poison","Water"}};
     EXPECT_EQUAL(cover.top(), secondPlace);
     cover.pop();
     EXPECT(cover.empty());

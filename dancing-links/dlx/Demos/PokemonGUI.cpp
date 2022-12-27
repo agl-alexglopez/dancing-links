@@ -2,6 +2,7 @@
 #include "PokemonParser.h"
 #include "PokemonLinks.h"
 #include "Utilities/PokemonUtilities.h"
+#include "Utilities/RankedSet.h"
 #include <fstream>
 #include <memory>
 #include <cmath>
@@ -325,8 +326,8 @@ namespace {
         /* Current network and solution. */
         PokemonTest mGeneration;
         Set<string> mSelected;
-        unique_ptr<priority_queue<RankedCover>> mAllDefenseCoverages;
-        unique_ptr<priority_queue<RankedCover>> mAllAttackCoverages;
+        unique_ptr<priority_queue<RankedSet<std::string>>> mAllDefenseCoverages;
+        unique_ptr<priority_queue<RankedSet<std::string>>> mAllAttackCoverages;
 
         /* Loads the world with the given name. */
         void loadWorld(const string& filename);
@@ -399,7 +400,7 @@ namespace {
         }
 
         mAllDefenseCoverages.reset(
-            new priority_queue<RankedCover>(
+            new priority_queue<RankedSet<std::string>>(
                 PokemonLinks(
                     mGeneration.typeInteractions, PokemonLinks::DEFENSE
                 ).getAllCoveredTeams()

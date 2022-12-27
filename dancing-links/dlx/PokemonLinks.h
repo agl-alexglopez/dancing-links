@@ -9,6 +9,7 @@
 #include <vector>
 #include "GUI/SimpleTest.h"
 #include "Utilities/PokemonUtilities.h"
+#include "Utilities/RankedSet.h"
 
 
 class PokemonLinks {
@@ -34,9 +35,9 @@ public:
     explicit PokemonLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions,
                           const CoverageType requestedCoverSolution);
 
-    std::priority_queue<RankedCover> getAllCoveredTeams();
+    std::priority_queue<RankedSet<std::string>> getAllCoveredTeams();
 
-    std::priority_queue<RankedCover> getAllAttackCoverages();
+    std::priority_queue<RankedSet<std::string>> getAllAttackCoverages();
 
 
     /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
@@ -75,8 +76,8 @@ private:
     CoverageType requestedCoverSolution_;
 
 
-    void fillCoverages(std::priority_queue<RankedCover>& exactCoverages,
-                       RankedCover& coverage,
+    void fillCoverages(std::priority_queue<RankedSet<std::string>>& exactCoverages,
+                       RankedSet<std::string>& team,
                        int teamPicks);
     int chooseItem() const;
 

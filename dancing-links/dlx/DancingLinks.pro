@@ -83,6 +83,7 @@ HEADERS         *=  "" \
     DisasterTags.h \
     PartnerLinks.h \
     PokemonLinks.h \
+    Utilities/RankedSet.h
 
 # Gather any .cpp or .h files within the project folder (student/starter code).
 # Second argument true makes search recursive

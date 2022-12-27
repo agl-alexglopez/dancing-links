@@ -4,7 +4,7 @@
 #include <string>
 #include <set>
 #include <vector>
-#include <iostream>
+#include <ostream>
 
 
 class Resistance {
@@ -54,60 +54,6 @@ private:
 
 std::ostream& operator<<(std::ostream& out, const Resistance& res);
 std::ostream& operator<<(std::ostream& out, const Resistance::Multiplier& mult);
-
-class RankedCover {
-
-public:
-
-    RankedCover() = default;
-
-    RankedCover(const int& rank, const std::set<std::string>& cover);
-
-    std::size_t size() const;
-    int rank() const;
-    void insert(const std::string& pokemonType);
-    void remove(const std::string& pokemonType);
-    void add(const int rankChange);
-    void subtract(const int rankChange);
-
-
-    using container = std::set<std::string>;
-    using iterator = container::iterator;
-    using const_iterator = container::const_iterator;
-    iterator begin();
-    const_iterator begin() const;
-    iterator end();
-    const_iterator end() const;
-
-    friend std::ostream& operator<<(std::ostream& out, const RankedCover& rc);
-
-    bool operator< (const RankedCover& rhs) const {
-        return this->rank_ < rhs.rank_;
-    }
-    explicit operator bool() const {
-        return this->rank_ != 0 || this->cover_.size() != 0;
-    }
-    bool operator== (const RankedCover& rhs) const {
-        return this->rank_ == rhs.rank_ && this->cover_ == rhs.cover_;
-    }
-    bool operator> (const RankedCover& rhs) const {
-        return rhs < *this;
-    }
-    bool operator>= (const RankedCover& rhs) const {
-        return !(*this < rhs);
-    }
-    bool operator<= (const RankedCover& rhs) const {
-        return !(*this > rhs);
-    }
-    bool operator!= (const RankedCover& rhs) const {
-        return !(*this == rhs);
-    }
-
-private:
-    int rank_;
-    std::set<std::string> cover_;
-};
-
 
 
 #endif // POKEMONUTILITIES_H
