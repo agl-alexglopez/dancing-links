@@ -10,9 +10,11 @@
 #include "Utilities/PokemonUtilities.h"
 #include "Utilities/RankedSet.h"
 
+const std::size_t MAX_OUTPUT_SIZE=500;
 
 class PokemonLinks {
 public:
+
 
     typedef enum CoverageType {
         DEFENSE,
@@ -24,6 +26,7 @@ public:
         int up;
         int down;
         Resistance::Multiplier multiplier;
+        int depthTag;
     }pokeLink;
 
     typedef struct typeName {
@@ -31,10 +34,13 @@ public:
         int left;
         int right;
     }typeName;
+
+
     explicit PokemonLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions,
                           const CoverageType requestedCoverSolution);
 
     std::set<RankedSet<std::string>> getExactTypeCoverage();
+    std::set<RankedSet<std::string>> getOverlappingTypeCoverage();
 
 
     /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
@@ -75,15 +81,23 @@ private:
     CoverageType requestedCoverSolution_;
 
 
-    void fillCoverages(std::set<RankedSet<std::string>>& exactCoverages,
-                       RankedSet<std::string>& team,
-                       int depthLimit);
+    void fillExactCoverages(std::set<RankedSet<std::string>>& exactCoverages,
+                            RankedSet<std::string>& coverage,
+                            int depthLimit);
+
+    void fillOverlappingCoverages(std::set<RankedSet<std::string>>& overlappingCoverages,
+                                  RankedSet<std::string>& coverage,
+                                  int depthTag);
+
     int chooseItem() const;
 
-    std::pair<int,std::string> coverAttackType(int indexInOption);
-    void uncoverAttackType(int indexInOption);
+    std::pair<int,std::string> coverType(int indexInOption);
+    void uncoverType(int indexInOption);
     void hideOptions(int indexInOption);
     void unhideOptions(int indexInOption);
+
+    std::pair<int,std::string> looseCoverType(int indexInOption, int depthTag);
+    void looseUncoverType(int indexInOption);
 
     void buildDefenseLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions);
     void buildAttackLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions);

@@ -20,11 +20,11 @@ namespace {
 
     const std::set<std::string> ADDED_GEN_9 = {"Bug-Dark","Fire-Grass","Poison-Steel",
                                                "Electric-Fighting","Normal-Poison","Fighting-Ground",
-                                               "Fairy-Fighting"};
+                                               "Fairy-Fighting","Ghost-Normal"};
 
     const std::set<std::string> ADDED_GEN_6 = {"Fairy"};
 
-    const std::set<std::string> ADDED_GEN_2 = {"Dark", "Steel","Dragon-Normal","Dragon-Fire",
+    const std::set<std::string> ADDED_GEN_2 = {"Dark","Steel","Dragon-Normal","Dragon-Fire",
                                                "Dragon-Water","Dragon-Electric","Dragon-Grass",
                                                "Dragon-Ice","Dragon-Fighting","Dragon-Poison",
                                                "Dragon-Ground","Dragon-Psychic","Dragon-Rock",
@@ -141,14 +141,15 @@ namespace {
     }
 
     bool isGenTwoToFive(std::string& type) {
-        if (ADDED_GEN_6.count(type)) {
+        if (ADDED_GEN_6.count(type) || ADDED_GEN_9.count(type)) {
             return false;
         }
         std::size_t typeDelim = type.find_first_of(DUAL_TYPE_DELIM);
         if (typeDelim != std::string::npos) {
             std::string firstType = type.substr(0, typeDelim);
             std::string secondType = type.substr(typeDelim + 1);
-            if (ADDED_GEN_6.count(firstType) || ADDED_GEN_6.count(secondType)) {
+            if (ADDED_GEN_6.count(firstType) || ADDED_GEN_6.count(secondType)
+                    || ADDED_GEN_9.count(firstType) || ADDED_GEN_9.count(secondType)) {
                 return false;
             }
         }
