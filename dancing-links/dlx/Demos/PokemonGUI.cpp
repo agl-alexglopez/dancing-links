@@ -45,6 +45,18 @@ namespace {
         { "#806030", "#FFB000", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
     };
 
+    const string GYM_1_STR = "G1";
+    const string GYM_2_STR = "G2";
+    const string GYM_3_STR = "G3";
+    const string GYM_4_STR = "G4";
+    const string GYM_5_STR = "G5";
+    const string GYM_6_STR = "G6";
+    const string GYM_7_STR = "G7";
+    const string GYM_8_STR = "G8";
+    const string ELT_4_STR = "E4";
+    const string NOT_SELECTED = "#000000";
+    const string SELECTED = "#FF0000";
+
     /* Colors to use to draw the roads. */
     const string kDarkRoadColor = "#505050";
     const string kLightRoadColor = "#FFFFFF";
@@ -326,10 +338,15 @@ namespace {
         GButton* overlappingDefenseButton;
         GButton* overlappingAttackButton;
 
-        GLabel* gymChoicesLabel;
-        GTextField* gymChoices;
-        GButton* addChoice;
-        GButton* removeChoice;
+        GButton* gym1;
+        GButton* gym2;
+        GButton* gym3;
+        GButton* gym4;
+        GButton* gym5;
+        GButton* gym6;
+        GButton* gym7;
+        GButton* gym8;
+        GButton* elite4;
         GButton* clearChoices;
 
         /* Current network and solution. */
@@ -340,8 +357,7 @@ namespace {
         /* Loads the world with the given name. */
         void loadWorld(const string& filename);
 
-        void addSelectedGym();
-        void removeSelectedGym();
+        void toggleSelectedGym(GButton*& button);
         void clearSelections();
         void solveDefense(const CoverageRequested& exactOrOverlapping);
         void solveAttack(const CoverageRequested& exactOrOverlapping);
@@ -354,10 +370,15 @@ namespace {
         overlappingDefenseButton  = new GButton("Overlapping Defense Coverage");
         overlappingAttackButton  = new GButton("Overlapping Attack Coverage");
 
-        gymChoicesLabel = new GTextLabel("Add/Remove gyms to cover problem.");
-        gymChoices = new GTextField("Enter as labelled on map...");
-        addChoice = new GButton("insert");
-        removeChoice = new GButton("remove");
+        gym1 = new GButton(GYM_1_STR);
+        gym2 = new GButton(GYM_2_STR);
+        gym3 = new GButton(GYM_3_STR);
+        gym4 = new GButton(GYM_4_STR);
+        gym5 = new GButton(GYM_5_STR);
+        gym6 = new GButton(GYM_6_STR);
+        gym7 = new GButton(GYM_7_STR);
+        gym8 = new GButton(GYM_8_STR);
+        elite4 = new GButton(ELT_4_STR);
         clearChoices = new GButton("clear");
 
 
@@ -366,11 +387,16 @@ namespace {
         controls->addToGrid(exactAttackButton, 1, 0, 1, 1);
         controls->addToGrid(overlappingDefenseButton, 2, 0, 1, 1);
         controls->addToGrid(overlappingAttackButton, 3, 0, 1, 1);
-        controls->addToGrid(gymChoicesLabel, 4, 0, 1, 1);
-        controls->addToGrid(gymChoices, 5, 0, 1, 1);
-        controls->addToGrid(addChoice, 6, 0, 1, 1);
-        controls->addToGrid(removeChoice, 7, 0, 1, 1);
-        controls->addToGrid(clearChoices, 8, 0, 1, 1);
+        controls->addToGrid(gym1, 6, 0);
+        controls->addToGrid(gym2, 6, 1);
+        controls->addToGrid(gym3, 6, 2);
+        controls->addToGrid(gym4, 7, 0);
+        controls->addToGrid(gym5, 7, 1);
+        controls->addToGrid(gym6, 7, 2);
+        controls->addToGrid(gym7, 8, 0);
+        controls->addToGrid(gym8, 8, 1);
+        controls->addToGrid(elite4, 8, 2);
+        controls->addToGrid(clearChoices, 9, 1);
 
         controls->setEnabled(false);
 
@@ -393,39 +419,30 @@ namespace {
         }
     }
 
-    void PokemonGUI::addSelectedGym() {
-        string userInput = gymChoices->getText();
-        if (userInput.length() <= 2
-                && mGeneration.pokemonGenerationMap.network.containsKey(userInput)) {
-            mSelected.add(userInput);
-            (*mSolutionsDisplay) << "Selected: | ";
-            for (const auto& s : mSelected) {
-                (*mSolutionsDisplay) << s << " | ";
-            }
-            (*mSolutionsDisplay) << endl;
+    void PokemonGUI::toggleSelectedGym(GButton*& button) {
+        string gymName = button->getText();
+        if (mSelected.contains(gymName)) {
+            mSelected.remove(gymName);
+            button->setForeground(NOT_SELECTED);
         } else {
-            (*mSolutionsDisplay) << "Invalid gym choice [" << userInput << "]. Enter gym names as they appear on the map." << endl;
+            mSelected.add(gymName);
+            button->setForeground(SELECTED);
         }
-    }
-
-    void PokemonGUI::removeSelectedGym() {
-        string userInput = gymChoices->getText();
-        if (userInput.length() <= 2 && mSelected.size() && mSelected.contains(userInput)) {
-            mSelected.remove(userInput);
-            (*mSolutionsDisplay) << "Selected: | ";
-            for (const auto& s : mSelected) {
-                (*mSolutionsDisplay) << s << " | ";
-            }
-            (*mSolutionsDisplay) << endl;
-        } else {
-            (*mSolutionsDisplay) << "Entry [" << userInput << "] not in current selection." << endl;
-        }
+        requestRepaint();
     }
 
     void PokemonGUI::clearSelections() {
         mSelected.clear();
         mAllCoverages.reset();
-        (*mSolutionsDisplay) << "Selected: " << endl;
+        gym1->setForeground(NOT_SELECTED);
+        gym2->setForeground(NOT_SELECTED);
+        gym3->setForeground(NOT_SELECTED);
+        gym4->setForeground(NOT_SELECTED);
+        gym5->setForeground(NOT_SELECTED);
+        gym6->setForeground(NOT_SELECTED);
+        gym7->setForeground(NOT_SELECTED);
+        gym8->setForeground(NOT_SELECTED);
+        elite4->setForeground(NOT_SELECTED);
         requestRepaint();
     }
 
@@ -439,10 +456,24 @@ namespace {
             solveDefense(OVERLAPPING);
         } else if (source == overlappingAttackButton) {
             solveAttack(OVERLAPPING);
-        } else if (source == addChoice) {
-            addSelectedGym();
-        } else if (source == removeChoice) {
-            removeSelectedGym();
+        } else if (source == gym1) {
+            toggleSelectedGym(gym1);
+        } else if (source == gym2) {
+            toggleSelectedGym(gym2);
+        } else if (source == gym3) {
+            toggleSelectedGym(gym3);
+        } else if (source == gym4) {
+            toggleSelectedGym(gym4);
+        } else if (source == gym5) {
+            toggleSelectedGym(gym5);
+        } else if (source == gym6) {
+            toggleSelectedGym(gym6);
+        } else if (source == gym7) {
+            toggleSelectedGym(gym7);
+        } else if (source == gym8) {
+            toggleSelectedGym(gym8);
+        } else if (source == elite4) {
+            toggleSelectedGym(elite4);
         } else if (source == clearChoices) {
             clearSelections();
         }
@@ -461,6 +492,15 @@ namespace {
         mSelected.clear();
         mSolutionsDisplay->clearDisplay();
         controls->setEnabled(true);
+        gym1->setForeground(NOT_SELECTED);
+        gym2->setForeground(NOT_SELECTED);
+        gym3->setForeground(NOT_SELECTED);
+        gym4->setForeground(NOT_SELECTED);
+        gym5->setForeground(NOT_SELECTED);
+        gym6->setForeground(NOT_SELECTED);
+        gym7->setForeground(NOT_SELECTED);
+        gym8->setForeground(NOT_SELECTED);
+        elite4->setForeground(NOT_SELECTED);
         requestRepaint();
     }
 
