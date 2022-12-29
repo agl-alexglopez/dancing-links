@@ -45,6 +45,10 @@ namespace {
         { "#806030", "#FFB000", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
     };
 
+    const set<string> ALL_ATTACK_TYPES = {"Normal","Fire","Water","Electric","Grass","Ice",
+                                          "Fighting","Poison","Ground","Flying","Psychic","Bug",
+                                          "Rock","Ghost","Dragon","Dark","Steel","Fairy"};
+
     const string GYM_1_STR = "G1";
     const string GYM_2_STR = "G2";
     const string GYM_3_STR = "G3";
@@ -338,6 +342,7 @@ namespace {
         GButton* overlappingDefenseButton;
         GButton* overlappingAttackButton;
 
+        Temporary<GContainer> gymControls;
         GButton* gym1;
         GButton* gym2;
         GButton* gym3;
@@ -367,8 +372,8 @@ namespace {
 
         exactDefenseButton  = new GButton("Exact Defense Coverage");
         exactAttackButton  = new GButton("Exact Attack Coverage");
-        overlappingDefenseButton  = new GButton("Overlapping Defense Coverage");
-        overlappingAttackButton  = new GButton("Overlapping Attack Coverage");
+        overlappingDefenseButton  = new GButton("Loose Defense Coverage");
+        overlappingAttackButton  = new GButton("Loose Attack Coverage");
 
         gym1 = new GButton(GYM_1_STR);
         gym2 = new GButton(GYM_2_STR);
@@ -380,23 +385,25 @@ namespace {
         gym8 = new GButton(GYM_8_STR);
         elite4 = new GButton(ELT_4_STR);
         clearChoices = new GButton("clear");
+        gymControls = make_temporary<GContainer>(window, "WEST", GContainer::LAYOUT_GRID);
+        gymControls->addToGrid(gym1, 6, 0);
+        gymControls->addToGrid(gym2, 6, 1);
+        gymControls->addToGrid(gym3, 6, 2);
+        gymControls->addToGrid(gym4, 7, 0);
+        gymControls->addToGrid(gym5, 7, 1);
+        gymControls->addToGrid(gym6, 7, 2);
+        gymControls->addToGrid(gym7, 8, 0);
+        gymControls->addToGrid(gym8, 8, 1);
+        gymControls->addToGrid(elite4, 8, 2);
+        gymControls->addToGrid(clearChoices, 9, 1);
 
+        gymControls->setEnabled(false);
 
         controls = make_temporary<GContainer>(window, "WEST", GContainer::LAYOUT_GRID);
-        controls->addToGrid(exactDefenseButton, 0, 0, 1, 1);
-        controls->addToGrid(exactAttackButton, 1, 0, 1, 1);
-        controls->addToGrid(overlappingDefenseButton, 2, 0, 1, 1);
-        controls->addToGrid(overlappingAttackButton, 3, 0, 1, 1);
-        controls->addToGrid(gym1, 6, 0);
-        controls->addToGrid(gym2, 6, 1);
-        controls->addToGrid(gym3, 6, 2);
-        controls->addToGrid(gym4, 7, 0);
-        controls->addToGrid(gym5, 7, 1);
-        controls->addToGrid(gym6, 7, 2);
-        controls->addToGrid(gym7, 8, 0);
-        controls->addToGrid(gym8, 8, 1);
-        controls->addToGrid(elite4, 8, 2);
-        controls->addToGrid(clearChoices, 9, 1);
+        controls->addToGrid(exactDefenseButton, 0, 0);
+        controls->addToGrid(exactAttackButton, 1, 0);
+        controls->addToGrid(overlappingDefenseButton, 2, 0);
+        controls->addToGrid(overlappingAttackButton, 3, 0);
 
         controls->setEnabled(false);
 
@@ -434,6 +441,8 @@ namespace {
     void PokemonGUI::clearSelections() {
         mSelected.clear();
         mAllCoverages.reset();
+        mSolutionsDisplay->clearDisplay();
+        mSolutionsDisplay->flush();
         gym1->setForeground(NOT_SELECTED);
         gym2->setForeground(NOT_SELECTED);
         gym3->setForeground(NOT_SELECTED);
@@ -491,7 +500,9 @@ namespace {
         mAllCoverages.reset();
         mSelected.clear();
         mSolutionsDisplay->clearDisplay();
+        mSolutionsDisplay->flush();
         controls->setEnabled(true);
+        gymControls->setEnabled(true);
         gym1->setForeground(NOT_SELECTED);
         gym2->setForeground(NOT_SELECTED);
         gym3->setForeground(NOT_SELECTED);
@@ -507,19 +518,44 @@ namespace {
     void PokemonGUI::solveDefense(const CoverageRequested& exactOrOverlapping) {
         mAllCoverages.reset();
         mSolutionsDisplay->clearDisplay();
+        mSolutionsDisplay->flush();
         controls->setEnabled(false);
+        gymControls->setEnabled(false);
         mProblems->setEnabled(false);
 
+        bool resetOnFailure = false;
 
         std::set<std::string> gymAttackTypes = {};
 
 
         if (!mSelected.isEmpty()) {
             gymAttackTypes = loadSelectedGymsAttacks(mProblems->getSelectedItem(), mSelected);
+            (*mSolutionsDisplay) << "Attack types to defend against:" << endl;
+            (*mSolutionsDisplay) << "|";
+            for (const auto& g : gymAttackTypes) {
+                (*mSolutionsDisplay) << g << " | ";
+            }
+            (*mSolutionsDisplay) << endl;
         } else {
+            resetOnFailure = true;
+            gym1->setForeground(SELECTED);
+            gym2->setForeground(SELECTED);
+            gym3->setForeground(SELECTED);
+            gym4->setForeground(SELECTED);
+            gym5->setForeground(SELECTED);
+            gym6->setForeground(SELECTED);
+            gym7->setForeground(SELECTED);
+            gym8->setForeground(SELECTED);
+            elite4->setForeground(SELECTED);
             for (const auto& s : mGeneration.pokemonGenerationMap.network) {
                 mSelected.add(s);
             }
+            (*mSolutionsDisplay) << "Attack types to defend against:" << endl;
+            (*mSolutionsDisplay) << "|";
+            for (const auto& a : ALL_ATTACK_TYPES) {
+                (*mSolutionsDisplay) << a << " | ";
+            }
+            (*mSolutionsDisplay) << " |" << endl;
         }
 
         // If gymAttackTypes is empty the constructor just builds the full generation of pokemon.
@@ -556,28 +592,64 @@ namespace {
         /* Enable controls. */
         controls->setEnabled(true);
         mProblems->setEnabled(true);
+        gymControls->setEnabled(true);
 
         if ((*mAllCoverages).size()) {
             requestRepaint();
+        } else if (resetOnFailure) {
+            mSelected.clear();
+            gym1->setForeground(NOT_SELECTED);
+            gym2->setForeground(NOT_SELECTED);
+            gym3->setForeground(NOT_SELECTED);
+            gym4->setForeground(NOT_SELECTED);
+            gym5->setForeground(NOT_SELECTED);
+            gym6->setForeground(NOT_SELECTED);
+            gym7->setForeground(NOT_SELECTED);
+            gym8->setForeground(NOT_SELECTED);
+            elite4->setForeground(NOT_SELECTED);
         }
     }
 
     void PokemonGUI::solveAttack(const CoverageRequested& exactOrOverlapping) {
         mAllCoverages.reset();
         mSolutionsDisplay->clearDisplay();
+        mSolutionsDisplay->flush();
         controls->setEnabled(false);
         mProblems->setEnabled(false);
+        gymControls->setEnabled(false);
 
-        // We will just point to the correct map rather than preemptively making a copy.
+        bool resetOnFailure = false;
         map<string,set<Resistance>> modifiedGeneration = {};
         if (!mSelected.isEmpty()) {
             modifiedGeneration = loadSelectedGymsDefense(mGeneration.typeInteractions,
                                                          mProblems->getSelectedItem(),
                                                          mSelected);
+            (*mSolutionsDisplay) << "Attacking the following defensive types:" << endl;
+            (*mSolutionsDisplay) << "|";
+            for (const auto& type : modifiedGeneration) {
+                (*mSolutionsDisplay) << type.first << " | ";
+            }
+            (*mSolutionsDisplay) << endl;
         } else {
+            resetOnFailure = true;
+            gym1->setForeground(SELECTED);
+            gym2->setForeground(SELECTED);
+            gym3->setForeground(SELECTED);
+            gym4->setForeground(SELECTED);
+            gym5->setForeground(SELECTED);
+            gym6->setForeground(SELECTED);
+            gym7->setForeground(SELECTED);
+            gym8->setForeground(SELECTED);
+            elite4->setForeground(SELECTED);
             for (const auto& s : mGeneration.pokemonGenerationMap.network) {
                 mSelected.add(s);
             }
+            (*mSolutionsDisplay) << "Attacking the following defensive types:" << endl;
+            (*mSolutionsDisplay) << "|";
+            for (const auto& type : mGeneration.typeInteractions) {
+                (*mSolutionsDisplay) << type.first << " | ";
+            }
+            (*mSolutionsDisplay) << endl;
         }
 
         set<RankedSet<std::string>> solution = {};
@@ -602,7 +674,7 @@ namespace {
         mAllCoverages.reset(new set<RankedSet<std::string>>(solution));
 
         *mSolutionsDisplay << "Found " << (*mAllCoverages).size()
-                           << " attack types [SCORE,TYPES]. Higher score is better." << endl;
+                           << " attack configurations [SCORE,TYPES]. Higher score is better." << endl;
         string maximumOutputExceeded = {};
         if ((*mAllCoverages).size() == MAX_OUTPUT_SIZE) {
             maximumOutputExceeded = "...exceeded maximum output, stopping at " + to_string(MAX_OUTPUT_SIZE);
@@ -621,9 +693,21 @@ namespace {
         /* Enable controls. */
         controls->setEnabled(true);
         mProblems->setEnabled(true);
+        gymControls->setEnabled(true);
 
         if ((*mAllCoverages).size()) {
             requestRepaint();
+        } else if (resetOnFailure) {
+            mSelected.clear();
+            gym1->setForeground(NOT_SELECTED);
+            gym2->setForeground(NOT_SELECTED);
+            gym3->setForeground(NOT_SELECTED);
+            gym4->setForeground(NOT_SELECTED);
+            gym5->setForeground(NOT_SELECTED);
+            gym6->setForeground(NOT_SELECTED);
+            gym7->setForeground(NOT_SELECTED);
+            gym8->setForeground(NOT_SELECTED);
+            elite4->setForeground(NOT_SELECTED);
         }
     }
 
