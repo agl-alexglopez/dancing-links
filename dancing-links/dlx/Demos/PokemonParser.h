@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include "DisasterParser.h"
+#include "set.h"
 #include "Utilities/PokemonUtilities.h"
 
 /* Leave a comment at the first line of the Pokemon Generation .dst file you want to construct with
@@ -44,5 +45,13 @@ typedef struct PokemonTest {
 
 
 PokemonTest loadPokemonGeneration(std::istream& source);
+
+std::map<std::string,std::set<Resistance>>
+loadSelectedGymsDefense(const std::map<std::string,std::set<Resistance>>& currentGenInteractions,
+                        const std::string& selectedMap,
+                        const Set<std::string>& selectedGyms);
+
+std::set<std::string> loadSelectedGymsAttacks(const std::string& selectedMap,
+                                              const Set<std::string>& selected);
 
 #endif // POKEMONPARSER_H

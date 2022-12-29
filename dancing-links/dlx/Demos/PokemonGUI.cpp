@@ -507,9 +507,9 @@ namespace {
         *mSolutionsDisplay << "Found " << (*mAllCoverages).size()
                            << " Pokemon teams [SCORE,TEAM]. Lower score is better";
 
-        string maximumOutputExceeded = ".";
+        string maximumOutputExceeded = {};
         if ((*mAllCoverages).size() == MAX_OUTPUT_SIZE) {
-            maximumOutputExceeded = "(exceeded maximum output, stopping at " + to_string(MAX_OUTPUT_SIZE) + ").";
+            maximumOutputExceeded = "...exceeded maximum output, stopping at " + to_string(MAX_OUTPUT_SIZE);
         }
         *mSolutionsDisplay << maximumOutputExceeded << endl;
         for (const RankedSet<std::string>& cov : (*mAllCoverages)) {
@@ -555,9 +555,9 @@ namespace {
 
         *mSolutionsDisplay << "Found " << (*mAllCoverages).size()
                            << " attack types [SCORE,TYPES]. Higher score is better";
-        string maximumOutputExceeded = ".";
+        string maximumOutputExceeded = {};
         if ((*mAllCoverages).size() == MAX_OUTPUT_SIZE) {
-            maximumOutputExceeded = "(exceeded maximum output, stopping at " + to_string(MAX_OUTPUT_SIZE) + ").";
+            maximumOutputExceeded = "...exceeded maximum output, stopping at " + to_string(MAX_OUTPUT_SIZE);
         }
         *mSolutionsDisplay << maximumOutputExceeded << endl;
 

@@ -1,9 +1,7 @@
 #ifndef DisasterParser_Included
 #define DisasterParser_Included
-
-#include "DisasterPlanning.h"
+#include "set.h"
 #include "map.h"
-#include "hashset.h"
 #include "gtypes.h"
 #include <string>
 #include <istream>

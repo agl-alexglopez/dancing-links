@@ -17,6 +17,9 @@ namespace {
     const int GEN_9 = 9;
     const int MAX_GEN_COMMENT_LEN = 4;
     const QString JSON_ALL_TYPES_FILE = "res/pokemon/all-types.json";
+    const QString JSON_ALL_MAPS_FILE = "res/pokemon/all-maps.json";
+    const QString GYM_ATTACKS_KEY = "attack";
+    const QString GYM_DEFENSE_KEY = "defense";
 
     const std::set<std::string> ADDED_GEN_9 = {"Bug-Dark","Fire-Grass","Poison-Steel",
                                                "Electric-Fighting","Normal-Poison","Fighting-Ground",
@@ -42,8 +45,8 @@ namespace {
     };
 
 
-    void getQJsonObject(QJsonObject& jsonObj) {
-        QFile jsonFile(JSON_ALL_TYPES_FILE);
+    void getQJsonObject(QJsonObject& jsonObj, const QString& pathToJson) {
+        QFile jsonFile(pathToJson);
         if (!jsonFile.open(QIODevice::ReadOnly)) {
             std::cerr << "Could not open json file." << std::endl;
             std::abort();
@@ -69,7 +72,7 @@ namespace {
 
     std::map<std::string,std::set<Resistance>> loadAllTypes() {
         QJsonObject pokemonData;
-        getQJsonObject(pokemonData);
+        getQJsonObject(pokemonData, JSON_ALL_TYPES_FILE);
         std::map<std::string,std::set<Resistance>> result = {};
         for (const QString& type : pokemonData.keys()) {
 
@@ -116,7 +119,7 @@ namespace {
 
     std::map<std::string,std::set<Resistance>> loadGenOne() {
         QJsonObject pokemonData;
-        getQJsonObject(pokemonData);
+        getQJsonObject(pokemonData, JSON_ALL_TYPES_FILE);
         std::map<std::string,std::set<Resistance>> result = {};
         for (const QString& type : pokemonData.keys()) {
             std::string newType = type.toStdString();
@@ -129,7 +132,7 @@ namespace {
                 Resistance::Multiplier multiplierTag = DAMAGE_MULTIPLIERS.at(mult);
 
                 QJsonArray typesInMultipliers = damageMultipliers[mult].toArray();
-                for (const QJsonValueRef& t : typesInMultipliers) {
+                for (const QJsonValueConstRef& t : typesInMultipliers) {
                     std::string type = QString(t.toString()).toStdString();
                     if (isGenOneType(type)) {
                         result[newType].insert({type, multiplierTag});
@@ -158,7 +161,7 @@ namespace {
 
     std::map<std::string,std::set<Resistance>> loadGensTwoToFive() {
         QJsonObject pokemonData;
-        getQJsonObject(pokemonData);
+        getQJsonObject(pokemonData, JSON_ALL_TYPES_FILE);
         std::map<std::string,std::set<Resistance>> result = {};
         for (const QString& type : pokemonData.keys()) {
             std::string newType = type.toStdString();
@@ -171,7 +174,7 @@ namespace {
                 Resistance::Multiplier multiplierTag = DAMAGE_MULTIPLIERS.at(mult);
 
                 QJsonArray typesInMultipliers = damageMultipliers[mult].toArray();
-                for (const QJsonValueRef& t : typesInMultipliers) {
+                for (const QJsonValueConstRef& t : typesInMultipliers) {
                     std::string type = QString(t.toString()).toStdString();
                     if (isGenTwoToFive(type)) {
                         result[newType].insert({type, multiplierTag});
@@ -209,4 +212,60 @@ PokemonTest loadPokemonGeneration(std::istream& source) {
     generation.typeInteractions = setTypeInteractions(source);
     generation.pokemonGenerationMap = loadDisaster(source);
     return generation;
+}
+
+std::map<std::string,std::set<Resistance>>
+loadSelectedGymsDefense(const std::map<std::string,std::set<Resistance>>& currentGenInteractions,
+                        const std::string& selectedMap,
+                        const Set<std::string>& selectedGyms) {
+    QJsonObject mapData;
+    getQJsonObject(mapData, JSON_ALL_MAPS_FILE);
+    std::map<std::string,std::set<Resistance>> result = {};
+
+    // Get the data associated with the selected file name for a map.
+    QString map = QString::fromStdString(selectedMap);
+    QJsonObject gymKeys = mapData[map].toObject();
+
+    // Iterate through all of the gym keys, if a key is in the selected Gyms proceed.
+    for (const QString& gym : gymKeys.keys()) {
+
+        if (selectedGyms.contains(gym.toStdString())) {
+            // Take all the types for that gym and put that type and its associated resistances in result.
+            QJsonArray gymDefenseTypes = gymKeys[gym][GYM_DEFENSE_KEY].toArray();
+            for (const QJsonValueConstRef& type : gymDefenseTypes) {
+                // You can get the resistances from the generation map we have already built.
+                std::string stdVersion = QString(type.toString()).toStdString();
+
+                result[stdVersion] = currentGenInteractions.at(stdVersion);
+
+            }
+        }
+
+    }
+    // return this much smaller map.
+    return result;
+}
+
+std::set<std::string> loadSelectedGymsAttacks(const std::string& selectedMap,
+                                              const Set<std::string>& selectedGyms) {
+    QJsonObject mapData;
+    getQJsonObject(mapData, JSON_ALL_MAPS_FILE);
+    std::set<std::string> result = {};
+    // Get the data for the selected map
+    QString map = QString::fromStdString(selectedMap);
+    QJsonObject gymKeys = mapData[map].toObject();
+
+    // Iterate through all the gym keys if the key is in the selected Gyms proceed.
+    for (const QString& gym : gymKeys.keys()) {
+
+        if (selectedGyms.contains(gym.toStdString())) {
+            // Add all attack types to the result set invariant, duplicates will filter out.
+            QJsonArray gymAttackTypes = gymKeys[gym][GYM_ATTACKS_KEY].toArray();
+            for (const QJsonValueConstRef& type : gymAttackTypes) {
+                std::string stdVersion = QString(type.toString()).toStdString();
+                result.insert(stdVersion);
+            }
+        }
+    }
+    return result;
 }

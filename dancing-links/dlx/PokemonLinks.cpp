@@ -160,11 +160,6 @@ void PokemonLinks::looseUncoverType(int indexInOption) {
         if (top < 0) {
             i = links_[i].down;
         } else {
-            /* This is the key optimization of this algorithm. Only reset a city to uncovered if
-             * we know we are taking away the same supply we gave when covering this city. A simple
-             * O(1) check beats an up,down,left,right pointer implementation that needs to splice
-             * from a left right doubly linked list for an entire column.
-             */
             if (links_[top].depthTag == links_[i].depthTag) {
                 links_[top].depthTag = 0;
                 itemTable_[itemTable_[top].left].right = top;
@@ -216,7 +211,7 @@ void PokemonLinks::unhideOptions(int indexInOption) {
 }
 
 
-/* * * * * * * * * * * * * * * * *        Debugging Operators           * * * * * * * * * * * * * */
+/* * * * * * * * * * * * * * * * *   Constructors and Links Build       * * * * * * * * * * * * * */
 
 
 PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions,
@@ -235,6 +230,26 @@ PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typ
         std::cerr << "Invalid requested cover solution. Choose ATTACK or DEFENSE." << std::endl;
         std::abort();
     }
+}
+
+PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions,
+                           const std::set<std::string>& attackTypes) :
+                           optionTable_({}),
+                           itemTable_({}),
+                           links_({}),
+                           numItems_(0),
+                           numOptions_(0),
+                           requestedCoverSolution_(DEFENSE){
+    std::map<std::string,std::set<Resistance>> modifiedInteractions = {};
+    for (const auto& type : typeInteractions) {
+        modifiedInteractions.insert(type);
+        for (const Resistance& t : type.second) {
+            if (attackTypes.count(t.type())) {
+                modifiedInteractions[type.first].insert(t);
+            }
+        }
+    }
+    buildDefenseLinks(modifiedInteractions);
 }
 
 void PokemonLinks::buildDefenseLinks(const std::map<std::string,std::set<Resistance>>&

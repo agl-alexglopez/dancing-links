@@ -39,7 +39,11 @@ public:
     explicit PokemonLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions,
                           const CoverageType requestedCoverSolution);
 
+    explicit PokemonLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions,
+                          const std::set<std::string>& attackTypes);
+
     std::set<RankedSet<std::string>> getExactTypeCoverage();
+
     std::set<RankedSet<std::string>> getOverlappingTypeCoverage();
 
 

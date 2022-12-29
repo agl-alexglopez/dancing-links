@@ -11,6 +11,7 @@
 #include "strlib.h"
 #include "gthread.h"
 #include "simpio.h"
+#include "DisasterPlanning.h"
 #include "DisasterLinks.h"
 #include "DisasterTags.h"
 #include <regex>
