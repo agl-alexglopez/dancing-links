@@ -178,7 +178,7 @@
             ],
             "defense": [
                 "Normal",
-                "Normal-Flying"
+                "Flying-Normal"
             ]
         },
         "G6": {
@@ -416,7 +416,7 @@
                 "Bug-Fighting",
                 "Dark-Poison",
                 "Ground-Water",
-                "Ground-Flying",
+                "Flying-Ground",
                 "Ground",
                 "Ground-Rock",
                 "Dark-Fire",
@@ -425,7 +425,7 @@
                 "Psychic",
                 "Psychic-Steel",
                 "Fighting-Psychic",
-                "Ghost-Dark",
+                "Dark-Ghost",
                 "Grass-Poison",
                 "Flying-Normal",
                 "Fighting-Steel",

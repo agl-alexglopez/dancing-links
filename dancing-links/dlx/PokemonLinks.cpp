@@ -39,6 +39,11 @@ void PokemonLinks::fillExactCoverages(std::set<RankedSet<std::string>>& exactCov
         coverage.insert(typeStrength.first, typeStrength.second);
 
         fillExactCoverages(exactCoverages, coverage, depthLimit - 1);
+        if (exactCoverages.size() == MAX_OUTPUT_SIZE) {
+            coverage.remove(typeStrength.first, typeStrength.second);
+            uncoverType(cur);
+            return;
+        }
 
         coverage.remove(typeStrength.first, typeStrength.second);
         uncoverType(cur);
@@ -240,16 +245,20 @@ PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typ
                            numItems_(0),
                            numOptions_(0),
                            requestedCoverSolution_(DEFENSE){
-    std::map<std::string,std::set<Resistance>> modifiedInteractions = {};
-    for (const auto& type : typeInteractions) {
-        modifiedInteractions.insert(type);
-        for (const Resistance& t : type.second) {
-            if (attackTypes.count(t.type())) {
-                modifiedInteractions[type.first].insert(t);
+    if (attackTypes.empty()) {
+        buildDefenseLinks(typeInteractions);
+    } else {
+        std::map<std::string,std::set<Resistance>> modifiedInteractions = {};
+        for (const auto& type : typeInteractions) {
+            modifiedInteractions[type.first] = {};
+            for (const Resistance& t : type.second) {
+                if (attackTypes.count(t.type())) {
+                    modifiedInteractions[type.first].insert(t);
+                }
             }
         }
+        buildDefenseLinks(modifiedInteractions);
     }
-    buildDefenseLinks(modifiedInteractions);
 }
 
 void PokemonLinks::buildDefenseLinks(const std::map<std::string,std::set<Resistance>>&

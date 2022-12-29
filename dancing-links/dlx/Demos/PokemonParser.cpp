@@ -236,6 +236,7 @@ loadSelectedGymsDefense(const std::map<std::string,std::set<Resistance>>& curren
                 // You can get the resistances from the generation map we have already built.
                 std::string stdVersion = QString(type.toString()).toStdString();
 
+
                 result[stdVersion] = currentGenInteractions.at(stdVersion);
 
             }

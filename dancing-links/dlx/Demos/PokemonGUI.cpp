@@ -38,13 +38,6 @@ namespace {
         COVERED_DIRECTLY
     };
 
-    /* This communicates solver used and index in kSolverColorOptions to use as well. */
-    enum CitySolver {
-        SET_BASED=0,
-        QUAD_DLX=1,
-        TAGGED_DLX=2,
-    };
-
     /* Colors to use when drawing cities. */
     const vector<CityColors> kColorOptions = {
         { "#101010", "#202020", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#A0A0A0") },   // Uncovered
@@ -313,6 +306,13 @@ namespace {
         void repaint() override;
 
     private:
+
+        typedef enum CoverageRequested {
+            EXACT,
+            OVERLAPPING
+        }CoverageRequested;
+
+
         /* Dropdown of all the problems to choose from. */
         Temporary<GComboBox> mProblems;
         Temporary<GColorConsole> mSolutionsDisplay;
@@ -326,6 +326,12 @@ namespace {
         GButton* overlappingDefenseButton;
         GButton* overlappingAttackButton;
 
+        GLabel* gymChoicesLabel;
+        GTextField* gymChoices;
+        GButton* addChoice;
+        GButton* removeChoice;
+        GButton* clearChoices;
+
         /* Current network and solution. */
         PokemonTest mGeneration;
         Set<string> mSelected;
@@ -334,11 +340,11 @@ namespace {
         /* Loads the world with the given name. */
         void loadWorld(const string& filename);
 
-        /* Computes an optimal solution. */
-        void solveExactDefense();
-        void solveExactAttack();
-        void solveOverlappingDefense();
-        void solveOverlappingAttack();
+        void addSelectedGym();
+        void removeSelectedGym();
+        void clearSelections();
+        void solveDefense(const CoverageRequested& exactOrOverlapping);
+        void solveAttack(const CoverageRequested& exactOrOverlapping);
     };
 
     PokemonGUI::PokemonGUI(GWindow& window) : ProblemHandler(window) {
@@ -348,11 +354,23 @@ namespace {
         overlappingDefenseButton  = new GButton("Overlapping Defense Coverage");
         overlappingAttackButton  = new GButton("Overlapping Attack Coverage");
 
+        gymChoicesLabel = new GTextLabel("Add/Remove gyms to cover problem.");
+        gymChoices = new GTextField("Enter as labelled on map...");
+        addChoice = new GButton("insert");
+        removeChoice = new GButton("remove");
+        clearChoices = new GButton("clear");
+
+
         controls = make_temporary<GContainer>(window, "WEST", GContainer::LAYOUT_GRID);
-        controls->addToGrid(exactDefenseButton, 0, 0, 1, 2);
-        controls->addToGrid(exactAttackButton, 1, 0, 1, 2);
-        controls->addToGrid(overlappingDefenseButton, 2, 0, 1, 2);
-        controls->addToGrid(overlappingAttackButton, 3, 0, 1, 2);
+        controls->addToGrid(exactDefenseButton, 0, 0, 1, 1);
+        controls->addToGrid(exactAttackButton, 1, 0, 1, 1);
+        controls->addToGrid(overlappingDefenseButton, 2, 0, 1, 1);
+        controls->addToGrid(overlappingAttackButton, 3, 0, 1, 1);
+        controls->addToGrid(gymChoicesLabel, 4, 0, 1, 1);
+        controls->addToGrid(gymChoices, 5, 0, 1, 1);
+        controls->addToGrid(addChoice, 6, 0, 1, 1);
+        controls->addToGrid(removeChoice, 7, 0, 1, 1);
+        controls->addToGrid(clearChoices, 8, 0, 1, 1);
 
         controls->setEnabled(false);
 
@@ -375,15 +393,58 @@ namespace {
         }
     }
 
+    void PokemonGUI::addSelectedGym() {
+        string userInput = gymChoices->getText();
+        if (userInput.length() <= 2
+                && mGeneration.pokemonGenerationMap.network.containsKey(userInput)) {
+            mSelected.add(userInput);
+            (*mSolutionsDisplay) << "Selected: | ";
+            for (const auto& s : mSelected) {
+                (*mSolutionsDisplay) << s << " | ";
+            }
+            (*mSolutionsDisplay) << endl;
+        } else {
+            (*mSolutionsDisplay) << "Invalid gym choice [" << userInput << "]. Enter gym names as they appear on the map." << endl;
+        }
+    }
+
+    void PokemonGUI::removeSelectedGym() {
+        string userInput = gymChoices->getText();
+        if (userInput.length() <= 2 && mSelected.size() && mSelected.contains(userInput)) {
+            mSelected.remove(userInput);
+            (*mSolutionsDisplay) << "Selected: | ";
+            for (const auto& s : mSelected) {
+                (*mSolutionsDisplay) << s << " | ";
+            }
+            (*mSolutionsDisplay) << endl;
+        } else {
+            (*mSolutionsDisplay) << "Entry [" << userInput << "] not in current selection." << endl;
+        }
+    }
+
+    void PokemonGUI::clearSelections() {
+        mSelected.clear();
+        mAllCoverages.reset();
+        (*mSolutionsDisplay) << "Selected: " << endl;
+        requestRepaint();
+    }
+
+
     void PokemonGUI::actionPerformed(GObservable* source) {
         if (source == exactDefenseButton) {
-            solveExactDefense();
+            solveDefense(EXACT);
         } else if (source == exactAttackButton) {
-            solveExactAttack();
+            solveAttack(EXACT);
         } else if (source == overlappingDefenseButton) {
-            solveOverlappingDefense();
+            solveDefense(OVERLAPPING);
         } else if (source == overlappingAttackButton) {
-            solveOverlappingAttack();
+            solveAttack(OVERLAPPING);
+        } else if (source == addChoice) {
+            addSelectedGym();
+        } else if (source == removeChoice) {
+            removeSelectedGym();
+        } else if (source == clearChoices) {
+            clearSelections();
         }
     }
     void PokemonGUI::repaint() {
@@ -403,28 +464,45 @@ namespace {
         requestRepaint();
     }
 
-    void PokemonGUI::solveExactDefense() {
-        /* Clear out any old solution. We're going to get a new one. */
-        mSelected.clear();
+    void PokemonGUI::solveDefense(const CoverageRequested& exactOrOverlapping) {
         mAllCoverages.reset();
         mSolutionsDisplay->clearDisplay();
-
-        /* Disable all controls until the operation finishes. */
         controls->setEnabled(false);
         mProblems->setEnabled(false);
 
-        if (mSelected.isEmpty()) {
+
+        std::set<std::string> gymAttackTypes = {};
+
+
+        if (!mSelected.isEmpty()) {
+            gymAttackTypes = loadSelectedGymsAttacks(mProblems->getSelectedItem(), mSelected);
+        } else {
             for (const auto& s : mGeneration.pokemonGenerationMap.network) {
                 mSelected.add(s);
             }
         }
 
-        set<RankedSet<std::string>> solution = PokemonLinks(mGeneration.typeInteractions, PokemonLinks::DEFENSE).getExactTypeCoverage();
+        // If gymAttackTypes is empty the constructor just builds the full generation of pokemon.
+        PokemonLinks dlx(mGeneration.typeInteractions, gymAttackTypes);
+
+        set<RankedSet<std::string>> solution = {};
+
+        if (exactOrOverlapping == EXACT) {
+            solution = dlx.getExactTypeCoverage();
+        } else {
+            solution = dlx.getOverlappingTypeCoverage();
+        }
 
         mAllCoverages.reset(new set<RankedSet<std::string>>(solution));
 
         *mSolutionsDisplay << "Found " << (*mAllCoverages).size()
                            << " Pokemon teams [SCORE,TEAM]. Lower score is better." << endl;
+
+        string maximumOutputExceeded = {};
+        if ((*mAllCoverages).size() == MAX_OUTPUT_SIZE) {
+            maximumOutputExceeded = "...exceeded maximum output, stopping at " + to_string(MAX_OUTPUT_SIZE);
+        }
+        *mSolutionsDisplay << maximumOutputExceeded << endl;
         for (const RankedSet<std::string>& cov : (*mAllCoverages)) {
             *mSolutionsDisplay << cov.rank() << " | ";
             for (const std::string& type : cov) {
@@ -432,40 +510,64 @@ namespace {
             }
             *mSolutionsDisplay << endl;
         }
+        *mSolutionsDisplay << maximumOutputExceeded << endl;
 
-        if ((*mAllCoverages).empty()) {
-            mSelected.clear();
-        }
 
         /* Enable controls. */
         controls->setEnabled(true);
         mProblems->setEnabled(true);
 
-        requestRepaint();
+        if ((*mAllCoverages).size()) {
+            requestRepaint();
+        }
     }
 
-    void PokemonGUI::solveExactAttack() {
-        /* Clear out any old solution. We're going to get a new one. */
-        mSelected.clear();
+    void PokemonGUI::solveAttack(const CoverageRequested& exactOrOverlapping) {
         mAllCoverages.reset();
         mSolutionsDisplay->clearDisplay();
-
-        /* Disable all controls until the operation finishes. */
         controls->setEnabled(false);
         mProblems->setEnabled(false);
 
-        if (mSelected.isEmpty()) {
+        // We will just point to the correct map rather than preemptively making a copy.
+        map<string,set<Resistance>> modifiedGeneration = {};
+        if (!mSelected.isEmpty()) {
+            modifiedGeneration = loadSelectedGymsDefense(mGeneration.typeInteractions,
+                                                         mProblems->getSelectedItem(),
+                                                         mSelected);
+        } else {
             for (const auto& s : mGeneration.pokemonGenerationMap.network) {
                 mSelected.add(s);
             }
         }
 
-        set<RankedSet<std::string>> solution = PokemonLinks(mGeneration.typeInteractions, PokemonLinks::ATTACK).getExactTypeCoverage();
+        set<RankedSet<std::string>> solution = {};
+        if (modifiedGeneration.empty()) {
+            PokemonLinks dlx(mGeneration.typeInteractions, PokemonLinks::ATTACK);
+            if (exactOrOverlapping == EXACT) {
+                solution = dlx.getExactTypeCoverage();
+            } else {
+                solution = dlx.getOverlappingTypeCoverage();
+            }
+        } else {
+            PokemonLinks dlx(modifiedGeneration, PokemonLinks::ATTACK);
+            if (exactOrOverlapping == EXACT) {
+                solution = dlx.getExactTypeCoverage();
+            } else {
+                solution = dlx.getOverlappingTypeCoverage();
+            }
+
+        }
+
 
         mAllCoverages.reset(new set<RankedSet<std::string>>(solution));
 
         *mSolutionsDisplay << "Found " << (*mAllCoverages).size()
                            << " attack types [SCORE,TYPES]. Higher score is better." << endl;
+        string maximumOutputExceeded = {};
+        if ((*mAllCoverages).size() == MAX_OUTPUT_SIZE) {
+            maximumOutputExceeded = "...exceeded maximum output, stopping at " + to_string(MAX_OUTPUT_SIZE);
+        }
+        *mSolutionsDisplay << maximumOutputExceeded << endl;
         for (auto it = (*mAllCoverages).rbegin(); it != (*mAllCoverages).rend(); it++) {
             *mSolutionsDisplay << it->rank() << " | ";
             for (const std::string& type : *it) {
@@ -473,114 +575,18 @@ namespace {
             }
             *mSolutionsDisplay << endl;
         }
+        *mSolutionsDisplay << maximumOutputExceeded << endl;
 
-        if ((*mAllCoverages).empty()) {
-            mSelected.clear();
-        }
 
         /* Enable controls. */
         controls->setEnabled(true);
         mProblems->setEnabled(true);
 
-        requestRepaint();
+        if ((*mAllCoverages).size()) {
+            requestRepaint();
+        }
     }
 
-    void PokemonGUI::solveOverlappingDefense() {
-        /* Clear out any old solution. We're going to get a new one. */
-        mSelected.clear();
-        mAllCoverages.reset();
-        mSolutionsDisplay->clearDisplay();
-
-        /* Disable all controls until the operation finishes. */
-        controls->setEnabled(false);
-        mProblems->setEnabled(false);
-
-        if (mSelected.isEmpty()) {
-            for (const auto& s : mGeneration.pokemonGenerationMap.network) {
-                mSelected.add(s);
-            }
-        }
-
-        set<RankedSet<std::string>> solution = PokemonLinks(mGeneration.typeInteractions, PokemonLinks::DEFENSE).getOverlappingTypeCoverage();
-        mAllCoverages.reset(new set<RankedSet<std::string>>(solution));
-
-        *mSolutionsDisplay << "Found " << (*mAllCoverages).size()
-                           << " Pokemon teams [SCORE,TEAM]. Lower score is better";
-
-        string maximumOutputExceeded = {};
-        if ((*mAllCoverages).size() == MAX_OUTPUT_SIZE) {
-            maximumOutputExceeded = "...exceeded maximum output, stopping at " + to_string(MAX_OUTPUT_SIZE);
-        }
-        *mSolutionsDisplay << maximumOutputExceeded << endl;
-        for (const RankedSet<std::string>& cov : (*mAllCoverages)) {
-            *mSolutionsDisplay << cov.rank() << " | ";
-            for (const std::string& type : cov) {
-                *mSolutionsDisplay << type << " | ";
-            }
-            *mSolutionsDisplay << endl;
-        }
-
-        *mSolutionsDisplay << maximumOutputExceeded << endl;
-
-        if ((*mAllCoverages).empty()) {
-            mSelected.clear();
-        }
-
-        /* Enable controls. */
-        controls->setEnabled(true);
-        mProblems->setEnabled(true);
-
-        requestRepaint();
-    }
-
-    void PokemonGUI::solveOverlappingAttack() {
-        /* Clear out any old solution. We're going to get a new one. */
-        mSelected.clear();
-        mAllCoverages.reset();
-        mSolutionsDisplay->clearDisplay();
-
-        /* Disable all controls until the operation finishes. */
-        controls->setEnabled(false);
-        mProblems->setEnabled(false);
-
-        if (mSelected.isEmpty()) {
-            for (const auto& s : mGeneration.pokemonGenerationMap.network) {
-                mSelected.add(s);
-            }
-        }
-
-        set<RankedSet<std::string>> solution = PokemonLinks(mGeneration.typeInteractions, PokemonLinks::ATTACK).getOverlappingTypeCoverage();
-
-        mAllCoverages.reset(new set<RankedSet<std::string>>(solution));
-
-        *mSolutionsDisplay << "Found " << (*mAllCoverages).size()
-                           << " attack types [SCORE,TYPES]. Higher score is better";
-        string maximumOutputExceeded = {};
-        if ((*mAllCoverages).size() == MAX_OUTPUT_SIZE) {
-            maximumOutputExceeded = "...exceeded maximum output, stopping at " + to_string(MAX_OUTPUT_SIZE);
-        }
-        *mSolutionsDisplay << maximumOutputExceeded << endl;
-
-        for (auto it = (*mAllCoverages).rbegin(); it != (*mAllCoverages).rend(); it++) {
-            *mSolutionsDisplay << it->rank() << " | ";
-            for (const std::string& type : *it) {
-                *mSolutionsDisplay << type << " | ";
-            }
-            *mSolutionsDisplay << endl;
-        }
-
-        *mSolutionsDisplay << maximumOutputExceeded << endl;
-
-        if ((*mAllCoverages).empty()) {
-            mSelected.clear();
-        }
-
-        /* Enable controls. */
-        controls->setEnabled(true);
-        mProblems->setEnabled(true);
-
-        requestRepaint();
-    }
 }
 
 GRAPHICS_HANDLER("Pokemon Planning", GWindow& window) {
