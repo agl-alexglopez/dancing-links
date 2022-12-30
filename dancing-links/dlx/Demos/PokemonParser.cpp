@@ -23,15 +23,33 @@ namespace {
 
     const std::set<std::string> ADDED_GEN_9 = {"Bug-Dark","Fire-Grass","Poison-Steel",
                                                "Electric-Fighting","Normal-Poison","Fighting-Ground",
-                                               "Fairy-Fighting","Ghost-Normal"};
+                                               "Fairy-Fighting","Ghost-Normal","Electric-Rock",
+                                               "Electric-Grass","Electric-Psychic"};
 
-    const std::set<std::string> ADDED_GEN_6 = {"Fairy"};
+    const std::set<std::string> ADDED_GEN_6_TO_8 = {"Fairy","Fighting-Ghost","Electric-Normal",
+                                                    "Fire-Normal","Fire-Water","Fighting-Ice",
+                                                    "Bug-Ice","Poison-Rock","Ghost-Grass",
+                                                    "Fire-Poison","Poison-Psychic","Electric-Poison"};
 
-    const std::set<std::string> ADDED_GEN_2 = {"Dark","Steel","Dragon-Normal","Dragon-Fire",
-                                               "Dragon-Water","Dragon-Electric","Dragon-Grass",
-                                               "Dragon-Ice","Dragon-Fighting","Dragon-Poison",
-                                               "Dragon-Ground","Dragon-Psychic","Dragon-Rock",
-                                               "Dragon-Ghost","Dragon-Dark","Dragon-Steel"};
+    const std::set<std::string> ADDED_GEN_2_TO_5 = {"Dark","Steel","Dragon-Normal","Dragon-Fire",
+                                                    "Dragon-Water","Dragon-Electric","Dragon-Grass",
+                                                    "Dragon-Ice","Dragon-Fighting","Dragon-Poison",
+                                                    "Dragon-Ground","Dragon-Psychic","Dragon-Rock",
+                                                    "Dragon-Ghost","Dark-Dragon","Dragon-Steel",
+                                                    "Bug-Rock","Electric-Water","Fighting-Fire",
+                                                    "Bug-Electric","Fire-Psychic","Fighting-Grass",
+                                                    "Grass-Ice","Grass-Ground","Bug-Ghost",
+                                                    "Grass-Normal","Grass-Rock","Fire-Ground",
+                                                    "Grass-Water","Fighting-Normal",
+                                                    "Electric-Fire","Electric-Ground","Bug-Psychic",
+                                                    "Ghost-Psychic","Ice-Rock","Normal-Water",
+                                                    "Normal-Psychic","Fire-Ice","Flying-Psychic",
+                                                    "Fire-Rock","Bug-Water","Bug-Fighting",
+                                                    "Ground-Ice","Ghost-Ice","Ghost-Water",
+                                                    "Ghost-Ground","Grass-Flying","Electric-Ghost",
+                                                    "Bug-Ground","Flying-Ground","Fighting-Rock",
+                                                    "Ground-Psychic","Flying-Ghost","Fire-Ghost",
+                                                    "Bug-Fire","Psychic-Rock","Electric-Ice"};
     const std::string DUAL_TYPE_DELIM = "-";
 
     // Might as well use QStrings if I am parsing with them in the first place.
@@ -102,15 +120,15 @@ namespace {
     }
 
     bool isGenOneType(const std::string& type) {
-        if (ADDED_GEN_9.count(type) || ADDED_GEN_2.count(type) || ADDED_GEN_6.count(type)) {
+        if (ADDED_GEN_9.count(type) || ADDED_GEN_2_TO_5.count(type) || ADDED_GEN_6_TO_8.count(type)) {
             return false;
         }
         std::size_t typeDelim = type.find_first_of(DUAL_TYPE_DELIM);
         if (typeDelim != std::string::npos) {
             std::string firstType = type.substr(0, typeDelim);
             std::string secondType = type.substr(typeDelim + 1);
-            if (ADDED_GEN_2.count(firstType) || ADDED_GEN_6.count(firstType)
-                    || ADDED_GEN_2.count(secondType) || ADDED_GEN_6.count(secondType)) {
+            if (ADDED_GEN_2_TO_5.count(firstType) || ADDED_GEN_6_TO_8.count(firstType)
+                    || ADDED_GEN_2_TO_5.count(secondType) || ADDED_GEN_6_TO_8.count(secondType)) {
                 return false;
             }
         }
@@ -144,14 +162,14 @@ namespace {
     }
 
     bool isGenTwoToFive(std::string& type) {
-        if (ADDED_GEN_6.count(type) || ADDED_GEN_9.count(type)) {
+        if (ADDED_GEN_6_TO_8.count(type) || ADDED_GEN_9.count(type)) {
             return false;
         }
         std::size_t typeDelim = type.find_first_of(DUAL_TYPE_DELIM);
         if (typeDelim != std::string::npos) {
             std::string firstType = type.substr(0, typeDelim);
             std::string secondType = type.substr(typeDelim + 1);
-            if (ADDED_GEN_6.count(firstType) || ADDED_GEN_6.count(secondType)
+            if (ADDED_GEN_6_TO_8.count(firstType) || ADDED_GEN_6_TO_8.count(secondType)
                     || ADDED_GEN_9.count(firstType) || ADDED_GEN_9.count(secondType)) {
                 return false;
             }

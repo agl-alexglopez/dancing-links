@@ -7,6 +7,7 @@
 std::set<RankedSet<std::string>> PokemonLinks::getExactTypeCoverage() {
     std::set<RankedSet<std::string>> exactCoverages = {};
     RankedSet<std::string> coverage = {};
+    hitLimit_ = false;
     int depthLimit = requestedCoverSolution_ == DEFENSE ? MAX_TEAM_SIZE : MAX_ATTACK_SLOTS;
     fillExactCoverages(exactCoverages, coverage, depthLimit);
     return exactCoverages;
@@ -15,6 +16,7 @@ std::set<RankedSet<std::string>> PokemonLinks::getExactTypeCoverage() {
 std::set<RankedSet<std::string>> PokemonLinks::getOverlappingTypeCoverage() {
     std::set<RankedSet<std::string>> overlappingCoverages = {};
     RankedSet<std::string> coverage = {};
+    hitLimit_ = false;
     int depthLimit = requestedCoverSolution_ == DEFENSE ? MAX_TEAM_SIZE : MAX_ATTACK_SLOTS;
     fillOverlappingCoverages(overlappingCoverages, coverage, depthLimit);
     return overlappingCoverages;
@@ -40,6 +42,7 @@ void PokemonLinks::fillExactCoverages(std::set<RankedSet<std::string>>& exactCov
 
         fillExactCoverages(exactCoverages, coverage, depthLimit - 1);
         if (exactCoverages.size() == MAX_OUTPUT_SIZE) {
+            hitLimit_ = true;
             coverage.remove(typeStrength.first, typeStrength.second);
             uncoverType(cur);
             return;
@@ -72,6 +75,7 @@ void PokemonLinks::fillOverlappingCoverages(std::set<RankedSet<std::string>>& ov
 
         fillOverlappingCoverages(overlappingCoverages, coverage, depthTag - 1);
         if (overlappingCoverages.size() == MAX_OUTPUT_SIZE) {
+            hitLimit_ = true;
             coverage.remove(typeStrength.first, typeStrength.second);
             looseUncoverType(cur);
             return;
@@ -215,6 +219,9 @@ void PokemonLinks::unhideOptions(int indexInOption) {
     }
 }
 
+bool PokemonLinks::reachedOutputLimit() {
+    return hitLimit_;
+}
 
 /* * * * * * * * * * * * * * * * *   Constructors and Links Build       * * * * * * * * * * * * * */
 
@@ -226,7 +233,8 @@ PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typ
                            links_({}),
                            numItems_(0),
                            numOptions_(0),
-                           requestedCoverSolution_(requestedCoverSolution){
+                           requestedCoverSolution_(requestedCoverSolution),
+                           hitLimit_(false){
     if (requestedCoverSolution == DEFENSE) {
         buildDefenseLinks(typeInteractions);
     } else if (requestedCoverSolution == ATTACK){
@@ -244,7 +252,8 @@ PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typ
                            links_({}),
                            numItems_(0),
                            numOptions_(0),
-                           requestedCoverSolution_(DEFENSE){
+                           requestedCoverSolution_(DEFENSE),
+                           hitLimit_(false){
     if (attackTypes.empty()) {
         buildDefenseLinks(typeInteractions);
     } else {

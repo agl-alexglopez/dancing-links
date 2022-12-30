@@ -10,11 +10,11 @@
 #include "Utilities/PokemonUtilities.h"
 #include "Utilities/RankedSet.h"
 
-const std::size_t MAX_OUTPUT_SIZE=500;
 
 class PokemonLinks {
 public:
 
+    const std::size_t MAX_OUTPUT_SIZE=10000;
 
     typedef enum CoverageType {
         DEFENSE,
@@ -45,6 +45,8 @@ public:
     std::set<RankedSet<std::string>> getExactTypeCoverage();
 
     std::set<RankedSet<std::string>> getOverlappingTypeCoverage();
+
+    bool reachedOutputLimit();
 
 
     /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
@@ -83,6 +85,7 @@ private:
     int numItems_;
     int numOptions_;
     CoverageType requestedCoverSolution_;
+    bool hitLimit_;
 
 
     void fillExactCoverages(std::set<RankedSet<std::string>>& exactCoverages,
