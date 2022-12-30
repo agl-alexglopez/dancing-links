@@ -1,5 +1,5 @@
-#ifndef DisasterParser_Included
-#define DisasterParser_Included
+#ifndef MapParser_Included
+#define MapParser_Included
 #include "set.h"
 #include "map.h"
 #include "gtypes.h"
@@ -9,7 +9,7 @@
 /**
  * Type representing a test case for the Disaster Preparation problem.
  */
-struct DisasterTest {
+struct MapTest {
     Map<std::string, Set<std::string>> network; // The road network
     Map<std::string, GPoint> cityLocations;     // Where each city should be drawn
 };
@@ -22,6 +22,6 @@ struct DisasterTest {
  * @return A test case from the file.
  * @throws ErrorException If an error occurs or the file is invalid.
  */
-DisasterTest loadDisaster(std::istream& source);
+MapTest loadDisaster(std::istream& source);
 
 #endif

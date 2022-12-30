@@ -1,5 +1,6 @@
 #include "PokemonParser.h"
-#include "DisasterParser.h"
+#include "MapParser.h"
+#include <functional>
 #include <map>
 #include <set>
 #include <iostream>
@@ -29,10 +30,11 @@ namespace {
     const std::set<std::string> ADDED_GEN_6_TO_8 = {"Fairy","Fighting-Ghost","Electric-Normal",
                                                     "Fire-Normal","Fire-Water","Fighting-Ice",
                                                     "Bug-Ice","Poison-Rock","Ghost-Grass",
-                                                    "Fire-Poison","Poison-Psychic","Electric-Poison"};
+                                                    "Fire-Poison","Poison-Psychic",
+                                                    "Electric-Poison","Dragon-Grass","Dark-Normal"};
 
     const std::set<std::string> ADDED_GEN_2_TO_5 = {"Dark","Steel","Dragon-Normal","Dragon-Fire",
-                                                    "Dragon-Water","Dragon-Electric","Dragon-Grass",
+                                                    "Dragon-Water","Dragon-Electric",
                                                     "Dragon-Ice","Dragon-Fighting","Dragon-Poison",
                                                     "Dragon-Ground","Dragon-Psychic","Dragon-Rock",
                                                     "Dragon-Ghost","Dark-Dragon","Dragon-Steel",
@@ -67,6 +69,7 @@ namespace {
         QFile jsonFile(pathToJson);
         if (!jsonFile.open(QIODevice::ReadOnly)) {
             std::cerr << "Could not open json file." << std::endl;
+            jsonFile.close();
             std::abort();
         }
         QByteArray bytes = jsonFile.readAll();
@@ -88,7 +91,7 @@ namespace {
         }
     }
 
-    // Add filtering as necessary but for now Gen 9 includes all types by default.
+    // Add more filtering if you ever come back to this after Gen 9. For now this is most recent.
     bool isGenNine(std::string& type) {
         (void) type;
         return true;
@@ -142,28 +145,32 @@ namespace {
         return true;
     }
 
+    void addResistancesForType(std::map<std::string,std::set<Resistance>>& result,
+                               const std::string& newType,
+                               const QJsonObject& damageMultipliers,
+                               const std::function<bool(std::string&)>& filterFunc) {
+        for (const QString& mult : damageMultipliers.keys()) {
+            Resistance::Multiplier multiplierTag = DAMAGE_MULTIPLIERS.at(mult);
+            QJsonArray typesInMultipliers = damageMultipliers[mult].toArray();
+            for (const QJsonValueConstRef& t : typesInMultipliers) {
+                std::string type = QString(t.toString()).toStdString();
+                if (filterFunc(type)) {
+                    result[newType].insert({type, multiplierTag});
+                }
+            }
+        }
+    }
+
     std::map<std::string,std::set<Resistance>>
-    filterPokemonByGeneration(std::function<bool(std::string&)> filterFunc) {
+    filterPokemonByGeneration(const std::function<bool(std::string&)>& filterFunc) {
         QJsonObject pokemonData;
         getQJsonObject(pokemonData, JSON_ALL_TYPES_FILE);
         std::map<std::string,std::set<Resistance>> result = {};
         for (const QString& type : pokemonData.keys()) {
             std::string newType = type.toStdString();
-            if (!filterFunc(newType)) {
-                continue;
-            }
-            result.insert({newType, {}});
-            QJsonObject damageMultipliers = pokemonData[type].toObject();
-            for (const QString& mult : damageMultipliers.keys()) {
-                Resistance::Multiplier multiplierTag = DAMAGE_MULTIPLIERS.at(mult);
-
-                QJsonArray typesInMultipliers = damageMultipliers[mult].toArray();
-                for (const QJsonValueConstRef& t : typesInMultipliers) {
-                    std::string type = QString(t.toString()).toStdString();
-                    if (filterFunc(type)) {
-                        result[newType].insert({type, multiplierTag});
-                    }
-                }
+            if (filterFunc(newType)) {
+                result.insert({newType, {}});
+                addResistancesForType(result, newType, pokemonData[type].toObject(), filterFunc);
             }
         }
         return result;
@@ -189,7 +196,6 @@ namespace {
         }
     }
 }
-
 
 PokemonTest loadPokemonGeneration(std::istream& source) {
     PokemonTest generation;

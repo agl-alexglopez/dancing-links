@@ -34,14 +34,17 @@ namespace {
 
     enum CityState { // "The state the city is in," not "Singapore." :-)
         UNCOVERED,
-        COVERED_INDIRECTLY,
         COVERED_DIRECTLY
     };
+
+    typedef enum MapDrawSelection {
+        FULL_GENERATION=0,
+        SELECTED_GYMS
+    }MapDrawSelection;
 
     /* Colors to use when drawing cities. */
     const vector<CityColors> kColorOptions = {
         { "#101010", "#202020", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#A0A0A0") },   // Uncovered
-        { "#303060", "#404058", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#C0C0C0") },   // Indirectly covered
         { "#806030", "#FFB000", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
     };
 
@@ -101,7 +104,7 @@ namespace {
     /* Given a data set, fills in the min and max X and Y values
      * encountered in that set.
      */
-    void computeDataBounds(const DisasterTest& network, Geometry& geo) {
+    void computeDataBounds(const MapTest& network, Geometry& geo) {
         geo.minDataX = geo.minDataY = numeric_limits<double>::infinity();
         geo.maxDataX = geo.maxDataY = -numeric_limits<double>::infinity();
 
@@ -159,7 +162,7 @@ namespace {
     }
 
     /* Given the road network, determines its geometry. */
-    Geometry geometryFor(GWindow& window, const DisasterTest& network) {
+    Geometry geometryFor(GWindow& window, const MapTest& network) {
         Geometry result;
         computeDataBounds(network, result);
         computeGraphicsBounds(window, result);
@@ -181,8 +184,8 @@ namespace {
      */
     void drawRoads(GWindow& window,
                    const Geometry& geo,
-                   const DisasterTest& network,
-                   const Set<string>& selected) {
+                   const MapTest& network,
+                   const MapDrawSelection userSelection) {
         /* For efficiency's sake, just create one line. */
         GLine toDraw;
         toDraw.setLineWidth(kRoadWidth);
@@ -192,7 +195,7 @@ namespace {
                 /* Selected roads draw in the bright color; deselected
                  * roads draw in a the dark color.
                  */
-                toDraw.setColor((selected.contains(source) || selected.contains(dest))? kLightRoadColor : kDarkRoadColor);
+                toDraw.setColor(userSelection == FULL_GENERATION ? kLightRoadColor : kDarkRoadColor);
 
                 /* Draw the line, remembering that the coordinates are in
                  * logical rather than physical space.
@@ -239,7 +242,7 @@ namespace {
      */
     void drawCities(GWindow& window,
                     const Geometry& geo,
-                    const DisasterTest& network,
+                    const MapTest& network,
                     const Set<string>& selected) {
 
         /* For simplicity, just make a single oval. */
@@ -252,9 +255,7 @@ namespace {
             auto center = logicalToPhysical(network.cityLocations[city], geo);
 
             /* See what state the city is in with regards to coverage. */
-            CityState state = UNCOVERED;
-            if (selected.contains(city)) state = COVERED_DIRECTLY;
-            else if (!(selected * network.network[city]).isEmpty()) state = COVERED_INDIRECTLY;
+            CityState state = selected.contains(city) ? COVERED_DIRECTLY : UNCOVERED;
 
             /* There's no way to draw a filled circle with a boundary as one call. */
             oval.setColor(kColorOptions[state].borderColor);
@@ -278,7 +279,8 @@ namespace {
 
     void visualizeNetwork(GWindow& window,
                           const PokemonTest& network,
-                          const Set<string>& selected) {
+                          const Set<string>& selected,
+                          const MapDrawSelection userSelection) {
         clearDisplay(window, kBackgroundColor);
 
         /* Edge case: Don't draw if the window is too small. */
@@ -297,7 +299,7 @@ namespace {
             /* Draw the roads under the cities to avoid weird graphics
              * artifacts.
              */
-            drawRoads(window, geo, network.pokemonGenerationMap, selected);
+            drawRoads(window, geo, network.pokemonGenerationMap, userSelection);
             drawCities(window, geo, network.pokemonGenerationMap, selected);
         }
     }
@@ -335,6 +337,7 @@ namespace {
         }ButtonToggle;
 
 
+
         /* Dropdown of all the problems to choose from. */
         Temporary<GComboBox> mProblems;
         Temporary<GColorConsole> mSolutionsDisplay;
@@ -362,6 +365,10 @@ namespace {
         /* Current network and solution. */
         PokemonTest mGeneration;
         Set<string> mSelected;
+        Set<string> mAllSelected;
+        set<string> mAllGenerationAttackTypes;
+        MapDrawSelection mUserSelection;
+
         unique_ptr<set<RankedSet<std::string>>> mAllCoverages;
 
         /* Loads the world with the given name. */
@@ -381,9 +388,13 @@ namespace {
     PokemonGUI::PokemonGUI(GWindow& window) : ProblemHandler(window) {
 
         exactDefenseButton  = new GButton("Exact Defense Coverage");
+        exactDefenseButton->setTooltip("Which teams resist all attack types exactly once?");
         exactAttackButton  = new GButton("Exact Attack Coverage");
+        exactAttackButton->setTooltip("Which attack types are effective against every defensive type exactly once?");
         overlappingDefenseButton  = new GButton("Loose Defense Coverage");
+        overlappingDefenseButton->setTooltip("Which teams resist all attack types?");
         overlappingAttackButton  = new GButton("Loose Attack Coverage");
+        overlappingAttackButton->setTooltip("Which attack types are effective against every defensive type?");
 
         gym1 = new GButton(GYM_1_STR);
         gym2 = new GButton(GYM_2_STR);
@@ -394,8 +405,9 @@ namespace {
         gym7 = new GButton(GYM_7_STR);
         gym8 = new GButton(GYM_8_STR);
         elite4 = new GButton(ELT_4_STR);
-        clearChoices = new GButton("clear");
+        clearChoices = new GButton("CL");
         gymControls = make_temporary<GContainer>(window, "WEST", GContainer::LAYOUT_GRID);
+        gymControls->setTooltip("Leave gym selections blank to solve for all types in a generation.");
         gymControls->addToGrid(gym1, 6, 0);
         gymControls->addToGrid(gym2, 6, 1);
         gymControls->addToGrid(gym3, 7, 0);
@@ -445,6 +457,7 @@ namespace {
             mSelected.add(gymName);
             button->setForeground(BUTTON_TOGGLE_COLORS[SELECTED]);
         }
+        mUserSelection = SELECTED_GYMS;
         requestRepaint();
     }
 
@@ -466,6 +479,7 @@ namespace {
         mSolutionsDisplay->clearDisplay();
         mSolutionsDisplay->flush();
         toggleAllGyms(NOT_SELECTED);
+        mUserSelection = SELECTED_GYMS;
         requestRepaint();
     }
 
@@ -500,8 +514,13 @@ namespace {
             clearSelections();
         }
     }
+
     void PokemonGUI::repaint() {
-        visualizeNetwork(window(), mGeneration, mSelected);
+        if (mUserSelection == FULL_GENERATION) {
+            visualizeNetwork(window(), mGeneration, mAllSelected, FULL_GENERATION);
+        } else {
+            visualizeNetwork(window(), mGeneration, mSelected, SELECTED_GYMS);
+        }
     }
 
     void PokemonGUI::loadWorld(const string& filename) {
@@ -509,6 +528,15 @@ namespace {
         if (!input) error("Cannot open file.");
 
         mGeneration = loadPokemonGeneration(input);
+        for (const auto& s : mGeneration.pokemonGenerationMap.network) {
+            mAllSelected.add(s);
+        }
+        for (const auto& attack : mGeneration.typeInteractions.begin()->second) {
+            mAllGenerationAttackTypes.insert(attack.type());
+        }
+        mUserSelection = SELECTED_GYMS;
+
+
         mAllCoverages.reset();
         mSelected.clear();
         mSolutionsDisplay->clearDisplay();
@@ -531,7 +559,7 @@ namespace {
 
     void PokemonGUI::printAttackSolution(bool hitLimit, const set<RankedSet<string>>& solution) {
         *mSolutionsDisplay << "Found " << solution.size()
-                           << " attack configurations [SCORE,TYPES]. Higher score is better.\n";
+                           << " attack configurations SCORE | TYPES |. Higher score is better.\n";
         string maximumOutputExceeded = "\n";
         if (hitLimit) {
             maximumOutputExceeded = "...exceeded maximum output, stopping at " + to_string(solution.size()) + ".\n\n";
@@ -558,7 +586,7 @@ namespace {
 
     void PokemonGUI::printDefenseSolution(bool hitLimit, const set<RankedSet<string>>& solution) {
         *mSolutionsDisplay << "Found " << solution.size()
-                           << " Pokemon teams [SCORE,TEAM]. Lower score is better.\n";
+                           << " Pokemon teams SCORE | TEAM |. Lower score is better.\n";
 
         string maximumOutputExceeded = "\n";
         if (hitLimit) {
@@ -583,23 +611,16 @@ namespace {
         gymControls->setEnabled(false);
         mProblems->setEnabled(false);
 
-        bool solvedFullMap = false;
 
         std::set<std::string> gymAttackTypes = {};
 
         if (!mSelected.isEmpty()) {
+            mUserSelection = SELECTED_GYMS;
             gymAttackTypes = loadSelectedGymsAttacks(mProblems->getSelectedItem(), mSelected);
             printDefenseMessage(gymAttackTypes);
         } else {
-            solvedFullMap = true;
-            for (const auto& s : mGeneration.pokemonGenerationMap.network) {
-                mSelected.add(s);
-            }
-            set<string> genAttacks = {};
-            for (const Resistance& aType : mGeneration.typeInteractions.begin()->second) {
-                genAttacks.insert(aType.type());
-            }
-            printDefenseMessage(genAttacks);
+            mUserSelection = FULL_GENERATION;
+            printDefenseMessage(mAllGenerationAttackTypes);
         }
 
         // If gymAttackTypes is empty the constructor just builds the full generation of pokemon.
@@ -623,13 +644,7 @@ namespace {
         mProblems->setEnabled(true);
         gymControls->setEnabled(true);
 
-        if (solvedFullMap) {
-            requestRepaint();
-            mSelected.clear();
-            toggleAllGyms(NOT_SELECTED);
-        } else {
-            requestRepaint();
-        }
+        requestRepaint();
     }
 
     void PokemonGUI::solveAttack(const CoverageRequested& req) {
@@ -640,7 +655,6 @@ namespace {
         mProblems->setEnabled(false);
         gymControls->setEnabled(false);
 
-        bool solvedFullMap = false;
 
         /* We are not sure if the user wants solution for map or selected gyms yet. We will point
          * to whatever they have asked for instead of preemptively creating copies of large maps.
@@ -649,17 +663,14 @@ namespace {
         map<string,set<Resistance>> modifiedGeneration = {};
 
         if (!mSelected.isEmpty()) {
+            mUserSelection = SELECTED_GYMS;
             modifiedGeneration = loadSelectedGymsDefense(mGeneration.typeInteractions,
                                                          mProblems->getSelectedItem(),
                                                          mSelected);
             genToUse = &modifiedGeneration;
             printAttackMessage(modifiedGeneration);
         } else {
-            solvedFullMap = true;
-
-            for (const auto& s : mGeneration.pokemonGenerationMap.network) {
-                mSelected.add(s);
-            }
+            mUserSelection = FULL_GENERATION;
             printAttackMessage(mGeneration.typeInteractions);
         }
 
@@ -679,13 +690,7 @@ namespace {
         mProblems->setEnabled(true);
         gymControls->setEnabled(true);
 
-        if (solvedFullMap) {
-            requestRepaint();
-            mSelected.clear();
-            toggleAllGyms(NOT_SELECTED);
-        } else {
-            requestRepaint();
-        }
+        requestRepaint();
     }
 
 }

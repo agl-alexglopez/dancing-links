@@ -14,7 +14,7 @@
 class PokemonLinks {
 public:
 
-    const std::size_t MAX_OUTPUT_SIZE=10000;
+    const std::size_t MAX_OUTPUT_SIZE=100000;
 
     typedef enum CoverageType {
         DEFENSE,

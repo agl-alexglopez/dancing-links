@@ -4,7 +4,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "DisasterParser.h"
+#include "MapParser.h"
 #include "set.h"
 #include "Utilities/PokemonUtilities.h"
 
@@ -40,7 +40,7 @@ typedef struct PokemonTest {
      * or Steel.
      */
     std::map<std::string,std::set<Resistance>> typeInteractions;
-    DisasterTest pokemonGenerationMap;
+    MapTest pokemonGenerationMap;
 }PokemonTest;
 
 

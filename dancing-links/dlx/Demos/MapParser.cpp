@@ -1,4 +1,4 @@
-#include "DisasterParser.h"
+#include "MapParser.h"
 #include "strlib.h"
 #include <regex>
 using namespace std;
@@ -18,9 +18,9 @@ namespace {
      *     CityName (X, Y)
      *
      * Parses out the name and the X/Y coordinate, returning the
-     * name, and filling in the DisasterTest with what's found.
+     * name, and filling in the MapTest with what's found.
      */
-    string parseCity(const string& cityInfo, DisasterTest& result) {
+    string parseCity(const string& cityInfo, MapTest& result) {
         /* Split on all the delimiters and confirm we've only got
          * three components.
          */
@@ -60,7 +60,7 @@ namespace {
      * adding them to the road network.
      */
     void parseLinks(const string& cityName, const string& linksStr,
-                    DisasterTest& result) {
+                    MapTest& result) {
         /* It's possible that there are no outgoing links. */
         if (trim(linksStr) == "") {
             result.network[cityName] = {};
@@ -90,7 +90,7 @@ namespace {
      * it found. This will only add edges in the forward direction as
      * a safety measure; edges are reversed later on.
      */
-    void parseCityLine(const string& line, DisasterTest& result) {
+    void parseCityLine(const string& line, MapTest& result) {
         /* Search for a colon on the line. The split function will only return a
          * single component if there are no outgoing links specified.
          */
@@ -118,7 +118,7 @@ namespace {
     /* Given a graph in which all forward edges have been added, adds
      * the reverse edges to the graph.
      */
-    void addReverseEdges(DisasterTest& result) {
+    void addReverseEdges(MapTest& result) {
         for (const string& source: result.network) {
             for (const string& dest: result.network[source]) {
                 if (!result.network.containsKey(dest)) {
@@ -130,7 +130,7 @@ namespace {
     }
 
     /* Given a graph, confirms all nodes are at distinct locations. */
-    void validateLocations(const DisasterTest& test) {
+    void validateLocations(const MapTest& test) {
         Map<GPoint, string> locations;
         for (auto loc: test.cityLocations) {
             if (locations.containsKey(test.cityLocations[loc])) {
@@ -149,8 +149,8 @@ namespace {
  * @return A test case from the file.
  * @throws ErrorException If an error occurs or the file is invalid.
  */
-DisasterTest loadDisaster(istream& source) {
-    DisasterTest result;
+MapTest loadDisaster(istream& source) {
+    MapTest result;
 
     for (string line; getline(source, line); ) {
         /* Skip blank lines or comments. */
