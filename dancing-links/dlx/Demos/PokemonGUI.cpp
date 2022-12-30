@@ -45,10 +45,6 @@ namespace {
         { "#806030", "#FFB000", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
     };
 
-    const set<string> ALL_ATTACK_TYPES = {"Normal","Fire","Water","Electric","Grass","Ice",
-                                          "Fighting","Poison","Ground","Flying","Psychic","Bug",
-                                          "Rock","Ghost","Dragon","Dark","Steel","Fairy"};
-
     const string GYM_1_STR = "G1";
     const string GYM_2_STR = "G2";
     const string GYM_3_STR = "G3";
@@ -599,7 +595,11 @@ namespace {
             for (const auto& s : mGeneration.pokemonGenerationMap.network) {
                 mSelected.add(s);
             }
-            printDefenseMessage(ALL_ATTACK_TYPES);
+            set<string> genAttacks = {};
+            for (const Resistance& aType : mGeneration.typeInteractions.begin()->second) {
+                genAttacks.insert(aType.type());
+            }
+            printDefenseMessage(genAttacks);
         }
 
         // If gymAttackTypes is empty the constructor just builds the full generation of pokemon.

@@ -88,39 +88,15 @@ namespace {
         }
     }
 
-    std::map<std::string,std::set<Resistance>> loadAllTypes() {
-        QJsonObject pokemonData;
-        getQJsonObject(pokemonData, JSON_ALL_TYPES_FILE);
-        std::map<std::string,std::set<Resistance>> result = {};
-        for (const QString& type : pokemonData.keys()) {
-
-            std::string newType = type.toStdString();
-
-            // For example: {"Flying", {}}
-            result.insert({newType, {}});
-
-            QJsonObject damageMultipliers = pokemonData[type].toObject();
-            for (const QString& mult : damageMultipliers.keys()) {
-                Resistance::Multiplier multiplierTag = DAMAGE_MULTIPLIERS.at(mult);
-
-                QJsonArray typesInMultipliers = damageMultipliers[mult].toArray();
-                for (const QJsonValueRef& t : typesInMultipliers) {
-                    QString tString = t.toString();
-
-                    /* For example:
-                     *
-                     * {"Flying", {"Fighting x2.0","Ground x0.0"...}
-                     *
-                     */
-                    result[newType].insert({tString.toStdString(), multiplierTag});
-                }
-            }
-        }
-        return result;
+    // Add filtering as necessary but for now Gen 9 includes all types by default.
+    bool isGenNine(std::string& type) {
+        (void) type;
+        return true;
     }
 
     bool isGenOneType(const std::string& type) {
-        if (ADDED_GEN_9.count(type) || ADDED_GEN_2_TO_5.count(type) || ADDED_GEN_6_TO_8.count(type)) {
+        if (ADDED_GEN_9.count(type) || ADDED_GEN_2_TO_5.count(type)
+                || ADDED_GEN_6_TO_8.count(type)) {
             return false;
         }
         std::size_t typeDelim = type.find_first_of(DUAL_TYPE_DELIM);
@@ -133,32 +109,6 @@ namespace {
             }
         }
         return true;
-    }
-
-    std::map<std::string,std::set<Resistance>> loadGenOne() {
-        QJsonObject pokemonData;
-        getQJsonObject(pokemonData, JSON_ALL_TYPES_FILE);
-        std::map<std::string,std::set<Resistance>> result = {};
-        for (const QString& type : pokemonData.keys()) {
-            std::string newType = type.toStdString();
-            if (!isGenOneType(newType)) {
-                continue;
-            }
-            result.insert({newType, {}});
-            QJsonObject damageMultipliers = pokemonData[type].toObject();
-            for (const QString& mult : damageMultipliers.keys()) {
-                Resistance::Multiplier multiplierTag = DAMAGE_MULTIPLIERS.at(mult);
-
-                QJsonArray typesInMultipliers = damageMultipliers[mult].toArray();
-                for (const QJsonValueConstRef& t : typesInMultipliers) {
-                    std::string type = QString(t.toString()).toStdString();
-                    if (isGenOneType(type)) {
-                        result[newType].insert({type, multiplierTag});
-                    }
-                }
-            }
-        }
-        return result;
     }
 
     bool isGenTwoToFive(std::string& type) {
@@ -177,13 +127,29 @@ namespace {
         return true;
     }
 
-    std::map<std::string,std::set<Resistance>> loadGensTwoToFive() {
+    bool isGenSixToEight(std::string& type) {
+        if (ADDED_GEN_9.count(type)) {
+            return false;
+        }
+        std::size_t typeDelim = type.find_first_of(DUAL_TYPE_DELIM);
+        if (typeDelim != std::string::npos) {
+            std::string firstType = type.substr(0, typeDelim);
+            std::string secondType = type.substr(typeDelim + 1);
+            if (ADDED_GEN_9.count(firstType) || ADDED_GEN_9.count(secondType)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    std::map<std::string,std::set<Resistance>>
+    filterPokemonByGeneration(std::function<bool(std::string&)> filterFunc) {
         QJsonObject pokemonData;
         getQJsonObject(pokemonData, JSON_ALL_TYPES_FILE);
         std::map<std::string,std::set<Resistance>> result = {};
         for (const QString& type : pokemonData.keys()) {
             std::string newType = type.toStdString();
-            if (!isGenTwoToFive(newType)) {
+            if (!filterFunc(newType)) {
                 continue;
             }
             result.insert({newType, {}});
@@ -194,14 +160,13 @@ namespace {
                 QJsonArray typesInMultipliers = damageMultipliers[mult].toArray();
                 for (const QJsonValueConstRef& t : typesInMultipliers) {
                     std::string type = QString(t.toString()).toStdString();
-                    if (isGenTwoToFive(type)) {
+                    if (filterFunc(type)) {
                         result[newType].insert({type, multiplierTag});
                     }
                 }
             }
         }
         return result;
-
     }
 
     std::map<std::string,std::set<Resistance>> setTypeInteractions(std::istream& source) {
@@ -211,16 +176,17 @@ namespace {
         std::string afterHashtag = line.substr(1, line.length() - 1);
         int generation = std::stoi(afterHashtag);
         if (line.length() > MAX_GEN_COMMENT_LEN || generation >= GEN_9) {
-            return loadAllTypes();
+            return filterPokemonByGeneration(&isGenNine);
         } else if (generation == GEN_ONE) {
-            return loadGenOne();
+            return filterPokemonByGeneration(&isGenOneType);
         } else if (generation < GEN_6) {
-            return loadGensTwoToFive();
+            return filterPokemonByGeneration(&isGenTwoToFive);
+        } else if (generation <= GEN_8){
+            return filterPokemonByGeneration(&isGenSixToEight);
         } else {
-            // return loadGensSixToEight();
+            std::cerr << "Could not pick a Pokemon Generation to load." << std::endl;
+            return {};
         }
-        std::cerr << "Could not pick a Pokemon Generation to load." << std::endl;
-        return {};
     }
 }
 
