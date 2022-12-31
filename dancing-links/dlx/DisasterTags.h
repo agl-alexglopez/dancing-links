@@ -188,11 +188,11 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const cityName& city);
 
-    friend std::ostream& operator<<(std::ostream&os, const std::vector<city>& grid);
+    friend std::ostream& operator<<(std::ostream& os, const std::vector<city>& grid);
 
-    friend std::ostream& operator<<(std::ostream&os, const std::vector<cityName>& links);
+    friend std::ostream& operator<<(std::ostream& os, const std::vector<cityName>& links);
 
-    friend std::ostream& operator<<(std::ostream&os, const DisasterTags& network);
+    friend std::ostream& operator<<(std::ostream& os, const DisasterTags& network);
 
 
 private:

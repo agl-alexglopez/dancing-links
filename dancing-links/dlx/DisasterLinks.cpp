@@ -7,9 +7,10 @@
  * the .h file or the readme. Comments are detailed for my own understanding and because some of
  * the implementation is complicated, especially the building of the dancing links grid.
  */
+#include <cmath>
 #include <limits.h>
 #include "DisasterLinks.h"
-#include "DisasterUtilities.h"
+#include "Utilities/DisasterUtilities.h"
 
 
 /* * * * * * * * * * * * *  Algorithm X via Dancing Links Implementation  * * * * * * * * * * * * */

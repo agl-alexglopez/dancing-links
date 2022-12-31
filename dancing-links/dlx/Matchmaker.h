@@ -3,7 +3,7 @@
 #include <ostream>
 #include "map.h"
 #include "set.h"
-#include "MatchingUtilities.h"
+#include "Utilities/MatchingUtilities.h"
 
 
 bool hasPerfectMatching(const Map<std::string, Set<std::string>>& possibleLinks, Set<Pair>& matching);

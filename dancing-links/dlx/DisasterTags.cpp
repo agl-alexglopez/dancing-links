@@ -6,9 +6,10 @@
  * calling Supply Tags. For more information, see the mini-writeup in the .h file or the detailed
  * write up in the README.md.
  */
+#include <cmath>
 #include <limits.h>
 #include "DisasterTags.h"
-#include "DisasterUtilities.h"
+#include "Utilities/DisasterUtilities.h"
 
 
 /* * * * * * * * * * * * *  Algorithm X via Dancing Links with Depth Tags * * * * * * * * * * * * */

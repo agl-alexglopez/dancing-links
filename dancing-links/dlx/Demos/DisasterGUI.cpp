@@ -1,5 +1,5 @@
 #include "GUI/MiniGUI.h"
-#include "DisasterParser.h"
+#include "MapParser.h"
 #include <fstream>
 #include <memory>
 #include <string>
@@ -11,6 +11,7 @@
 #include "strlib.h"
 #include "gthread.h"
 #include "simpio.h"
+#include "DisasterPlanning.h"
 #include "DisasterLinks.h"
 #include "DisasterTags.h"
 #include <regex>
@@ -106,7 +107,7 @@ namespace {
     /* Given a data set, fills in the min and max X and Y values
      * encountered in that set.
      */
-    void computeDataBounds(const DisasterTest& network, Geometry& geo) {
+    void computeDataBounds(const MapTest& network, Geometry& geo) {
         geo.minDataX = geo.minDataY = numeric_limits<double>::infinity();
         geo.maxDataX = geo.maxDataY = -numeric_limits<double>::infinity();
 
@@ -164,7 +165,7 @@ namespace {
     }
 
     /* Given the road network, determines its geometry. */
-    Geometry geometryFor(GWindow& window, const DisasterTest& network) {
+    Geometry geometryFor(GWindow& window, const MapTest& network) {
         Geometry result;
         computeDataBounds(network, result);
         computeGraphicsBounds(window, result);
@@ -186,7 +187,7 @@ namespace {
      */
     void drawRoads(GWindow& window,
                    const Geometry& geo,
-                   const DisasterTest& network,
+                   const MapTest& network,
                    const Set<string>& selected) {
         /* For efficiency's sake, just create one line. */
         GLine toDraw;
@@ -244,7 +245,7 @@ namespace {
      */
     void drawCities(GWindow& window,
                     const Geometry& geo,
-                    const DisasterTest& network,
+                    const MapTest& network,
                     const Set<string>& selected,
                     const enum CitySolver solverUsed) {
 
@@ -283,7 +284,7 @@ namespace {
     }
 
     void visualizeNetwork(GWindow& window,
-                          const DisasterTest& network,
+                          const MapTest& network,
                           const Set<string>& selected,
                           const enum CitySolver solverUsed) {
         clearDisplay(window, kBackgroundColor);
@@ -328,7 +329,7 @@ namespace {
      * preparedness, populating the result field with the minimum group of cities
      * that ended up being needed.
      */
-    void solveOptimallyWithSets(const DisasterTest& test, Set<string>& result) {
+    void solveOptimallyWithSets(const MapTest& test, Set<string>& result) {
         /* The variable 'low' is the lowest number that might be feasible.
          * The variable 'high' is the highest number that we know is feasible.
          */
@@ -357,7 +358,7 @@ namespace {
         }
     }
 
-    void solveOptimallyWithQuadDLX(const DisasterTest& test, Set<string>& result) {
+    void solveOptimallyWithQuadDLX(const MapTest& test, Set<string>& result) {
         int low = 0, high = test.network.size();
         DisasterLinks network(test.network);
         (void) network.isDisasterReady(high, result);
@@ -374,7 +375,7 @@ namespace {
         }
     }
 
-    void solveOptimallyWithSupplyTagDLX(const DisasterTest& test, Set<string>& result) {
+    void solveOptimallyWithSupplyTagDLX(const MapTest& test, Set<string>& result) {
         int low = 0, high = test.network.size();
         DisasterTags network(test.network);
         (void) network.hasDisasterCoverage(high, result);
@@ -397,7 +398,7 @@ namespace {
      * coverage schemes so I can use a vector from the beggining. I haven't figured it out.
      */
 
-    void solveAllWithSets(const DisasterTest& test, unique_ptr<vector<Set<string>>>& allSolutions) {
+    void solveAllWithSets(const MapTest& test, unique_ptr<vector<Set<string>>>& allSolutions) {
         int low = 0, high = test.network.size();
         Set<string> result = {};
         (void) canBeMadeDisasterReady(test.network, high, result);
@@ -420,7 +421,7 @@ namespace {
         }
     }
 
-    void solveAllWithQuadDLX(const DisasterTest& test,
+    void solveAllWithQuadDLX(const MapTest& test,
                              unique_ptr<vector<Set<string>>>& allSolutions) {
         int low = 0, high = test.network.size();
         Set<string> result = {};
@@ -445,7 +446,7 @@ namespace {
         }
     }
 
-    void solveAllWithSupplyTagDLX(const DisasterTest& test,
+    void solveAllWithSupplyTagDLX(const MapTest& test,
                                   unique_ptr<vector<Set<string>>>& allSolutions) {
         int low = 0, high = test.network.size();
         Set<string> result = {};
@@ -503,7 +504,7 @@ namespace {
         const string mAllSolutionsMessage = "Solutions Found:";
 
         /* Current network and solution. */
-        DisasterTest mNetwork;
+        MapTest mNetwork;
         Set<string> mSelected;
 
         /* Loads the world with the given name. */

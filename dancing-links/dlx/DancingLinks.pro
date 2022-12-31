@@ -70,17 +70,22 @@ DEFINES     +=  main=qMain qMain=studentMain
 # Afterward we glob-add files to SOURCES ourselves. Operator *= will unique
 # entries, so no worries about duplicates
 SOURCES         *=  "" \
+    Demos/MapParser.cpp \
+    Demos/PokemonGUI.cpp \
+    Demos/PokemonParser.cpp \
     DisasterLinks.cpp \
     DisasterTags.cpp \
-    DisasterUtilities.cpp \
-    MatchingUtilities.cpp \
-    PartnerLinks.cpp
+    PartnerLinks.cpp \
+    PokemonLinks.cpp \
+    res/pokemon/htmlToJSON.cpp
 HEADERS         *=  "" \
+    Demos/MapParser.h \
+    Demos/PokemonParser.h \
     DisasterLinks.h \
     DisasterTags.h \
-    DisasterUtilities.h \
-    MatchingUtilities.h \
-    PartnerLinks.h
+    PartnerLinks.h \
+    PokemonLinks.h \
+    Utilities/RankedSet.h
 
 # Gather any .cpp or .h files within the project folder (student/starter code).
 # Second argument true makes search recursive
@@ -90,6 +95,7 @@ HEADERS         *=  $$files(*.h, true)
 # Gather resource files (image/sound/etc) from res dir, list under "Other files"
 OTHER_FILES     *=  $$files(res/*, true)
 OTHER_FILES     *=  $$files(FastMatching/*,true)
+OTHER_FILES     *=  $$files(Utilities/*,true)
 # Gather text files from root dir or anywhere recursively
 OTHER_FILES     *=  $$files(*.txt, true)
 
