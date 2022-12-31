@@ -142,7 +142,7 @@ namespace {
 }
 
 /**
- * Given a stream pointing at a test case for Disaster Preparation,
+ * Given a stream pointing at a test case for a map,
  * pulls the data from that test case.
  *
  * @param source The stream containing the test case.

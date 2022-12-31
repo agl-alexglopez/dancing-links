@@ -426,16 +426,14 @@ namespace {
         controls->addToGrid(exactAttackButton, 1, 0);
         controls->addToGrid(overlappingDefenseButton, 2, 0);
         controls->addToGrid(overlappingAttackButton, 3, 0);
-
         controls->setEnabled(false);
-
         GComboBox* choices = new GComboBox();
         for (const string& file: sampleProblems(kBasePath)) {
             choices->addItem(file);
         }
         choices->setEditable(false);
-        mProblems = Temporary<GComboBox>(choices, window, "SOUTH");
-        mProblems->setWidth(190);
+        mProblems = Temporary<GComboBox>(choices, window, "WEST");
+
         mSolutionsDisplay = Temporary<GColorConsole>(new GColorConsole(), window, "SOUTH");
         mSolutionsDisplay->setWidth(DISPLAY_WIDTH);
 
@@ -643,6 +641,7 @@ namespace {
         controls->setEnabled(true);
         mProblems->setEnabled(true);
         gymControls->setEnabled(true);
+        mSolutionsDisplay->scrollToTop();
 
         requestRepaint();
     }
@@ -689,6 +688,7 @@ namespace {
         controls->setEnabled(true);
         mProblems->setEnabled(true);
         gymControls->setEnabled(true);
+        mSolutionsDisplay->scrollToTop();
 
         requestRepaint();
     }

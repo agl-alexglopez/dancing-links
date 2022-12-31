@@ -109,7 +109,7 @@ std::pair<int,std::string> PokemonLinks::coverType(int indexInOption) {
     int i = indexInOption;
     do {
         int top = links_[i].topOrLen;
-        // Pickup the current type defense option we have chosen.
+        // Pickup the current type option we have chosen.
         if (top <= 0) {
             i = links_[i].up;
             result.second = optionTable_[std::abs(links_[i - 1].topOrLen)];
@@ -128,7 +128,6 @@ void PokemonLinks::uncoverType(int indexInOption) {
     int i = --indexInOption;
     do {
         int top = links_[i].topOrLen;
-        // Pickup the current type defense option we have chosen.
         if (top <= 0) {
             i = links_[i].down;
         } else {
@@ -440,7 +439,7 @@ std::ostream& operator<<(std::ostream& os, const PokemonLinks::typeName& name) {
 std::ostream& operator<<(std::ostream&os, const std::vector<PokemonLinks::typeName>& items) {
     os << "LOOKUP TABLE" << std::endl;
     for (const auto& item : items) {
-        os << "{\"" << item.name << "\"," << item.left << "," << item.right << "}" << std::endl;
+        os << "{\"" << item.name << "\"," << item.left << "," << item.right << "},\n";
     }
     os << std::endl;
     return os;
@@ -459,10 +458,10 @@ std::ostream& operator<<(std::ostream&os, const std::vector<PokemonLinks::pokeLi
     int index = 0;
     for (const auto& item : links) {
         if (item.topOrLen < 0) {
-            os << std::endl;
+            os << "\n";
         }
         os << "{" << item.topOrLen << ","
-           << item.up << "," << item.down << "," << item.multiplier << "}";
+           << item.up << "," << item.down << "," << item.multiplier << "," << item.depthTag << "},";
         index++;
     }
     os << std::endl;
@@ -470,26 +469,9 @@ std::ostream& operator<<(std::ostream&os, const std::vector<PokemonLinks::pokeLi
 }
 
 std::ostream& operator<<(std::ostream&os, const PokemonLinks& links) {
-    os << "LOOKUP ARRAY" << std::endl;
-    for (const auto& header : links.itemTable_) {
-        os << "{\""
-           << header.name << "\","
-           << header.left << ","
-           << header.right << "},"
-           << std::endl;
-    }
-    os << "DLX ARRAY" << std::endl;
-    int index = 0;
-    for (const auto& item : links.links_) {
-        if (index >= links.itemTable_.size() && item.topOrLen < 0) {
-            os << std::endl;
-        }
-        os << "{" << item.topOrLen << ","
-           << item.up << "," << item.down << "," << item.multiplier << "},";
-        index++;
-    }
-    os << std::endl;
-    os << "Number of items: " << links.numItems_ << std::endl;
+    os << links.itemTable_;
+    os << links.links_;
+    os << "Number of items: " << links.numItems_ << "\n";
     os << "Number of options: " << links.numOptions_ << std::endl;
     return os;
 }
@@ -886,7 +868,152 @@ STUDENT_TEST("At least test that we can recognize a successful attack coverage")
 /* * * * * * * * * * *    Finding a Weak Coverage that Allows Overlap     * * * * * * * * * * * * */
 
 
-STUDENT_TEST("Cover Electric with Electric to cause hiding of many options.") {
+STUDENT_TEST("Test the depth tag approach to overlapping coverage.") {
+    /*
+     * This is just nonsense type weakness information in pairs to I can test the cover logic.
+     *
+     *            Electric  Fire  Grass  Ice   Normal  Water
+     *  Electric   x0.5     x0.5
+     *  Fire       x0.5           x0.5                 x0.5
+     *  Grass               x0.5                       x0.5
+     *  Ice                              x0.5          x0.5
+     *  Normal     x0.5                        x0.5
+     *  Water              x0.5                        x0.5
+     *
+     */
+    const std::map<std::string,std::set<Resistance>> types {
+        {"Electric", {{"Electric",Resistance::FRAC12},{"Fire",Resistance::FRAC12},{"Grass",Resistance::NORMAL},{"Ice",Resistance::NORMAL},{"Normal",Resistance::NORMAL},{"Water",Resistance::NORMAL}}},
+        {"Fire", {{"Electric",Resistance::FRAC12},{"Fire",Resistance::NORMAL},{"Grass",Resistance::FRAC12},{"Ice",Resistance::NORMAL},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
+        {"Grass", {{"Electric",Resistance::NORMAL},{"Fire",Resistance::FRAC12},{"Grass",Resistance::NORMAL},{"Ice",Resistance::NORMAL},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
+        {"Ice", {{"Electric",Resistance::NORMAL},{"Fire",Resistance::NORMAL},{"Grass",Resistance::NORMAL},{"Ice",Resistance::FRAC12},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
+        {"Normal", {{"Electric",Resistance::FRAC12},{"Fire",Resistance::NORMAL},{"Grass",Resistance::NORMAL},{"Ice",Resistance::NORMAL},{"Normal",Resistance::FRAC12},{"Water",Resistance::NORMAL}}},
+        {"Water", {{"Electric",Resistance::NORMAL},{"Fire",Resistance::FRAC12},{"Grass",Resistance::NORMAL},{"Ice",Resistance::NORMAL},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
+    };
+
+    const std::vector<PokemonLinks::typeName> headers {
+        {"",6,1},
+        {"Electric",0,2},
+        {"Fire",1,3},
+        {"Grass",2,4},
+        {"Ice",3,5},
+        {"Normal",4,6},
+        {"Water",5,0},
+    };
+    const std::vector<PokemonLinks::pokeLink> dlx = {
+        //       0                            1Electric                        2Fire                         3Grass                        4Ice                             5Normal                        6Water
+        {0,0,0,Resistance::EMPTY_,0},   {3,21,8,Resistance::EMPTY_,0},{3,24,9,Resistance::EMPTY_,0}, {1,12,12,Resistance::EMPTY_,0},{1,18,18,Resistance::EMPTY_,0},{1,22,22,Resistance::EMPTY_,0},{4,25,13,Resistance::EMPTY_,0},
+        //       7Electric                    8                                9
+        {-1,0,9,Resistance::EMPTY_,0},  {1,1,11,Resistance::FRAC12,0},{2,2,15,Resistance::FRAC12,0},
+        //       10Fire                       11                                                              12                                                                                            13
+        {-2,8,13,Resistance::EMPTY_,0}, {1,8,21,Resistance::FRAC12,0},                               {3,3,3,Resistance::FRAC12,0},                                                                 {6,6,16,Resistance::FRAC12,0},
+        //       14Grass                                                       15                                                                                                                           16
+        {-3,11,16,Resistance::EMPTY_,0},                              {2,9,24,Resistance::FRAC12,0},                                                                                               {6,13,19,Resistance::FRAC12,0},
+        //       17Ice                                                                                                                      18                                                              19
+        {-4,15,19,Resistance::EMPTY_,0},                                                                                            {4,4,4,Resistance::FRAC12,0},                                  {6,16,25,Resistance::FRAC12,0},
+        //       20Normal                     21                                                                                                                             22
+        {-5,18,22,Resistance::EMPTY_,0},{1,11,1,Resistance::FRAC12,0},                                                                                             {5,5,5,Resistance::FRAC12,0},
+        //       23Water                                                       24                                                                                                                           25
+        {-6,21,25,Resistance::EMPTY_,0},                              {2,15,2,Resistance::FRAC12,0},                                                                                               {6,19,6,Resistance::FRAC12,0},
+        //       26
+        {INT_MIN,24,INT_MIN,Resistance::EMPTY_,0},
+    };
+    PokemonLinks links (types, PokemonLinks::DEFENSE);
+    EXPECT_EQUAL(links.links_, dlx);
+    EXPECT_EQUAL(links.itemTable_, headers);
+
+    std::pair<int,std::string> choice = links.looseCoverType(8, 6);
+    EXPECT_EQUAL(choice.first, 6);
+    EXPECT_EQUAL(choice.second, "Electric");
+    const std::vector<PokemonLinks::typeName> headersCoverElectric {
+        {"",6,3},
+        {"Electric",0,2},
+        {"Fire",0,3},
+        {"Grass",0,4},
+        {"Ice",3,5},
+        {"Normal",4,6},
+        {"Water",5,0},
+    };
+    const std::vector<PokemonLinks::pokeLink> dlxCoverElectric = {
+        /*
+         *
+         *            Grass   Ice   Normal  Water
+         *  Fire       x0.5                 x0.5
+         *  Grass                           x0.5
+         *  Ice               x0.5          x0.5
+         *  Normal                  x0.5
+         *  Water                           x0.5
+         *
+         */
+        //       0                            1Electric                        2Fire                         3Grass                        4Ice                             5Normal                        6Water
+        {0,0,0,Resistance::EMPTY_,0},   {3,21,8,Resistance::EMPTY_,6},{3,24,9,Resistance::EMPTY_,6}, {1,12,12,Resistance::EMPTY_,0},{1,18,18,Resistance::EMPTY_,0},{1,22,22,Resistance::EMPTY_,0},{4,25,13,Resistance::EMPTY_,0},
+        //       7Electric                    8                                9
+        {-1,0,9,Resistance::EMPTY_,0},  {1,1,11,Resistance::FRAC12,6},{2,2,15,Resistance::FRAC12,6},
+        //       10Fire                       11                                                              12                                                                                            13
+        {-2,8,13,Resistance::EMPTY_,0}, {1,8,21,Resistance::FRAC12,0},                               {3,3,3,Resistance::FRAC12,0},                                                                 {6,6,16,Resistance::FRAC12,0},
+        //       14Grass                                                       15                                                                                                                           16
+        {-3,11,16,Resistance::EMPTY_,0},                              {2,9,24,Resistance::FRAC12,0},                                                                                               {6,13,19,Resistance::FRAC12,0},
+        //       17Ice                                                                                                                      18                                                              19
+        {-4,15,19,Resistance::EMPTY_,0},                                                                                            {4,4,4,Resistance::FRAC12,0},                                  {6,16,25,Resistance::FRAC12,0},
+        //       20Normal                     21                                                                                                                             22
+        {-5,18,22,Resistance::EMPTY_,0},{1,11,1,Resistance::FRAC12,0},                                                                                             {5,5,5,Resistance::FRAC12,0},
+        //       23Water                                                       24                                                                                                                           25
+        {-6,21,25,Resistance::EMPTY_,0},                              {2,15,2,Resistance::FRAC12,0},                                                                                               {6,19,6,Resistance::FRAC12,0},
+        //       26
+        {INT_MIN,24,INT_MIN,Resistance::EMPTY_,0},
+    };
+    EXPECT_EQUAL(links.itemTable_, headersCoverElectric);
+    EXPECT_EQUAL(links.links_, dlxCoverElectric);
+
+    std::pair<int,std::string> choice2 = links.looseCoverType(12, 5);
+    EXPECT_EQUAL(choice2.first, 6);
+    EXPECT_EQUAL(choice2.second, "Fire");
+    const std::vector<PokemonLinks::typeName> headersCoverGrass {
+        {"",5,4},
+        {"Electric",0,2},
+        {"Fire",0,3},
+        {"Grass",0,4},
+        {"Ice",0,5},
+        {"Normal",4,0},
+        {"Water",5,0},
+    };
+    const std::vector<PokemonLinks::pokeLink> dlxCoverGrass = {
+        /*
+         *
+         *            Ice   Normal
+         *  Grass
+         *  Ice       x0.5
+         *  Normal          x0.5
+         *  Water
+         *
+         */
+        //       0                            1Electric                        2Fire                         3Grass                        4Ice                             5Normal                        6Water
+        {0,0,0,Resistance::EMPTY_,0},   {3,21,8,Resistance::EMPTY_,6},{3,24,9,Resistance::EMPTY_,6}, {1,12,12,Resistance::EMPTY_,5},{1,18,18,Resistance::EMPTY_,0},{1,22,22,Resistance::EMPTY_,0},{4,25,13,Resistance::EMPTY_,5},
+        //       7Electric                    8                                9
+        {-1,0,9,Resistance::EMPTY_,0},  {1,1,11,Resistance::FRAC12,6},{2,2,15,Resistance::FRAC12,6},
+        //       10Fire                       11                                                              12                                                                                            13
+        {-2,8,13,Resistance::EMPTY_,0}, {1,8,21,Resistance::FRAC12,5},                               {3,3,3,Resistance::FRAC12,5},                                                                 {6,6,16,Resistance::FRAC12,5},
+        //       14Grass                                                       15                                                                                                                           16
+        {-3,11,16,Resistance::EMPTY_,0},                              {2,9,24,Resistance::FRAC12,0},                                                                                               {6,13,19,Resistance::FRAC12,0},
+        //       17Ice                                                                                                                      18                                                              19
+        {-4,15,19,Resistance::EMPTY_,0},                                                                                            {4,4,4,Resistance::FRAC12,0},                                  {6,16,25,Resistance::FRAC12,0},
+        //       20Normal                     21                                                                                                                             22
+        {-5,18,22,Resistance::EMPTY_,0},{1,11,1,Resistance::FRAC12,0},                                                                                             {5,5,5,Resistance::FRAC12,0},
+        //       23Water                                                       24                                                                                                                           25
+        {-6,21,25,Resistance::EMPTY_,0},                              {2,15,2,Resistance::FRAC12,0},                                                                                               {6,19,6,Resistance::FRAC12,0},
+        //       26
+        {INT_MIN,24,INT_MIN,Resistance::EMPTY_,0},
+    };
+    EXPECT_EQUAL(links.itemTable_, headersCoverGrass);
+    EXPECT_EQUAL(links.links_, dlxCoverGrass);
+    links.looseUncoverType(12);
+    EXPECT_EQUAL(links.itemTable_, headersCoverElectric);
+    EXPECT_EQUAL(links.links_, dlxCoverElectric);
+    links.looseUncoverType(8);
+    EXPECT_EQUAL(links.links_, dlx);
+    EXPECT_EQUAL(links.itemTable_, headers);
+}
+
+STUDENT_TEST("Overlapping allows two types to cover same opposing type i.e. Fire and Electric") {
     /*
      * This is just nonsense type weakness information in pairs to I can test the cover logic.
      *
@@ -909,5 +1036,10 @@ STUDENT_TEST("Cover Electric with Electric to cause hiding of many options.") {
     };
     PokemonLinks links (types, PokemonLinks::DEFENSE);
     std::set<RankedSet<std::string>> result = links.getOverlappingTypeCoverage();
-    std::cout << result << std::endl;
+    std::set<RankedSet<std::string>> correct = {
+        {18,{"Electric","Fire","Ice","Normal",}},
+        {18,{"Fire","Grass","Ice","Normal",}},
+        {18,{"Fire","Ice","Normal","Water",}}
+    };
+    EXPECT_EQUAL(correct, result);
 }
