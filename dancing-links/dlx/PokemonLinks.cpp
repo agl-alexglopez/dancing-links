@@ -3,7 +3,6 @@
 #include <cmath>
 
 
-
 std::set<RankedSet<std::string>> PokemonLinks::getExactTypeCoverage() {
     std::set<RankedSet<std::string>> exactCoverages = {};
     RankedSet<std::string> coverage = {};
@@ -29,10 +28,12 @@ void PokemonLinks::fillExactCoverages(std::set<RankedSet<std::string>>& exactCov
         exactCoverages.insert(coverage);
         return;
     }
+    // Depth limit is either the size of a Pokemon Team or the number of attack slots on a team.
     if (depthLimit <= 0) {
         return;
     }
     int attackType = chooseItem();
+    // An item has become inaccessible due to our chosen options so far, undo.
     if (attackType == -1) {
         return;
     }
@@ -41,6 +42,10 @@ void PokemonLinks::fillExactCoverages(std::set<RankedSet<std::string>>& exactCov
         coverage.insert(typeStrength.first, typeStrength.second);
 
         fillExactCoverages(exactCoverages, coverage, depthLimit - 1);
+
+        /* It is possible for these algorithms to produce many many sets. To make the Pokemon
+         * Planner GUI more usable I cut off recursion if we are generating too many sets.
+         */
         if (exactCoverages.size() == MAX_OUTPUT_SIZE) {
             hitLimit_ = true;
             coverage.remove(typeStrength.first, typeStrength.second);
@@ -74,6 +79,10 @@ void PokemonLinks::fillOverlappingCoverages(std::set<RankedSet<std::string>>& ov
 
 
         fillOverlappingCoverages(overlappingCoverages, coverage, depthTag - 1);
+
+        /* It is possible for these algorithms to produce many many sets. To make the Pokemon
+         * Planner GUI more usable I cut off recursion if we are generating too many sets.
+         */
         if (overlappingCoverages.size() == MAX_OUTPUT_SIZE) {
             hitLimit_ = true;
             coverage.remove(typeStrength.first, typeStrength.second);
@@ -93,6 +102,7 @@ int PokemonLinks::chooseItem() const {
     int chosenIndex = 0;
     int head = 0;
     for (int cur = itemTable_[0].right; cur != head; cur = itemTable_[cur].right) {
+        // No way to reach this item. Bad past choices!
         if (links_[cur].topOrLen <= 0) {
             return -1;
         }
@@ -109,7 +119,9 @@ std::pair<int,std::string> PokemonLinks::coverType(int indexInOption) {
     int i = indexInOption;
     do {
         int top = links_[i].topOrLen;
-        // Pickup the current type option we have chosen.
+        /* This is the next spacer node for the next option. We now know how to find the title of
+         * our current option if we go back to the start of the chosen option and go left.
+         */
         if (top <= 0) {
             i = links_[i].up;
             result.second = optionTable_[std::abs(links_[i - 1].topOrLen)];
@@ -118,6 +130,13 @@ std::pair<int,std::string> PokemonLinks::coverType(int indexInOption) {
             itemTable_[cur.left].right = cur.right;
             itemTable_[cur.right].left = cur.left;
             hideOptions(i);
+
+            /* If there is a better way to score the teams or attack schemes we build here would
+             * be the place to change it. I just give points based on how good the resistance or
+             * attack strength is. Immunity is better than quarter is better than half damage if
+             * we are building defense. Quad is better than double damage if we are building
+             * attack types. Points only change by increments of one.
+             */
             result.first += links_[i++].multiplier;
         }
     } while (i != indexInOption);
@@ -125,6 +144,7 @@ std::pair<int,std::string> PokemonLinks::coverType(int indexInOption) {
 }
 
 void PokemonLinks::uncoverType(int indexInOption) {
+    // Go left first so the in place link restoration of the doubly linked lookup table works.
     int i = --indexInOption;
     do {
         int top = links_[i].topOrLen;
@@ -148,6 +168,12 @@ std::pair<int,std::string> PokemonLinks::looseCoverType(int indexInOption, int d
             i = links_[i].up;
             result.second = optionTable_[std::abs(links_[i - 1].topOrLen)];
         } else {
+
+            /* Overlapping cover is much simpler at the cost of generating a tremendous number of
+             * solutions. We only need to know which items and options are covered at which
+             * recursive levels because we are more relaxed about leaving options available after
+             * items in those options have been covered by other options.
+             */
             if (!links_[top].depthTag) {
                 links_[top].depthTag = depthTag;
                 itemTable_[itemTable_[top].left].right = itemTable_[top].right;
@@ -179,17 +205,23 @@ void PokemonLinks::looseUncoverType(int indexInOption) {
 }
 
 
+/* The hide/unhide technique is what makes exact cover so much more restrictive and fast at
+ * shrinking the problem. Notice how aggressively it eliminates the appearances of items across
+ * other options. When compared to Overlapping Coverage, Exact Coverage answers a different
+ * question but also shrinks the problem much more quickly.
+ */
+
 void PokemonLinks::hideOptions(int indexInOption) {
-    for (int i = links_[indexInOption].down; i != indexInOption; i = links_[i].down) {
-        if (i == links_[indexInOption].topOrLen) {
+    for (int row = links_[indexInOption].down; row != indexInOption; row = links_[row].down) {
+        if (row == links_[indexInOption].topOrLen) {
             continue;
         }
-        for (int j = i + 1; j != i;) {
-            int top = links_[j].topOrLen;
+        for (int col = row + 1; col != row;) {
+            int top = links_[col].topOrLen;
             if (top <= 0) {
-                j = links_[j].up;
+                col = links_[col].up;
             } else {
-                pokeLink cur = links_[j++];
+                pokeLink cur = links_[col++];
                 links_[cur.up].down = cur.down;
                 links_[cur.down].up = cur.up;
                 links_[top].topOrLen--;
@@ -199,20 +231,20 @@ void PokemonLinks::hideOptions(int indexInOption) {
 }
 
 void PokemonLinks::unhideOptions(int indexInOption) {
-    for (int i = links_[indexInOption].up; i != indexInOption; i = links_[i].up) {
-        if (i == links_[indexInOption].topOrLen) {
+    for (int row = links_[indexInOption].up; row != indexInOption; row = links_[row].up) {
+        if (row == links_[indexInOption].topOrLen) {
             continue;
         }
-        for (int j = i - 1; j != i;) {
-            int top = links_[j].topOrLen;
+        for (int col = row - 1; col != row;) {
+            int top = links_[col].topOrLen;
             if (top <= 0) {
-                j = links_[j].down;
+                col = links_[col].down;
             } else {
-                pokeLink cur = links_[j];
-                links_[cur.up].down = j;
-                links_[cur.down].up = j;
+                pokeLink cur = links_[col];
+                links_[cur.up].down = col;
+                links_[cur.down].up = col;
                 links_[top].topOrLen++;
-                j--;
+                col--;
             }
         }
     }
@@ -256,6 +288,12 @@ PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typ
     if (attackTypes.empty()) {
         buildDefenseLinks(typeInteractions);
     } else {
+
+        /* If we want altered attack types to defend against, it is more efficient and explicit
+         * to pass in their own set then eliminate them from the Generation map by making a
+         * smaller copy.
+         */
+
         std::map<std::string,std::set<Resistance>> modifiedInteractions = {};
         for (const auto& type : typeInteractions) {
             modifiedInteractions[type.first] = {};
@@ -271,7 +309,7 @@ PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typ
 
 void PokemonLinks::buildDefenseLinks(const std::map<std::string,std::set<Resistance>>&
                                      typeInteractions) {
-    // We always must gather all attack types available in this generation before we begin.
+    // We always must gather all attack types available in this query
     requestedCoverSolution_ = DEFENSE;
     std::set<std::string> generationTypes = {};
     for (const Resistance& res : typeInteractions.begin()->second) {
@@ -356,7 +394,6 @@ void PokemonLinks::initializeColumns(const std::map<std::string,std::set<Resista
                 columnBuilder[sType] = currentLinksIndex;
             }
         }
-
         optionTable_.push_back(type.first);
         typeLookupIndex++;
         currentLinksIndex++;
@@ -372,34 +409,32 @@ void PokemonLinks::initializeColumns(const std::map<std::string,std::set<Resista
 
 void PokemonLinks::buildAttackLinks(const std::map<std::string,std::set<Resistance>>&
                                     typeInteractions) {
-    // We need two passes. The first pass will gather all types as options in the itemTable/headers
     requestedCoverSolution_ = ATTACK;
     optionTable_.push_back("");
     itemTable_.push_back({"", 0, 1});
     links_.push_back({0, 0, 0, Resistance::EMPTY_,0});
     int index = 1;
+
+    /* An inverted map has the attack types as the keys and the damage they do to defensive types
+     * as the set of Resistances. Once this is built just use the same builder function for cols.
+     */
+
     std::map<std::string,std::set<Resistance>> invertedMap = {};
     std::unordered_map<std::string,int> columnBuilder = {};
     for (const auto& interaction : typeInteractions) {
         std::string defenseType = interaction.first;
-
         columnBuilder[defenseType] = index;
         itemTable_.push_back({defenseType, index - 1, index + 1});
         itemTable_[0].left++;
-
         links_.push_back({0, index, index, Resistance::EMPTY_,0});
-
         numItems_++;
         index++;
-
         for (const Resistance& attack : interaction.second) {
             invertedMap[attack.type()].insert({defenseType, attack.multiplier()});
         }
     }
     itemTable_[itemTable_.size() - 1].right = 0;
-    // Second Pass iterate through this inverted map like you normally would. Use same helpers!
     initializeColumns(invertedMap, columnBuilder, requestedCoverSolution_);
-
 }
 
 

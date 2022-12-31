@@ -16,13 +16,6 @@
 /* * * * * * * * * * * * *  Perfect Matching Algorithm X via Dancing Links  * * * * * * * * * * * */
 
 
-/**
- * @brief hasPerfectLinks  determines if an instance of a PartnerLinks matrix can solve the
- *                         Perfect Match problem. A perfect matching is when every person is
- *                         partnered with someone.
- * @param pairs            the output parameter that shows the first perfect matching we found.
- * @return                 true if there is a perfect matching false if not.
- */
 bool PartnerLinks::hasPerfectLinks(Set<Pair>& pairs) {
     // Mathematically impossible perfect links no work necessary.
     if (hasSingleton_ || numPeople_ % 2 != 0) {
@@ -31,12 +24,6 @@ bool PartnerLinks::hasPerfectLinks(Set<Pair>& pairs) {
     return isPerfectMatching(pairs);
 }
 
-/**
- * @brief isPerfectMatching  finds the first available Perfect Matching for a network. The set
- *                           is empty if no matching is found.
- * @param pairs              the output parameter of the found matching.
- * @return                   true if the matching is found, false if not.
- */
 bool PartnerLinks::isPerfectMatching(Set<Pair>& pairs) {
     if (table_[0].right == 0) {
         return true;
@@ -63,13 +50,6 @@ bool PartnerLinks::isPerfectMatching(Set<Pair>& pairs) {
     return false;
 }
 
-/**
- * @brief getAllPerfectLinks  retrieves every configuration of a graph of people that will
- *                            produce a Perfect Matching. This is not every possible pairing
- *                            of people, rather, only those pairings that will produce
- *                            Perfect Matching.
- * @return                    set of sets. Each set is a unique Perfect Matching configuration.
- */
 Vector<Set<Pair>> PartnerLinks::getAllPerfectLinks() {
     if (hasSingleton_ || numPeople_ % 2 != 0) {
         return {};
@@ -84,13 +64,6 @@ Vector<Set<Pair>> PartnerLinks::getAllPerfectLinks() {
     return result;
 }
 
-/**
- * @brief fillPerfectMatchings  finds all available Perfect Matchings for a network. Fills the
- *                              sets that complete this task as pass by reference output
- *                              parameters. Every Perfect Matching configuration is unique.
- * @param soFar                 the helper set we insert/delete from as we build Matchings.
- * @param result                the output parameter we fill with any Perfect Matchings we find.
- */
 void PartnerLinks::fillPerfectMatchings(Set<Pair>& soFar, Vector<Set<Pair>>& result) {
     if (table_[0].right == 0) {
         result.add(soFar);
@@ -120,14 +93,6 @@ void PartnerLinks::fillPerfectMatchings(Set<Pair>& soFar, Vector<Set<Pair>>& res
     }
 }
 
-/**
- * @brief choosePerson  chooses a person for the Perfect Matching algorithm. It will simply
- *                      select the next person avaialable with no advanced heuristics. However,
- *                      it first checks if anyone has been isolated due to previous parings.
- *                      We willl then know we should stop recursion because someone is alone and
- *                      has no pairing possibilities.
- * @return              the index of the next person to pair or -1 if someone is alone.
- */
 int PartnerLinks::choosePerson() const {
     for (int cur = table_[0].right; cur != 0; cur = table_[cur].right) {
         // Someone has become inaccessible due to other matches.
@@ -138,15 +103,6 @@ int PartnerLinks::choosePerson() const {
     return table_[0].right;
 }
 
-/**
- * @brief coverPairing  when we cover a pairing in a Perfect Matching we report back the
- *                      partnership as a Pair. This is helpful for proving the recursive
- *                      selections are correct. This selects the option beneath the index given.
- *                      Covering a pair means that both people will dissapear from all other
- *                      partnerships they could have matched with, eliminating those options.
- * @param indexInPair   the index of the pair we want to cover.
- * @return              the pair we have created by selecting this option.
- */
 Pair PartnerLinks::coverPairing(int indexInPair) {
 
     /* We now must cover the two people in this option in the lookup table. Then go through all
@@ -174,12 +130,6 @@ Pair PartnerLinks::coverPairing(int indexInPair) {
     return {p1.name, p2.name};
 }
 
-/**
- * @brief uncoverPairing  uncovers a pairing that was hidden in Perfect Matching or Max Weight
- *                        Matching. The uncovering process is identical across both algorithms.
- *                        Be sure to provide the same index as the option you covered.
- * @param indexInPair     the same index as the index that was covered.
- */
 void PartnerLinks::uncoverPairing(int indexInPair) {
 
     personName p1 = table_[links_[indexInPair].topOrLen];
@@ -197,13 +147,6 @@ void PartnerLinks::uncoverPairing(int indexInPair) {
     unhidePersonPairings(indexInPair);
 }
 
-/**
- * @brief hidePersonPairings  hides other options that include the specified person. This only
- *                            hides pairings including a single person. If you want to hide both
- *                            people in a pair, you must use this on both people.
- * @param start               the starting node of the person we are hide in the selected option
- * @param indexInPair         the index of the person we are hiding in the selected option.
- */
 void PartnerLinks::hidePersonPairings(int indexInPair) {
     for (int i = links_[indexInPair].down; i != indexInPair; i = links_[i].down) {
          // We need this guard to prevent splicing while on a column header.
@@ -217,12 +160,6 @@ void PartnerLinks::hidePersonPairings(int indexInPair) {
     }
 }
 
-/**
- * @brief unhidePersonPairings  undoes the work of hidePersonPairings if given the same start
- *                              and index.
- * @param start                 the node of the person we unhide in the selected option.
- * @param indexInPair           the index of the person we are unhiding in the selected option.
- */
 void PartnerLinks::unhidePersonPairings(int indexInPair) {
     // The direction does not truly matter but I distinguish this from hide by going upwards.
     for (int i = links_[indexInPair].up; i != indexInPair; i = links_[i].up) {
@@ -236,11 +173,6 @@ void PartnerLinks::unhidePersonPairings(int indexInPair) {
     }
 }
 
-/**
- * @brief toPairIndex  helper function to increment the index to the next partner. We might
- *                     need to move left or right.
- * @param indexInPair  the index we take by reference to advance.
- */
 inline int PartnerLinks::toPairIndex(int indexInPair) {
     // There are only ever two people in an option so this is a safe increment/decrement.
     if (links_[++indexInPair].topOrLen <= 0) {
@@ -253,12 +185,6 @@ inline int PartnerLinks::toPairIndex(int indexInPair) {
 /* * * * * * * * * * * * *  Weighted Matching Algorithm X via Dancing Links  * * ** * * * * * * * */
 
 
-/**
- * @brief getMaxWeightMatching  determines the Max Weight Matching of a PartnerLinks matrix. A
- *                              Max Weight Matching is the greatest sum of edge weights we can
- *                              acheive by partnering up people in a network.
- * @return                      the set representing the Max Weight Matching that we found.
- */
 Set<Pair> PartnerLinks::getMaxWeightMatching() {
     if (!isWeighted_) {
         error("Asking for max weight matching of a graph with no weight information provided.\n"
@@ -276,14 +202,6 @@ Set<Pair> PartnerLinks::getMaxWeightMatching() {
     return winner.second;
 }
 
-/**
- * @brief fillWeights  recusively finds the maximum weight pairings possible given a dancing
- *                     links network with weighted partners. Uses the soFar set to store all
- *                     possible pairing combinations while the winner output parameter tracks
- *                     snapshots of the best weight and pairs found so far.
- * @param soFar        the pair of weight and pairs we fill with every possible pairing.
- * @param winner       the pair of weight and pairs that records the best weight found.
- */
 void PartnerLinks::fillWeights(std::pair<int,Set<Pair>>& soFar, std::pair<int,Set<Pair>>& winner) {
     if (table_[0].right == 0) {
         return;
@@ -321,14 +239,6 @@ void PartnerLinks::fillWeights(std::pair<int,Set<Pair>>& soFar, std::pair<int,Se
     }
 }
 
-/**
- * @brief chooseWeightedPerson  choosing a person in Max Weight matching is different than
- *                              Perfect Matching. It is ok if someone cannot be reached by
- *                              partners. We will select next available person who has partners
- *                              available. If everyone that has not been matched has no possible
- *                              connections, that is ok, but we will return -1 to indicate this.
- * @return                      the index of the next person to pair or -1 if no pairs remain.
- */
 int PartnerLinks::chooseWeightedPerson() const {
     int head = 0;
     for (int cur = table_[0].right; cur != head; cur = table_[cur].right) {
@@ -341,15 +251,6 @@ int PartnerLinks::chooseWeightedPerson() const {
     return -1;
 }
 
-/**
- * @brief hidePerson   to generate all possible pairings in any pairing algorithm, we need to
- *                     include every person in future possible pairings and exclude them. To
- *                     exclude a person, we will cover only that person. Instead of eliminating
- *                     every option that includes both people in a Pair, we only eliminate
- *                     other appearances of this individual in other pairings. It is a subtle
- *                     but important difference from covering a pairing.
- * @param indexInPair  the index of the person we cover. Chooses option below this index.
- */
 void PartnerLinks::hidePerson(int indexInPair) {
     indexInPair = links_[indexInPair].down;
 
@@ -368,12 +269,6 @@ void PartnerLinks::hidePerson(int indexInPair) {
     links_[cur.topOrLen].topOrLen--;
 }
 
-/**
- * @brief unhidePerson  undoes the work of covering a person, reinstating all possible pairings
- *                      that include this person. Will undo the same option chosen in
- *                      hidePerson() if given the same index.
- * @param indexInPair   the index of the person to uncover. Chooses option below this index.
- */
 void PartnerLinks::unhidePerson(int indexInPair) {
     indexInPair = links_[indexInPair].down;
     personName p1 = table_[links_[indexInPair].topOrLen];
@@ -389,15 +284,6 @@ void PartnerLinks::unhidePerson(int indexInPair) {
     links_[cur.topOrLen].topOrLen++;
 }
 
-/**
- * @brief coverWeightedPair  when we cover a weighted pair in Max Weight Matching we should
- *                           report back the weight of the pair and the names of the people in
- *                           the Pair. This is helpful for proof of correct choices. Covering a
- *                           Pair means that both people disappear from all other possible
- *                           pairings, thus eliminating those options.
- * @param indexInPair        the index of the weighted pair we cover. Chooses option below this.
- * @return                   an std::pair of the weight of the pair and their names.
- */
 std::pair<int,Pair> PartnerLinks::coverWeightedPair(int indexInPair) {
 
     personName p1 = table_[links_[indexInPair].topOrLen];
@@ -432,13 +318,6 @@ std::pair<int,Pair> PartnerLinks::coverWeightedPair(int indexInPair) {
 /* * * * * * * * * * * * * * *   Constructor to Build the Networks  * * * * * * * * * * * * * * * */
 
 
-/**
- * @brief PartnerLinks   the constructor for a world intended to check for Perfect Matching.
- *                       Provide a map of the person, and the set of people they are willing to
- *                       pair with. This will then build a dancing link matrix in order to solve
- *                       future queries.
- * @param possibleLinks  the map of people and partners they are willing to work with.
- */
 PartnerLinks::PartnerLinks(const Map<std::string, Set<std::string>>& possibleLinks) :
                            table_({}),
                            links_({}),
@@ -467,14 +346,6 @@ PartnerLinks::PartnerLinks(const Map<std::string, Set<std::string>>& possibleLin
     links_.push_back({INT_MIN, index - 2, INT_MIN});
 }
 
-/**
- * @brief PartnerLinks   the constructor for a world intended to check for Max Weight Matching.
- *                       Provide a map of the person, and the map of the partners they are
- *                       willing to pair with and the weights of each partnership. If a negative
- *                       weight is given for a partnership, we treat that partnership as if it
- *                       does not exist.
- * @param possibleLinks  the map of people and map of partners and weights.
- */
 PartnerLinks::PartnerLinks(const Map<std::string, Map<std::string, int>>& possibleLinks) :
                            table_({}),
                            links_({}),
@@ -502,12 +373,6 @@ PartnerLinks::PartnerLinks(const Map<std::string, Map<std::string, int>>& possib
     links_.push_back({INT_MIN, index - 2, INT_MIN});
 }
 
-/**
- * @brief initializeHeaders  initializes the headers of the dancing link data structure if
- *                           given a map of pairs with no weights.
- * @param possibleLinks      the map of unweighted connections for every person in the graph.
- * @param columnBuilder      the helping data structure we use to build columns in one array.
- */
 void PartnerLinks::initializeHeaders(const Map<std::string, Set<std::string>>& possibleLinks,
                                      HashMap<std::string,int>& columnBuilder) {
     // Set up the headers first. Lookup table and first N headers in links.
@@ -529,13 +394,6 @@ void PartnerLinks::initializeHeaders(const Map<std::string, Set<std::string>>& p
     table_[table_.size() - 1].right = 0;
 }
 
-/**
- * @brief initializeHeaders  initializes the headers of the dancing link data structure if
- *                           given a map of pairs with weights. Negative weights are ignored
- *                           and no pairing is made for that negative match.
- * @param possibleLinks      the map of weighted matches for every person in the graph.
- * @param columnBuilder      the helping data structure we use to build columns in one array.
- */
 void PartnerLinks::initializeHeaders(const Map<std::string, Map<std::string,int>>& possibleLinks,
                                      HashMap<std::string,int>& columnBuilder) {
     // Set up the headers first. Lookup table and first N headers in links.
@@ -557,17 +415,6 @@ void PartnerLinks::initializeHeaders(const Map<std::string, Map<std::string,int>
     table_[table_.size() - 1].right = 0;
 }
 
-/**
- * @brief setPerfectPairs  creates the internal rows and columns of the dancing links data
- *                         structure. Perfect pairs do not have any weight information and
- *                         options will simply be given a number from 1 to N number of matches.
- * @param person           the person who will set all possible matches for.
- * @param preferences      the set of all people this person is willing to pair with.
- * @param columnBuilder    the structure we use to track and build all columns in one array.
- * @param seenPairs        helper set to keep pairings unique and bidirectional.
- * @param index            we advance the index as an output parameter.
- * @param spacerTitle      we advance the spacerTitle to number each option.
- */
 void PartnerLinks::setPerfectPairs(const std::string& person,
                                    const Set<std::string>& preferences,
                                    HashMap<std::string,int>& columnBuilder,
@@ -617,18 +464,6 @@ void PartnerLinks::setPerfectPairs(const std::string& person,
     }
 }
 
-/**
- * @brief setWeightedPairs  creates the internal rows and columns of the dancing links data
- *                          structure. Weighted Pairs have weights for each partnership that
- *                          are placed as negative topOrLen fields in the spacer for each row.
- *                          We can then get the weight and names of any partnership while
- *                          recursing easily. Negative weights are ignored and no pairing made.
- * @param person            the person who's weighted matches we will set.
- * @param preferences       the people this person can pair with and the weight of those pairs.
- * @param columnBuilder     the structure we use to track and build all columns in one array.
- * @param seenPairs         helper set to keep pairings unique and bidirectional.
- * @param index             we advance the index as an output parameter.
- */
 void PartnerLinks::setWeightedPairs(const std::string& person,
                                     const Map<std::string,int>& preferences,
                                     HashMap<std::string,int>& columnBuilder,

@@ -15,17 +15,6 @@
 /* * * * * * * * * * * * *  Algorithm X via Dancing Links with Depth Tags * * * * * * * * * * * * */
 
 
- /**
- * @brief hasDisasterCoverage  performs a recursive search to determine if a transportation grid
- *                             can be covered with the specified number of emergency supplies.
- *                             Places the found cities in the output parameter if there
- *                             exists a solution. A city is covered if it has supplies or
- *                             is adjacent to a city with supplies. The solution may not use all
- *                             of the provided supplies.
- * @param numSupplies          the limiting number of supplies we must distribute.
- * @param suppliedCities       the output parameter telling which cities received supplies.
- * @return                     true if we have found a viable supply scheme, false if not.
- */
 bool DisasterTags::hasDisasterCoverage(int numSupplies, Set<std::string>& supplyLocations) {
     if (numSupplies < 0) {
         error("negative supplies");
@@ -36,17 +25,6 @@ bool DisasterTags::hasDisasterCoverage(int numSupplies, Set<std::string>& supply
     return isDLXCovered(numSupplies, supplyLocations);
 }
 
-/**
- * @brief isDLXCovered     performs an in-place recursive search on a dancing links data
- *                         structure to determine if a transportation grid is safe with the
- *                         given number of supplies. A city is safe if it has supplies or is
- *                         adjacent to a city with supplies. All cities are tagged with the
- *                         supply number that has covered them either by being next to a city
- *                         with that supply number or holding the supply themselves.
- * @param numSupplies      the depth or our recursive search. How many supplies we can give out.
- * @param supplyLocations  the output parameter upon successfull coverage. Empty if we fail.
- * @return                 true if we can cover the grid with the given supplies, false if not.
- */
 bool DisasterTags::isDLXCovered(int numSupplies, Set<std::string>& supplyLocations) {
     if (table_[0].right == 0 && numSupplies >= 0) {
         return true;
@@ -78,14 +56,6 @@ bool DisasterTags::isDLXCovered(int numSupplies, Set<std::string>& supplyLocatio
     return false;
 }
 
-/**
- * @brief getAllDisasterConfigurations  returns every possible disaster configuration possible
- *                                      with a given supply count. I advise finding the optimal
- *                                      number of supplies before running this function or it
- *                                      will work very hard. It is slow.
- * @param numSupplies                   the number of supplies we have to distribute.
- * @return                              all possible distributions of the supplies.
- */
 Set<Set<std::string>> DisasterTags::getAllDisasterConfigurations(int numSupplies) {
     if (numSupplies < 0) {
         error("Negative supply count.");
@@ -97,15 +67,6 @@ Set<Set<std::string>> DisasterTags::getAllDisasterConfigurations(int numSupplies
     return allConfigurations;
 }
 
-/**
- * @brief fillConfigurations  finds all possible distributions of the given number of supplies.
- *                            It generates duplicate configurations and uses a Set to filter
- *                            them out. This is slow and I want to only generate unique
- *                            configurations but am having trouble finding a way.
- * @param numSupplies         the number of supplies we have to distribute.
- * @param suppliedCities      the set that will hold new configurations that work.
- * @param allConfigurations   the set that records all configurations found.
- */
 void DisasterTags::fillConfigurations(int numSupplies,
                                       Set<std::string>& suppliedCities,
                                       Set<Set<std::string>>& allConfigurations) {
@@ -132,18 +93,6 @@ void DisasterTags::fillConfigurations(int numSupplies,
 
 }
 
-/**
- * @brief chooseIsolatedCity  selects a city we are trying to cover either by giving it supplies or
- *                            covering an adjacent neighbor. The selection uses the following
- *                            heuristic:
- *                              - Select the most isolated city so far.
- *                              - We must cover this city so select an adjacent city with the
- *                                most connections and try that first.
- *                              - If that fails we try the next adjacent city with most connections.
- *                              - Finally, if all other neighbors fail, try to supply the city
- *                                in question, not neighbors.
- * @return                    the index of the city we are selecting to attempt to cover.
- */
 int DisasterTags::chooseIsolatedCity() const {
     int min = INT_MAX;
     int chosenIndex = 0;
@@ -157,15 +106,6 @@ int DisasterTags::chooseIsolatedCity() const {
     return chosenIndex;
 }
 
-/**
- * @brief coverCity      covers a city wit supplies and all of its neighbors. All cities tagged
- *                       with a supply number equivalent to the current depth of the recursive
- *                       search. This tells us which cities are now unsafe if distributing that
- *                       exact supply did not work out and it must be removed later.
- * @param indexInOption  the index for the current city we are trying to cover.
- * @param supplyTag      uses number of supplies remaining as a unique tag for recursive depth.
- * @return               the name of the city holding the supplies.
- */
 std::string DisasterTags::coverCity(int indexInOption, const int supplyTag) {
     int i = indexInOption;
     std::string result = "";
@@ -194,13 +134,6 @@ std::string DisasterTags::coverCity(int indexInOption, const int supplyTag) {
     return result;
 }
 
-/**
- * @brief uncoverCity    uncovers a city if that choice of option did not lead to a covered
- *                       network. Uncovers same option that was selected for coverage if given
- *                       the same index. Will only uncover those cities that were covered by
- *                       the previously given supply.
- * @param indexInOption  the index of the item we covered with the option below the index.
- */
 void DisasterTags::uncoverCity(int indexInOption) {
     /* We must go in the reverse direction we started, fixing the first city we covered in the
      * lookup table last. This a requirement due to leaving the pointers of doubly linked left-right
@@ -231,12 +164,6 @@ void DisasterTags::uncoverCity(int indexInOption) {
 /* * * * * * * * * * *  Constructor and Building of Dancing Links Network   * * * * * * * * * * * */
 
 
-/**
- * @brief DisasterTags  a custom constructor for this class that can turn a Map representation
- *                      of a transportation grid into a vector grid prepared for exact cover
- *                      search via dancing links.
- * @param roadNetwork   the transportation grid passed in via map form.
- */
 DisasterTags::DisasterTags(const Map<std::string, Set<std::string>>& roadNetwork) :
                            table_({}),
                            grid_({}),
@@ -255,15 +182,6 @@ DisasterTags::DisasterTags(const Map<std::string, Set<std::string>>& roadNetwork
     initializeItems(roadNetwork, connectionSizes, columnBuilder);
 }
 
-/**
- * @brief initializeHeaders  creates the lookup table of city names and the first row of headers
- *                           that are in the dancing links array. This is the first pass on the
- *                           input map. We will perform a second, much longer pass to build the
- *                           columns later.
- * @param roadNetwork        the input of cities connected to other cities.
- * @param connectionSizes    a city and the size of the set of adjacent cities.
- * @param columnBuilder      the hash map we will use to connect newly added items to a column.
- */
 void DisasterTags::initializeHeaders(const Map<std::string, Set<std::string>>& roadNetwork,
                                       std::vector<std::pair<std::string,int>>& connectionSizes,
                                       HashMap<std::string,int>& columnBuilder) {
@@ -299,18 +217,9 @@ void DisasterTags::initializeHeaders(const Map<std::string, Set<std::string>>& r
     table_[table_.size() - 1].right = 0;
 }
 
-/**
- * @brief initializeItems  builds the structure needed to perform the dancing links algorithm.
- *                         This focusses on setting up the grid in the dancing Network struct
- *                         so that all item columns are tallied correctly and the option rows
- *                         represent all the cities that a supply city can cover, self included.
- * @param roadNetwork      we need to look back at the original map to grab sets to build.
- * @param connectionSizes  we organize rows in descending order top to bottom as a heuristic.
- * @param columnBuilder    the map we use to help build an accurate column for each city item.
- */
 void DisasterTags::initializeItems(const Map<std::string, Set<std::string>>& roadNetwork,
-                                    const std::vector<std::pair<std::string,int>>& connectionSizes,
-                                    HashMap<std::string,int>& columnBuilder) {
+                                   const std::vector<std::pair<std::string,int>>& connectionSizes,
+                                   HashMap<std::string,int>& columnBuilder) {
     int previousSetSize = grid_.size();
     int index = grid_.size();
 
@@ -335,16 +244,6 @@ void DisasterTags::initializeItems(const Map<std::string, Set<std::string>>& roa
     grid_.push_back({INT_MIN, index - previousSetSize, INT_MIN,0});
 }
 
-/**
- * @brief initializeColumns  this is the set builder for each row. When a city is given supplies
- *                           it is connected to itself and its adjacent cities. We represent
- *                           this in a row and connect each item to any appearance in a previous
- *                           row so that each column is built.
- * @param connections        the set containing the city and all adjacent connections.
- * @param columnBuilder      the map we use to track the last appearance of an item in a column.
- * @param index              the index of the array at which we start building.
- * @return                   the new index of the grid after adding all items in a row.
- */
 int DisasterTags::initializeColumns(const Set<std::string>& connections,
                                      HashMap<std::string,int>& columnBuilder,
                                      int index) {

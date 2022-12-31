@@ -22,8 +22,6 @@ namespace {
     /* File constants. */
     const string kProblemSuffix = ".dst";
     const string kBasePath = "res/pokemon/";
-    /* Background color. */
-    const string kBackgroundColor  = "#000000";
 
     /* Colors to use when drawing the network. */
     struct CityColors {

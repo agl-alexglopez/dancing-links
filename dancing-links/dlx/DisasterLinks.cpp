@@ -16,17 +16,6 @@
 /* * * * * * * * * * * * *  Algorithm X via Dancing Links Implementation  * * * * * * * * * * * * */
 
 
-/**
- * @brief isDisasterReady  performs a recursive search to determine if a transportation grid
- *                         can be covered with the specified number of emergency supplies. It
- *                         will also place the found cities in the output parameter if there
- *                         exists a solution. A city is covered or safe it has supplies or
- *                         is adjacent to a city with supplies. The solution may not use all
- *                         of the provided supplies.
- * @param numSupplies      the limiting number of supplies we must distribute.
- * @param suppliedCities   the output parameter telling which cities received supplies.
- * @return                 true if we have found a viable supply scheme, false if not.
- */
 bool DisasterLinks::isDisasterReady(int numSupplies, Set<std::string>& suppliedCities) {
     if (numSupplies < 0) {
         error("Negative supply quantity is impossible.");
@@ -37,20 +26,6 @@ bool DisasterLinks::isDisasterReady(int numSupplies, Set<std::string>& suppliedC
     return isCovered(numSupplies, suppliedCities);
 }
 
-/**
- * @brief isCovered       performs a modified exact cover search of a transportation Network.
- *                        Given a number of supplies for the network, determines if every city
- *                        is covered. A city is covered if it has received supplies or is
- *                        adjacent to a city with supplies. If a city has supplies it may not
- *                        be supplied again. However, if a city is safely covered by an adjacent
- *                        city with supplies, this safe city may still receive supplies to cover
- *                        other cities. With infinite supplies this algorithm will find a good
- *                        solution. For the optimal solution challenge it with decreasing supply
- *                        counts until it confirms a network cannot be covered with that amount.
- * @param numSupplies     the number of supplies that we have to distribute over the network.
- * @param suppliedCities  the output parameter showing the cities we have chosen to supply.
- * @return                true if all cities are safe, false if not.
- */
 bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities) {
     if (table_[0].right == 0 && numSupplies >= 0) {
         return true;
@@ -83,14 +58,6 @@ bool DisasterLinks::isCovered(int numSupplies, Set<std::string>& suppliedCities)
     return false;
 }
 
-/**
- * @brief getAllDisasterConfigurations  returns every possible disaster configuration possible
- *                                      with a given supply count. I advise finding the optimal
- *                                      number of supplies before running this function or it
- *                                      will work very hard. It is slow.
- * @param numSupplies                   the number of supplies we have to distribute.
- * @return                              all possible distributions of the supplies.
- */
 Set<Set<std::string>> DisasterLinks::getAllDisasterConfigurations(int numSupplies) {
     if (numSupplies < 0) {
         error("Negative supply count.");
@@ -102,15 +69,6 @@ Set<Set<std::string>> DisasterLinks::getAllDisasterConfigurations(int numSupplie
     return allConfigurations;
 }
 
-/**
- * @brief fillConfigurations  finds all possible distributions of the given number of supplies.
- *                            It generates duplicate configurations and uses a Set to filter
- *                            them out. This is slow and I want to only generate unique
- *                            configurations but am having trouble finding a way.
- * @param numSupplies         the number of supplies we have to distribute.
- * @param suppliedCities      the set that will hold new configurations that work.
- * @param allConfigurations   the set that records all configurations found.
- */
 void DisasterLinks::fillConfigurations(int numSupplies,
                                        Set<std::string>& suppliedCities,
                                        Set<Set<std::string>>& allConfigurations) {
@@ -137,18 +95,6 @@ void DisasterLinks::fillConfigurations(int numSupplies,
     }
 }
 
-/**
- * @brief chooseIsolatedCity  selects a city we are trying to cover either by giving it supplies or
- *                            covering an adjacent neighbor. The selection uses the following
- *                            heuristic:
- *                              - Select the most isolated city so far.
- *                              - We must cover this city so select an adjacent city with the
- *                                most connections and try that first.
- *                              - If that fails we try the next adjacent city with most connections.
- *                              - Finally, if all other neighbors fail, try to supply the city
- *                                in question, not neighbors.
- * @return                    the index of the city we are selecting to attempt to cover.
- */
 int DisasterLinks::chooseIsolatedCity() const {
     int min = INT_MAX;
     int chosenIndex = 0;
@@ -162,12 +108,6 @@ int DisasterLinks::chooseIsolatedCity() const {
     return chosenIndex;
 }
 
-/**
- * @brief coverCity      covers a city with the index of option we found it. A city in question
- *                       may be covered by supplying a neighbor or supplying the city itself.
- * @param indexInOption  the index we start at for an item in the supply option(row) we found it.
- * @return               the string name of the option we used to cover a city, neighbor or city.
- */
 std::string DisasterLinks::coverCity(int indexInOption) {
     /* Be sure to leave the row of the option we supply unchanged. Splice these cities out of all
      * other options in which they can be found above and below the current row.
@@ -192,12 +132,6 @@ std::string DisasterLinks::coverCity(int indexInOption) {
     return result;
 }
 
-/**
- * @brief uncoverCity    uncovers a city if that choice of option did not lead to a covered
- *                       network. Uncovers the same option that was selected for coverage if given
-   *                     the same index.
- * @param indexInOption  the index we start at for an item in the supply option(row) we found it.
- */
 void DisasterLinks::uncoverCity(int indexInOption) {
     /* To uncover a city we take the supplies away from the option in which we found this city. We
      * then must go up and down for every city covered by this supply location and put the cities
@@ -216,13 +150,6 @@ void DisasterLinks::uncoverCity(int indexInOption) {
     } while (i != indexInOption);
 }
 
-/**
- * @brief hideCityCol  when we supply an option it covers itself and connected cities. We must
- *                     remove these cities from any other sets that contain them to make them
- *                     disappear from the world as uncovered cities. However, we keep them as
- *                     available cities to supply.
- * @param indexInCol   the starting index in the option we are in. It is also a city's column.
- */
 void DisasterLinks::hideCityCol(int indexInCol) {
     for (int i = grid_[indexInCol].down; i != indexInCol; i = grid_[i].down) {
         cityItem cur = grid_[i];
@@ -231,11 +158,6 @@ void DisasterLinks::hideCityCol(int indexInCol) {
     }
 }
 
-/**
- * @brief unhideCityCol  when an option fails, we must put the cities it covers back into all
- *                       the sets to which they belong. This puts the cities back in network.
- * @param indexInCol     the starting index in the option we are in. It is also a city's column.
- */
 void DisasterLinks::unhideCityCol(int indexInCol) {
     for (int i = grid_[indexInCol].up; i != indexInCol; i = grid_[i].up) {
         cityItem cur = grid_[i];
@@ -248,12 +170,6 @@ void DisasterLinks::unhideCityCol(int indexInCol) {
 /* * * * * * * * * * *  Constructor and Building of Dancing Links Network   * * * * * * * * * * * */
 
 
-/**
- * @brief DisasterLinks  a custom constructor for this class that can turn a Map representation
- *                       of a transportation grid into a vector grid prepared for exact cover
- *                       search via dancing links.
- * @param roadNetwork    the transportation grid passed in via map form.
- */
 DisasterLinks::DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwork) :
                              table_({}),
                              grid_({}),
@@ -272,15 +188,6 @@ DisasterLinks::DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwo
     initializeItems(roadNetwork, connectionSizes, columnBuilder);
 }
 
-/**
- * @brief initializeHeaders  creates the lookup table of city names and the first row of headers
- *                           that are in the dancing links array. This is the first pass on the
- *                           input map. We will perform a second, much longer pass to build the
- *                           columns later.
- * @param roadNetwork        the input of cities connected to other cities.
- * @param connectionSizes    a city and the size of the set of adjacent cities.
- * @param columnBuilder      the hash map we will use to connect newly added items to a column.
- */
 void DisasterLinks::initializeHeaders(const Map<std::string, Set<std::string>>& roadNetwork,
                                       std::vector<std::pair<std::string,int>>& connectionSizes,
                                       HashMap<std::string,int>& columnBuilder) {
@@ -318,15 +225,6 @@ void DisasterLinks::initializeHeaders(const Map<std::string, Set<std::string>>& 
     grid_[grid_.size() - 1].right = 0;
 }
 
-/**
- * @brief initializeItems  builds the structure needed to perform the dancing links algorithm.
- *                         This focusses on setting up the grid in the dancing Network struct
- *                         so that all item columns are tallied correctly and the option rows
- *                         represent all the cities that a supply city can cover, self included.
- * @param roadNetwork      we need to look back at the original map to grab sets to build.
- * @param connectionSizes  we organize rows in descending order top to bottom as a heuristic.
- * @param columnBuilder    the map we use to help build an accurate column for each city item.
- */
 void DisasterLinks::initializeItems(const Map<std::string, Set<std::string>>& roadNetwork,
                                     const std::vector<std::pair<std::string,int>>& connectionSizes,
                                     HashMap<std::string,int>& columnBuilder) {
@@ -355,16 +253,6 @@ void DisasterLinks::initializeItems(const Map<std::string, Set<std::string>>& ro
     grid_.push_back({INT_MIN, index - previousSetSize, 0, index - 1, INT_MIN});
 }
 
-/**
- * @brief initializeColumns  this is the set builder for each row. When a city is given supplies
- *                           it is connected to itself and its adjacent cities. We represent
- *                           this in a row and connect each item to any appearance in a previous
- *                           row so that each column is built.
- * @param connections        the set containing the city and all adjacent connections.
- * @param columnBuilder      the map we use to track the last appearance of an item in a column.
- * @param index              the index of the array at which we start building.
- * @return                   the new index of the grid after adding all items in a row.
- */
 int DisasterLinks::initializeColumns(const Set<std::string>& connections,
                                      HashMap<std::string,int>& columnBuilder,
                                      int index) {
