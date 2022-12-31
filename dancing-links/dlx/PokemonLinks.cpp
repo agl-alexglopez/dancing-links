@@ -260,6 +260,7 @@ bool PokemonLinks::reachedOutputLimit() {
     return hitLimit_;
 }
 
+
 /* * * * * * * * * * * * * * * * *   Constructors and Links Build       * * * * * * * * * * * * * */
 
 
