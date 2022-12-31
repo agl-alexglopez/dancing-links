@@ -436,6 +436,7 @@ namespace {
 
         mSolutionsDisplay = Temporary<GColorConsole>(new GColorConsole(), window, "SOUTH");
         mSolutionsDisplay->setWidth(DISPLAY_WIDTH);
+        mSolutionsDisplay->setStyle("black", GColorConsole::BOLD, FontSize{11});
 
         loadWorld(choices->getSelectedItem());
     }
