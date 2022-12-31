@@ -159,52 +159,6 @@ void PokemonLinks::uncoverType(int indexInOption) {
     } while (i != indexInOption);
 }
 
-std::pair<int,std::string> PokemonLinks::looseCoverType(int indexInOption, int depthTag) {
-    int i = indexInOption;
-    std::pair<int, std::string> result = {};
-    do {
-        int top = links_[i].topOrLen;
-        if (top <= 0) {
-            i = links_[i].up;
-            result.second = optionTable_[std::abs(links_[i - 1].topOrLen)];
-        } else {
-
-            /* Overlapping cover is much simpler at the cost of generating a tremendous number of
-             * solutions. We only need to know which items and options are covered at which
-             * recursive levels because we are more relaxed about leaving options available after
-             * items in those options have been covered by other options.
-             */
-            if (!links_[top].depthTag) {
-                links_[top].depthTag = depthTag;
-                itemTable_[itemTable_[top].left].right = itemTable_[top].right;
-                itemTable_[itemTable_[top].right].left = itemTable_[top].left;
-                result.first += links_[i].multiplier;
-            }
-            links_[i++].depthTag = depthTag;
-        }
-    } while (i != indexInOption);
-
-    return result;
-}
-
-void PokemonLinks::looseUncoverType(int indexInOption) {
-    int i = --indexInOption;
-    do {
-        int top = links_[i].topOrLen;
-        if (top < 0) {
-            i = links_[i].down;
-        } else {
-            if (links_[top].depthTag == links_[i].depthTag) {
-                links_[top].depthTag = 0;
-                itemTable_[itemTable_[top].left].right = top;
-                itemTable_[itemTable_[top].right].left = top;
-            }
-            links_[i--].depthTag = 0;
-        }
-    } while (i != indexInOption);
-}
-
-
 /* The hide/unhide technique is what makes exact cover so much more restrictive and fast at
  * shrinking the problem. Notice how aggressively it eliminates the appearances of items across
  * other options. When compared to Overlapping Coverage, Exact Coverage answers a different
@@ -248,6 +202,51 @@ void PokemonLinks::unhideOptions(int indexInOption) {
             }
         }
     }
+}
+
+std::pair<int,std::string> PokemonLinks::looseCoverType(int indexInOption, int depthTag) {
+    int i = indexInOption;
+    std::pair<int, std::string> result = {};
+    do {
+        int top = links_[i].topOrLen;
+        if (top <= 0) {
+            i = links_[i].up;
+            result.second = optionTable_[std::abs(links_[i - 1].topOrLen)];
+        } else {
+
+            /* Overlapping cover is much simpler at the cost of generating a tremendous number of
+             * solutions. We only need to know which items and options are covered at which
+             * recursive levels because we are more relaxed about leaving options available after
+             * items in those options have been covered by other options.
+             */
+            if (!links_[top].depthTag) {
+                links_[top].depthTag = depthTag;
+                itemTable_[itemTable_[top].left].right = itemTable_[top].right;
+                itemTable_[itemTable_[top].right].left = itemTable_[top].left;
+                result.first += links_[i].multiplier;
+            }
+            links_[i++].depthTag = depthTag;
+        }
+    } while (i != indexInOption);
+
+    return result;
+}
+
+void PokemonLinks::looseUncoverType(int indexInOption) {
+    int i = --indexInOption;
+    do {
+        int top = links_[i].topOrLen;
+        if (top < 0) {
+            i = links_[i].down;
+        } else {
+            if (links_[top].depthTag == links_[i].depthTag) {
+                links_[top].depthTag = 0;
+                itemTable_[itemTable_[top].left].right = top;
+                itemTable_[itemTable_[top].right].left = top;
+            }
+            links_[i--].depthTag = 0;
+        }
+    } while (i != indexInOption);
 }
 
 bool PokemonLinks::reachedOutputLimit() {
