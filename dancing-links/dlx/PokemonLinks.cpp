@@ -74,7 +74,7 @@ void PokemonLinks::fillOverlappingCoverages(std::set<RankedSet<std::string>>& ov
     }
 
     for (int cur = links_[attackType].down; cur != attackType; cur = links_[cur].down) {
-        std::pair<int,std::string> typeStrength = looseCoverType(cur, depthTag);
+        std::pair<int,std::string> typeStrength = overlappingCoverType(cur, depthTag);
         coverage.insert(typeStrength.first, typeStrength.second);
 
 
@@ -86,12 +86,12 @@ void PokemonLinks::fillOverlappingCoverages(std::set<RankedSet<std::string>>& ov
         if (overlappingCoverages.size() == MAX_OUTPUT_SIZE) {
             hitLimit_ = true;
             coverage.remove(typeStrength.first, typeStrength.second);
-            looseUncoverType(cur);
+            overlappingUncoverType(cur);
             return;
         }
 
         coverage.remove(typeStrength.first, typeStrength.second);
-        looseUncoverType(cur);
+        overlappingUncoverType(cur);
     }
 
 }
@@ -204,7 +204,7 @@ void PokemonLinks::unhideOptions(int indexInOption) {
     }
 }
 
-std::pair<int,std::string> PokemonLinks::looseCoverType(int indexInOption, int depthTag) {
+std::pair<int,std::string> PokemonLinks::overlappingCoverType(int indexInOption, int depthTag) {
     int i = indexInOption;
     std::pair<int, std::string> result = {};
     do {
@@ -232,7 +232,7 @@ std::pair<int,std::string> PokemonLinks::looseCoverType(int indexInOption, int d
     return result;
 }
 
-void PokemonLinks::looseUncoverType(int indexInOption) {
+void PokemonLinks::overlappingUncoverType(int indexInOption) {
     int i = --indexInOption;
     do {
         int top = links_[i].topOrLen;
@@ -955,7 +955,7 @@ STUDENT_TEST("Test the depth tag approach to overlapping coverage.") {
     EXPECT_EQUAL(links.links_, dlx);
     EXPECT_EQUAL(links.itemTable_, headers);
 
-    std::pair<int,std::string> choice = links.looseCoverType(8, 6);
+    std::pair<int,std::string> choice = links.overlappingCoverType(8, 6);
     EXPECT_EQUAL(choice.first, 6);
     EXPECT_EQUAL(choice.second, "Electric");
     const std::vector<PokemonLinks::typeName> headersCoverElectric {
@@ -998,7 +998,7 @@ STUDENT_TEST("Test the depth tag approach to overlapping coverage.") {
     EXPECT_EQUAL(links.itemTable_, headersCoverElectric);
     EXPECT_EQUAL(links.links_, dlxCoverElectric);
 
-    std::pair<int,std::string> choice2 = links.looseCoverType(12, 5);
+    std::pair<int,std::string> choice2 = links.overlappingCoverType(12, 5);
     EXPECT_EQUAL(choice2.first, 6);
     EXPECT_EQUAL(choice2.second, "Fire");
     const std::vector<PokemonLinks::typeName> headersCoverGrass {
@@ -1039,10 +1039,10 @@ STUDENT_TEST("Test the depth tag approach to overlapping coverage.") {
     };
     EXPECT_EQUAL(links.itemTable_, headersCoverGrass);
     EXPECT_EQUAL(links.links_, dlxCoverGrass);
-    links.looseUncoverType(12);
+    links.overlappingUncoverType(12);
     EXPECT_EQUAL(links.itemTable_, headersCoverElectric);
     EXPECT_EQUAL(links.links_, dlxCoverElectric);
-    links.looseUncoverType(8);
+    links.overlappingUncoverType(8);
     EXPECT_EQUAL(links.links_, dlx);
     EXPECT_EQUAL(links.itemTable_, headers);
 }

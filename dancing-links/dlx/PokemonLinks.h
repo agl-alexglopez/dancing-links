@@ -231,25 +231,27 @@ private:
     void unhideOptions(int indexInOption);
 
     /**
-     * @brief looseCoverType  performs a loose or "overlapping" cover of items in a dancing links
-     *                        algorithm. We allow other options that cover items already covered to
-     *                        stay accessible in the links leading to many more solutions being
-     *                        found as multiple options can cover some of the same items.
-     * @param indexInOption   the index in the array we use to start covering and eliminating links.
-     * @param depthTag        to effeciently perform this type of coverage I use a depth tag to
-     *                        know which items have already been covered in an option and which
-     *                        still need coverage.
-     * @return                the score our choice of option contributes to its RankedSet and name.
+     * @brief overlappingCoverType  performs a loose or "overlapping" cover of items in a dancing
+     *                              links algorithm. We allow other options that cover items already
+     *                              covered to stay accessible in the links leading to many more
+     *                              solutions being found as multiple options can cover some of the
+     *                              same items.
+     * @param indexInOption         the index in array used to start covering and eliminating links.
+     * @param depthTag              to perform this type of coverage I use a depth tag to know which
+     *                              items have already been covered in an option and which still
+     *                              need coverage.
+     * @return                      the score our option contributes to its RankedSet and name.
      */
-    std::pair<int,std::string> looseCoverType(int indexInOption, int depthTag);
+    std::pair<int,std::string> overlappingCoverType(int indexInOption, int depthTag);
 
     /**
-     * @brief looseUncoverType  undoes the work of the loos cover operation. It uncovers items that
-     *                          were covered by an option at the same level of recursion in which
-     *                          they were covered, using the depth tags to note levels.
-     * @param indexInOption     the same index as the cover operation will uncover the same items.
+     * @brief overlappingUncoverType  undoes the work of the loos cover operation. It uncovers items
+     *                                that were covered by an option at the same level of recursion
+     *                                in which they were covered, using the depth tags to note
+     *                                levels.
+     * @param indexInOption           the same index as cover operation will uncover same items.
      */
-    void looseUncoverType(int indexInOption);
+    void overlappingUncoverType(int indexInOption);
 
 
     /* * * * * * * * * * *   Dancing Links Instantiation and Building     * * * * * * * * * * * * */
