@@ -3,6 +3,9 @@
 #include <cmath>
 
 
+/* * * * * * * * * * * * * * * *    Algorithm X via Dancing Links   * * * * * * * * * * * * * * * */
+
+
 std::set<RankedSet<std::string>> PokemonLinks::getExactTypeCoverage() {
     std::set<RankedSet<std::string>> exactCoverages = {};
     RankedSet<std::string> coverage = {};
@@ -10,15 +13,6 @@ std::set<RankedSet<std::string>> PokemonLinks::getExactTypeCoverage() {
     int depthLimit = requestedCoverSolution_ == DEFENSE ? MAX_TEAM_SIZE : MAX_ATTACK_SLOTS;
     fillExactCoverages(exactCoverages, coverage, depthLimit);
     return exactCoverages;
-}
-
-std::set<RankedSet<std::string>> PokemonLinks::getOverlappingTypeCoverage() {
-    std::set<RankedSet<std::string>> overlappingCoverages = {};
-    RankedSet<std::string> coverage = {};
-    hitLimit_ = false;
-    int depthLimit = requestedCoverSolution_ == DEFENSE ? MAX_TEAM_SIZE : MAX_ATTACK_SLOTS;
-    fillOverlappingCoverages(overlappingCoverages, coverage, depthLimit);
-    return overlappingCoverages;
 }
 
 void PokemonLinks::fillExactCoverages(std::set<RankedSet<std::string>>& exactCoverages,
@@ -56,62 +50,6 @@ void PokemonLinks::fillExactCoverages(std::set<RankedSet<std::string>>& exactCov
         coverage.remove(typeStrength.first, typeStrength.second);
         uncoverType(cur);
     }
-}
-
-void PokemonLinks::fillOverlappingCoverages(std::set<RankedSet<std::string>>& overlappingCoverages,
-                                            RankedSet<std::string>& coverage,
-                                            int depthTag) {
-    if (itemTable_[0].right == 0 && depthTag >= 0) {
-        overlappingCoverages.insert(coverage);
-        return;
-    }
-    if (depthTag <= 0) {
-        return;
-    }
-    int attackType = chooseItem();
-    if (attackType == -1) {
-        return;
-    }
-
-    for (int cur = links_[attackType].down; cur != attackType; cur = links_[cur].down) {
-        std::pair<int,std::string> typeStrength = overlappingCoverType(cur, depthTag);
-        coverage.insert(typeStrength.first, typeStrength.second);
-
-
-        fillOverlappingCoverages(overlappingCoverages, coverage, depthTag - 1);
-
-        /* It is possible for these algorithms to produce many many sets. To make the Pokemon
-         * Planner GUI more usable I cut off recursion if we are generating too many sets.
-         */
-        if (overlappingCoverages.size() == MAX_OUTPUT_SIZE) {
-            hitLimit_ = true;
-            coverage.remove(typeStrength.first, typeStrength.second);
-            overlappingUncoverType(cur);
-            return;
-        }
-
-        coverage.remove(typeStrength.first, typeStrength.second);
-        overlappingUncoverType(cur);
-    }
-
-}
-
-
-int PokemonLinks::chooseItem() const {
-    int min = INT_MAX;
-    int chosenIndex = 0;
-    int head = 0;
-    for (int cur = itemTable_[0].right; cur != head; cur = itemTable_[cur].right) {
-        // No way to reach this item. Bad past choices!
-        if (links_[cur].topOrLen <= 0) {
-            return -1;
-        }
-        if (links_[cur].topOrLen < min) {
-            chosenIndex = cur;
-            min = links_[cur].topOrLen;
-        }
-    }
-    return chosenIndex;
 }
 
 std::pair<int,std::string> PokemonLinks::coverType(int indexInOption) {
@@ -202,6 +140,75 @@ void PokemonLinks::unhideOptions(int indexInOption) {
             }
         }
     }
+}
+
+// Both Cover Problems can use the exact same choosing heursistic.
+int PokemonLinks::chooseItem() const {
+    int min = INT_MAX;
+    int chosenIndex = 0;
+    int head = 0;
+    for (int cur = itemTable_[0].right; cur != head; cur = itemTable_[cur].right) {
+        // No way to reach this item. Bad past choices!
+        if (links_[cur].topOrLen <= 0) {
+            return -1;
+        }
+        if (links_[cur].topOrLen < min) {
+            chosenIndex = cur;
+            min = links_[cur].topOrLen;
+        }
+    }
+    return chosenIndex;
+}
+
+
+/* * * * * * * * * * * *   Overlapping Coverage via Dancing Links   * * * * * * * * * * * * * * * */
+
+
+std::set<RankedSet<std::string>> PokemonLinks::getOverlappingTypeCoverage() {
+    std::set<RankedSet<std::string>> overlappingCoverages = {};
+    RankedSet<std::string> coverage = {};
+    hitLimit_ = false;
+    int depthLimit = requestedCoverSolution_ == DEFENSE ? MAX_TEAM_SIZE : MAX_ATTACK_SLOTS;
+    fillOverlappingCoverages(overlappingCoverages, coverage, depthLimit);
+    return overlappingCoverages;
+}
+
+void PokemonLinks::fillOverlappingCoverages(std::set<RankedSet<std::string>>& overlappingCoverages,
+                                            RankedSet<std::string>& coverage,
+                                            int depthTag) {
+    if (itemTable_[0].right == 0 && depthTag >= 0) {
+        overlappingCoverages.insert(coverage);
+        return;
+    }
+    if (depthTag <= 0) {
+        return;
+    }
+    int attackType = chooseItem();
+    if (attackType == -1) {
+        return;
+    }
+
+    for (int cur = links_[attackType].down; cur != attackType; cur = links_[cur].down) {
+        std::pair<int,std::string> typeStrength = overlappingCoverType(cur, depthTag);
+        coverage.insert(typeStrength.first, typeStrength.second);
+
+
+        fillOverlappingCoverages(overlappingCoverages, coverage, depthTag - 1);
+
+        /* It is possible for these algorithms to produce many many sets. To make the Pokemon
+         * Planner GUI more usable I cut off recursion if we are generating too many sets.
+         */
+        if (overlappingCoverages.size() == MAX_OUTPUT_SIZE) {
+            hitLimit_ = true;
+            coverage.remove(typeStrength.first, typeStrength.second);
+            overlappingUncoverType(cur);
+            return;
+        }
+
+        coverage.remove(typeStrength.first, typeStrength.second);
+        overlappingUncoverType(cur);
+    }
+
 }
 
 std::pair<int,std::string> PokemonLinks::overlappingCoverType(int indexInOption, int depthTag) {
