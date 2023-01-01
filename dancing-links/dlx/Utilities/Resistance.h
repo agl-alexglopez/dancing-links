@@ -1,9 +1,6 @@
-#ifndef POKEMONUTILITIES_H
-#define POKEMONUTILITIES_H
-#include <map>
+#ifndef RESISTANCE_H
+#define RESISTANCE_H
 #include <string>
-#include <set>
-#include <vector>
 #include <ostream>
 
 
@@ -56,4 +53,4 @@ std::ostream& operator<<(std::ostream& out, const Resistance& res);
 std::ostream& operator<<(std::ostream& out, const Resistance::Multiplier& mult);
 
 
-#endif // POKEMONUTILITIES_H
+#endif // RESISTANCE_H

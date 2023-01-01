@@ -1,4 +1,4 @@
-#include "PokemonUtilities.h"
+#include "Resistance.h"
 
 
 /* * * * * * * * * * * * *     Resistance Helper Class      * * * * * * * * * * * * * * * * * * * */

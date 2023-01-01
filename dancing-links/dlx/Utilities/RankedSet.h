@@ -1,3 +1,22 @@
+/**
+ * Author: Alexander Lopez
+ * File: RankedSet.h
+ * -----------------------
+ * This template class is a simple wrapper for a set so that I can implement my scoring method for
+ * the exact and overlapping covers I find for Pokemon. However, this could be used for any case
+ * in which I need a set to carry a numeric rank that defines its natural order. The order goes as
+ * follows: RankedSets are ordered first by their numeric rank in ascending order. If two ranks
+ * are the same the RankedSet is then organized by the natural ordering of std::set and behaves
+ * exactly as you would expect the C++ std::set to behave when compared. The rank component of
+ * the set is a simple integer, allowing for both positive and negative weights.
+ *
+ * Initially, my purpose in using this was to create the same data structure as a priority queue.
+ * I found that the C++ priority queue was inconvenient because iteration through a priority queue
+ * of Sets required me to pop from the queue, destroying it. This gives me less flexibility with
+ * how I store and illustrate solutions to cover problems in the Pokemon GUI. Putting RankedSets
+ * in a set acheives the same ordering as I wanted in a priority queue and allows for more
+ * flexibility.
+ */
 #ifndef RANKEDSET_H
 #define RANKEDSET_H
 #include <iterator>

@@ -1,7 +1,7 @@
 #include "GUI/MiniGUI.h"
 #include "PokemonParser.h"
 #include "PokemonLinks.h"
-#include "Utilities/PokemonUtilities.h"
+#include "Utilities/Resistance.h"
 #include "Utilities/RankedSet.h"
 #include <fstream>
 #include <memory>

@@ -87,7 +87,7 @@
 #include <utility>
 #include <vector>
 #include "GUI/SimpleTest.h"
-#include "Utilities/PokemonUtilities.h"
+#include "Utilities/Resistance.h"
 #include "Utilities/RankedSet.h"
 
 
