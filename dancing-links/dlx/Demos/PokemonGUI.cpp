@@ -336,12 +336,10 @@ namespace {
             SELECTED,
         }ButtonToggle;
 
-
-
         /* Dropdown of all the problems to choose from. */
         Temporary<GComboBox> mProblems;
         Temporary<GColorConsole> mSolutionsDisplay;
-        const double DISPLAY_WIDTH = 800.0;
+        const double DISPLAY_WIDTH = 900.0;
 
         /* Button to trigger the solver. */
         Temporary<GContainer> controls;

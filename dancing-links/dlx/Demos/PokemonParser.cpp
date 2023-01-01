@@ -1,3 +1,15 @@
+/**
+ * Author: Alex Lopez
+ * File: PokemonParser.cpp
+ * -----------------------
+ * This file handles getting Pokemon Data from JSON files and turning it into C++ std compliant
+ * data forms like maps and sets. This implementation is heavily dependent on QT libraries for
+ * parsing the JSON. I chose to turn the data into C++ std forms to use with the program, even
+ * though it would have been possible to just read the data from the files in directly during the
+ * program runtime, in case QT becomes deprecated or I want to move this to a CLI implementation.
+ * Then, I just need to rewrite the parser that gets me data from JSON files rather than rewrite
+ * the whole program.
+ */
 #include "PokemonParser.h"
 #include "MapParser.h"
 #include <functional>
@@ -31,7 +43,8 @@ namespace {
                                                     "Fire-Normal","Fire-Water","Fighting-Ice",
                                                     "Bug-Ice","Poison-Rock","Ghost-Grass",
                                                     "Fire-Poison","Poison-Psychic",
-                                                    "Electric-Poison","Dragon-Grass","Dark-Normal"};
+                                                    "Electric-Poison","Dragon-Grass","Dark-Normal",
+                                                    "Fighting-Flying"};
 
     const std::set<std::string> ADDED_GEN_2_TO_5 = {"Dark","Steel","Dragon-Normal","Dragon-Fire",
                                                     "Dragon-Water","Dragon-Electric",
@@ -48,7 +61,7 @@ namespace {
                                                     "Normal-Psychic","Fire-Ice","Flying-Psychic",
                                                     "Fire-Rock","Bug-Water","Bug-Fighting",
                                                     "Ground-Ice","Ghost-Ice","Ghost-Water",
-                                                    "Ghost-Ground","Grass-Flying","Electric-Ghost",
+                                                    "Ghost-Ground","Flying-Grass","Electric-Ghost",
                                                     "Bug-Ground","Flying-Ground","Fighting-Rock",
                                                     "Ground-Psychic","Flying-Ghost","Fire-Ghost",
                                                     "Bug-Fire","Psychic-Rock","Electric-Ice"};
@@ -212,28 +225,20 @@ loadSelectedGymsDefense(const std::map<std::string,std::set<Resistance>>& curren
     getQJsonObject(mapData, JSON_ALL_MAPS_FILE);
     std::map<std::string,std::set<Resistance>> result = {};
 
-    // Get the data associated with the selected file name for a map.
     QString map = QString::fromStdString(selectedMap);
     QJsonObject gymKeys = mapData[map].toObject();
 
-    // Iterate through all of the gym keys, if a key is in the selected Gyms proceed.
     for (const QString& gym : gymKeys.keys()) {
-
         if (selectedGyms.contains(gym.toStdString())) {
-            // Take all the types for that gym and put that type and its associated resistances in result.
             QJsonArray gymDefenseTypes = gymKeys[gym][GYM_DEFENSE_KEY].toArray();
+
             for (const QJsonValueConstRef& type : gymDefenseTypes) {
-                // You can get the resistances from the generation map we have already built.
                 std::string stdVersion = QString(type.toString()).toStdString();
-
-
                 result[stdVersion] = currentGenInteractions.at(stdVersion);
-
             }
         }
-
     }
-    // return this much smaller map.
+    // This will be a much smaller map.
     return result;
 }
 
@@ -242,21 +247,19 @@ std::set<std::string> loadSelectedGymsAttacks(const std::string& selectedMap,
     QJsonObject mapData;
     getQJsonObject(mapData, JSON_ALL_MAPS_FILE);
     std::set<std::string> result = {};
-    // Get the data for the selected map
     QString map = QString::fromStdString(selectedMap);
     QJsonObject gymKeys = mapData[map].toObject();
 
-    // Iterate through all the gym keys if the key is in the selected Gyms proceed.
     for (const QString& gym : gymKeys.keys()) {
-
         if (selectedGyms.contains(gym.toStdString())) {
-            // Add all attack types to the result set invariant, duplicates will filter out.
             QJsonArray gymAttackTypes = gymKeys[gym][GYM_ATTACKS_KEY].toArray();
+
             for (const QJsonValueConstRef& type : gymAttackTypes) {
                 std::string stdVersion = QString(type.toString()).toStdString();
                 result.insert(stdVersion);
             }
         }
     }
+    // Return a simple set rather than altering every type's resistances in a large map.
     return result;
 }

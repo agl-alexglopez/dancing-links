@@ -1,3 +1,14 @@
+/**
+ * Author: Alexander Lopez
+ * File: PokemonLinks.cpp
+ * ----------------------
+ * Contained in this file is my implementation of Algorithm X via dancing links as outlined by
+ * Donald Knuth. The exact cover implementation is a faithful representation of the algorithm that
+ * Knuth describes in the context of C++ and the Pokemon Type Coverage Problem. The Overlapping
+ * Coverage implementation is a variation on exact cover that I use to generate coverage that allows
+ * multiple options to cover some of the same items more than once. For a more detailed writeup see
+ * the .h file and README.md in this repository.
+ */
 #include "PokemonLinks.h"
 #include <limits.h>
 #include <cmath>
@@ -10,8 +21,7 @@ std::set<RankedSet<std::string>> PokemonLinks::getExactTypeCoverage() {
     std::set<RankedSet<std::string>> exactCoverages = {};
     RankedSet<std::string> coverage = {};
     hitLimit_ = false;
-    int depthLimit = requestedCoverSolution_ == DEFENSE ? MAX_TEAM_SIZE : MAX_ATTACK_SLOTS;
-    fillExactCoverages(exactCoverages, coverage, depthLimit);
+    fillExactCoverages(exactCoverages, coverage, depthLimit_);
     return exactCoverages;
 }
 
@@ -142,7 +152,10 @@ void PokemonLinks::unhideOptions(int indexInOption) {
     }
 }
 
-// Both Cover Problems can use the exact same choosing heursistic.
+
+/* * * * * * * * * * * *  Shared Choosing Heuristic for Both Techniques * * * * * * * * * * * * * */
+
+
 int PokemonLinks::chooseItem() const {
     int min = INT_MAX;
     int chosenIndex = 0;
@@ -168,8 +181,7 @@ std::set<RankedSet<std::string>> PokemonLinks::getOverlappingTypeCoverage() {
     std::set<RankedSet<std::string>> overlappingCoverages = {};
     RankedSet<std::string> coverage = {};
     hitLimit_ = false;
-    int depthLimit = requestedCoverSolution_ == DEFENSE ? MAX_TEAM_SIZE : MAX_ATTACK_SLOTS;
-    fillOverlappingCoverages(overlappingCoverages, coverage, depthLimit);
+    fillOverlappingCoverages(overlappingCoverages, coverage, depthLimit_);
     return overlappingCoverages;
 }
 
@@ -317,6 +329,7 @@ PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typ
 void PokemonLinks::buildDefenseLinks(const std::map<std::string,std::set<Resistance>>&
                                      typeInteractions) {
     // We always must gather all attack types available in this query
+    depthLimit_ = MAX_TEAM_SIZE;
     requestedCoverSolution_ = DEFENSE;
     std::set<std::string> generationTypes = {};
     for (const Resistance& res : typeInteractions.begin()->second) {
@@ -441,6 +454,7 @@ void PokemonLinks::buildAttackLinks(const std::map<std::string,std::set<Resistan
         }
     }
     itemTable_[itemTable_.size() - 1].right = 0;
+    depthLimit_ = invertedMap.size();
     initializeColumns(invertedMap, columnBuilder, requestedCoverSolution_);
 }
 
@@ -527,6 +541,9 @@ std::ostream& operator<<(std::ostream& os, const std::set<RankedSet<std::string>
 }
 
 
+/* * * * * * * * * * * * * * * *   Test Cases Below this Point    * * * * * * * * * * * * * * * * */
+
+
 /* * * * * * * * * * * * * * * * * *   Defense Links Init   * * * * * * * * * * * * * * * * * * * */
 
 
@@ -561,6 +578,7 @@ STUDENT_TEST("Initialize small defensive links") {
         {INT_MIN,7,INT_MIN,Resistance::EMPTY_,0} ,
     };
     PokemonLinks links(types, PokemonLinks::DEFENSE);
+    EXPECT_EQUAL(links.depthLimit_, links.MAX_TEAM_SIZE);
     EXPECT_EQUAL(optionTable, links.optionTable_);
     EXPECT_EQUAL(itemTable, links.itemTable_);
     EXPECT_EQUAL(dlx, links.links_);
@@ -608,6 +626,7 @@ STUDENT_TEST("Initialize a world where there are only single types.") {
         {INT_MIN,17,INT_MIN,Resistance::EMPTY_,0},
     };
     PokemonLinks links(types, PokemonLinks::DEFENSE);
+    EXPECT_EQUAL(links.depthLimit_, links.MAX_TEAM_SIZE);
     EXPECT_EQUAL(optionTable, links.optionTable_);
     EXPECT_EQUAL(itemTable, links.itemTable_);
     EXPECT_EQUAL(dlx, links.links_);
@@ -659,6 +678,7 @@ STUDENT_TEST("Cover Electric with Dragon eliminates Electric Option. Uncover res
         {INT_MIN,17,INT_MIN,Resistance::EMPTY_,0},
     };
     PokemonLinks links(types, PokemonLinks::DEFENSE);
+    EXPECT_EQUAL(links.depthLimit_, links.MAX_TEAM_SIZE);
     EXPECT_EQUAL(optionTable, links.optionTable_);
     EXPECT_EQUAL(itemTable, links.itemTable_);
     EXPECT_EQUAL(dlx, links.links_);
@@ -828,6 +848,7 @@ STUDENT_TEST("There are two exact covers for this typing combo.") {
         {"Water", {{"Electric",Resistance::NORMAL},{"Grass",Resistance::DOUBLE},{"Ice",Resistance::FRAC12},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
     };
     PokemonLinks links(types, PokemonLinks::DEFENSE);
+    EXPECT_EQUAL(links.depthLimit_, links.MAX_TEAM_SIZE);
     std::set<RankedSet<std::string>> correct = {{11,{"Ghost","Ground","Poison","Water"}}, {13,{"Electric","Ghost","Poison","Water"}}};
     EXPECT_EQUAL(links.getExactTypeCoverage(), correct);
 }
@@ -873,6 +894,7 @@ STUDENT_TEST("Initialization of ATTACK dancing links.") {
         {INT_MIN,9,INT_MIN,Resistance::EMPTY_,0},
     };
     PokemonLinks links(types, PokemonLinks::ATTACK);
+    EXPECT_EQUAL(links.depthLimit_, 3);
     EXPECT_EQUAL(links.optionTable_, optionTable);
     EXPECT_EQUAL(links.itemTable_, itemTable);
     EXPECT_EQUAL(links.links_, dlx);
@@ -903,6 +925,7 @@ STUDENT_TEST("At least test that we can recognize a successful attack coverage")
     std::set<RankedSet<std::string>> solutions = {{30, {"Fighting","Grass","Ground","Ice"}},
                                                   {30,{"Fighting","Grass","Ground","Poison"}}};
     PokemonLinks links(types, PokemonLinks::ATTACK);
+    EXPECT_EQUAL(links.depthLimit_, 5);
     EXPECT_EQUAL(links.getExactTypeCoverage(), solutions);
 }
 

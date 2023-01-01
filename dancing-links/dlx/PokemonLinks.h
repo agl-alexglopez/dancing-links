@@ -1,3 +1,83 @@
+/**
+ * Author: Alexander G. Lopez
+ * File: PokemonLinks.h
+ * --------------------------
+ * This class defines a PokemonLinks object that can be used to solve the Pokemon Type Coverage
+ * Problem with Donald Knuth's Algorithm X via Dancing Links. At the most abstract level, an exact
+ * coverage is one in which we are able to cover each item in a set of items exactly once by
+ * choosing options that contain those items. No two options that we pick can cover the same item.
+ *
+ * I apply this concept to the videogame Pokemon. In Pokemon, there are fundamental nature-related
+ * types like Fire, Water, Flying, Fighting and many others. Depending on the Pokemon Generation
+ * there can be anywhere from 15 to 18 of these single types. These types act as a large and
+ * nuanced layer of complexity that goes over what is fundametally a game of rock-paper-scissors.
+ * Types have advantages of over types or are weak to other types. Pokemon can themselves BE these
+ * fundamental types. However, they may take on two types, such as Fire-Flying or Bug-Flying. While
+ * these fundamental types could be combined to form 306 unique dual types, not to mention the
+ * additional 15 to 18 single types, the developers of this game have not done so yet. Depending on
+ * the generation there are far fewer types than this, but there are still many. The most recent
+ * release is up to 162 unique pokemon types.
+ *
+ * For the full ruleset of Pokemon look elswhere, but in brief what I do in this problem is
+ * determine if there are Perfect and/or Overlapping type coverages for given sets of Attack and
+ * Defense types. Attack types can only be those 15 to 18 single types mentioned earlier an
+ * defensive types are these sames types with the additional possiblity of combining two types.
+ *
+ * An exact cover for Defense uses the following rules to determine if such a cover is possible.
+ *
+ *      - We may pick a maximum of 6 Pokemon for a team.
+ *      - We defend ourselves from 15 to 18 attack types, depending on the generation of Pokemon.
+ *      - Pick at most 6 pokemon that have resistances to every attack type exactly once.
+ *      - Resistance means that when an attack type is used on our chosen type it does no more
+ *        than x0.5 the damage of a normal attack. So, across all of our chosen pokemon can we
+ *        be resistant to every attack type exactly once?
+ *      - Some Resistances are better than others. For example, it is possible for a type to be
+ *        immune to other types x0.0, very resistant x0.25, or resistant x0.5. These resistances
+ *        are scored with x0.0 being given 1 point, x0.25 given 2 points, and x0.5 given 3 points.
+ *        The goal is to keep the lowest score possible, NOT the highest.
+ *      - Viable teams that we find will be ranked according to the scoring system described above.
+ *
+ * An exact cover for Attack uses the following rules to determine if an exact cover is possible.
+ *
+ *      - Every pokemon in a team can learn 4 attacks.
+ *      - Attacks are only of a single type. There are no attacks that do two simultaneous types of
+ *        damage.
+ *      - This means that we can choose 24 attacks. This will never happen because we are always
+ *        limited by the maximum number of attack types (15 to 18). So effectively, there is no
+ *        depth limit for this search as we can choose every attack at most.
+ *      - Our choice of attack types must be effective against every defensive type we are tasked
+ *        with damaging exactly once. No two attack types may be effective against the same
+ *        defensive type.
+ *      - Attacks may be super-effective in two ways against another type: they do double damage x2
+ *        or quadruple damage x4. These multipliers are scored with x2 damage earning 5 points and
+ *        x4 damage earning 6 points. A higher score is better in this case, NOT a lower score.
+ *      - Viable attack type selections will be ranked by the scoring system described above.
+ *
+ * An overlapping cover is another way to look at both of these problems. An overlapping cover means
+ * that we allow overlap in the options we choose covering some of the same items. For example,
+ * in the defensive case, our goal is to simply choose at most 6 Pokemon that will resist all
+ * attack types in the game, we do not care about how much overlap there is in coverage between
+ * the defensive types we choose. We only care about being resistant to all damage types across our
+ * entire team.
+ *
+ * For the Overlapping version of this problem, we use the exact same scoring schemes for Defense
+ * and Attack. Overlapping cover will produce a tremendous number of possibilities in some cases
+ * so I have limited how long this algorithm can run with a maximum output. I have run out of
+ * memory when generating combinations before and could not tell you how many Overlapping covers
+ * are possible for some Pokemon Generations. Exact cover, in contrast, is usually much more
+ * reasonable to determine because it is much more difficult to achieve. For an even more detailed
+ * writeup please see the README.md for this repository, where I use images to help describe the
+ * process.
+ *
+ * For more information on Algorithm X via Dancing Links as Knuth describes it please read his work.
+ *
+ *      The Art of Computer Programming,
+ *      Volume 4B,
+ *      Combinatorial Algorithms, Part 2,
+ *      Sec. 7.2.2.1,
+ *      Pg.65-70,
+ *      Knuth
+ */
 #ifndef POKEMONLINKS_H
 #define POKEMONLINKS_H
 #include <map>
@@ -100,7 +180,9 @@ public:
      * @brief getOverlappingTypeCoverage  an overlapping coverage in which we cover every "item"
      *                                    with our choices of "options." It is allowable for two
      *                                    options cover the same item twice, the goal is to cover
-     *                                    the items with any allowable choices.
+     *                                    the items with any allowable choices. The scoring scheme
+     *                                    for generated sets is the same as described in the
+     *                                    exact cover version of the problem.
      * @return                            the set of Ranked Sets that form all overlapping covers.
      */
     std::set<RankedSet<std::string>> getOverlappingTypeCoverage();
@@ -154,6 +236,7 @@ private:
     std::vector<std::string> optionTable_;  // How we know the name of the option we chose.
     std::vector<typeName> itemTable_;       // How we know the names of our items
     std::vector<pokeLink> links_;           // The links that dance!
+    int depthLimit_;
     int numItems_;
     int numOptions_;
     CoverageType requestedCoverSolution_;
