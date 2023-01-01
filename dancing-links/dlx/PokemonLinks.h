@@ -15,12 +15,12 @@
  * fundamental types. However, they may take on two types, such as Fire-Flying or Bug-Flying. While
  * these fundamental types could be combined to form 306 unique dual types, not to mention the
  * additional 15 to 18 single types, the developers of this game have not done so yet. Depending on
- * the generation there are far fewer types than this, but there are still many. The most recent
+ * the generation, there are far fewer types than this, but there are still many. The most recent
  * release is up to 162 unique pokemon types.
  *
  * For the full ruleset of Pokemon look elswhere, but in brief what I do in this problem is
  * determine if there are Perfect and/or Overlapping type coverages for given sets of Attack and
- * Defense types. Attack types can only be those 15 to 18 single types mentioned earlier an
+ * Defense types. Attack types can only be those 15 to 18 single types mentioned earlier and
  * defensive types are these sames types with the additional possiblity of combining two types.
  *
  * An exact cover for Defense uses the following rules to determine if such a cover is possible.
@@ -92,6 +92,7 @@
 
 
 class PokemonLinks {
+
 public:
 
     /* Alter here if you want to change the rules of Pokemon. Normally, there are at most 6 pokemon
@@ -102,7 +103,6 @@ public:
      */
     const std::size_t MAX_OUTPUT_SIZE=100000;
     const int MAX_TEAM_SIZE=6;
-    const int MAX_ATTACK_SLOTS=24;
 
     // The user is asking us for the defensive team they should build or attacks they need.
     typedef enum CoverageType {
@@ -164,7 +164,7 @@ public:
      *
      *                                  The lower the score the stronger that typing is. For forming
      *                                  our choices of attack types we score based on their
-     *                                  resistance to each attack type as follows.
+     *                                  damage to each attack type as follows.
      *
      *                                      - x2 multiplier is 4 points.
      *                                      - x4 multiplier is 5 points.
@@ -177,7 +177,7 @@ public:
     std::set<RankedSet<std::string>> getExactTypeCoverage();
 
     /**
-     * @brief getOverlappingTypeCoverage  an overlapping coverage in which we cover every "item"
+     * @brief getOverlappingTypeCoverage  an overlapping coverage is when we cover every "item"
      *                                    with our choices of "options." It is allowable for two
      *                                    options cover the same item twice, the goal is to cover
      *                                    the items with any allowable choices. The scoring scheme
@@ -224,7 +224,6 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const PokemonLinks& links);
 
 private:
-
 
     /* * * * * * * * * * *   Dancing Links Internals and Implementation   * * * * * * * * * * * * */
 

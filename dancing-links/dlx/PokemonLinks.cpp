@@ -52,11 +52,9 @@ void PokemonLinks::fillExactCoverages(std::set<RankedSet<std::string>>& exactCov
          */
         if (exactCoverages.size() == MAX_OUTPUT_SIZE) {
             hitLimit_ = true;
-            coverage.remove(typeStrength.first, typeStrength.second);
             uncoverType(cur);
             return;
         }
-
         coverage.remove(typeStrength.first, typeStrength.second);
         uncoverType(cur);
     }
@@ -78,7 +76,6 @@ std::pair<int,std::string> PokemonLinks::coverType(int indexInOption) {
             itemTable_[cur.left].right = cur.right;
             itemTable_[cur.right].left = cur.left;
             hideOptions(i);
-
             /* If there is a better way to score the teams or attack schemes we build here would
              * be the place to change it. I just give points based on how good the resistance or
              * attack strength is. Immunity is better than quarter is better than half damage if
@@ -195,15 +192,12 @@ void PokemonLinks::fillOverlappingCoverages(std::set<RankedSet<std::string>>& ov
     if (depthTag <= 0) {
         return;
     }
+    // This algorithm never decreases length of a column so will never return -1 here.
     int attackType = chooseItem();
-    if (attackType == -1) {
-        return;
-    }
 
     for (int cur = links_[attackType].down; cur != attackType; cur = links_[cur].down) {
         std::pair<int,std::string> typeStrength = overlappingCoverType(cur, depthTag);
         coverage.insert(typeStrength.first, typeStrength.second);
-
 
         fillOverlappingCoverages(overlappingCoverages, coverage, depthTag - 1);
 
@@ -212,15 +206,12 @@ void PokemonLinks::fillOverlappingCoverages(std::set<RankedSet<std::string>>& ov
          */
         if (overlappingCoverages.size() == MAX_OUTPUT_SIZE) {
             hitLimit_ = true;
-            coverage.remove(typeStrength.first, typeStrength.second);
             overlappingUncoverType(cur);
             return;
         }
-
         coverage.remove(typeStrength.first, typeStrength.second);
         overlappingUncoverType(cur);
     }
-
 }
 
 std::pair<int,std::string> PokemonLinks::overlappingCoverType(int indexInOption, int depthTag) {
@@ -232,7 +223,6 @@ std::pair<int,std::string> PokemonLinks::overlappingCoverType(int indexInOption,
             i = links_[i].up;
             result.second = optionTable_[std::abs(links_[i - 1].topOrLen)];
         } else {
-
             /* Overlapping cover is much simpler at the cost of generating a tremendous number of
              * solutions. We only need to know which items and options are covered at which
              * recursive levels because we are more relaxed about leaving options available after
