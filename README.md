@@ -12,6 +12,9 @@
 	- Dancing Links Class **([`PartnerLinks.h`](/dancing-links/dlx/PartnerLinks.h))**
 	- Dancing Links Implementation **([`PartnerLinks.cpp`](/dancing-links/dlx/PartnerLinks.cpp))**
 	- Traditional Set Implementation **([`Matchmaker.cpp`](/dancing-links/dlx/Matchmaker.cpp))**
+- Pokémon Planning
+	- Dancing Links Class **([`PokemonLinks.h`](/dancing-links/dlx/PokemonLinks.h))**
+	- Dancing Links Implementation **([`PokemonLinks.cpp`](/dancing-links/dlx/PokemonLinks.cpp))**
 - [Citations](#citations)
 
 ## Build Note
