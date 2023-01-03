@@ -555,7 +555,7 @@ You can solve the maps entirely for exact and overlapping cover problems or you 
 5. Select only specific gyms that you would like to cover with the `G1`-`E4` buttons.
 6. Clear all selections at any time with the `CL` button.
 
-I find it interesting that only Generation IX, the `Paldea.dst` map, has an exact cover for all possible types you will encounter in that generation. I am no expert on game design, but perhaps that communicates the variety and balance that Game Freak has achieved in their later games. However, looking at smaller subsets of gyms in the other maps can still plenty of fun!
+I find it interesting that only Generation IX, the `Paldea.dst` map, has an exact cover for all possible types you will encounter in that generation. I am no expert on game design, but perhaps that communicates the variety and balance that Game Freak has achieved in their later games. However, looking at smaller subsets of gyms in the other maps can still be plenty of fun!
 
 ## Citations
 
