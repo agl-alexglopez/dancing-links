@@ -17,7 +17,7 @@
 /* * * * * * * * * * * * * * * *    Algorithm X via Dancing Links   * * * * * * * * * * * * * * * */
 
 
-std::set<RankedSet<std::string>> PokemonLinks::getExactTypeCoverage() {
+std::set<RankedSet<std::string>> PokemonLinks::getExactTypeCoverages() {
     std::set<RankedSet<std::string>> exactCoverages = {};
     RankedSet<std::string> coverage = {};
     hitLimit_ = false;
@@ -174,7 +174,7 @@ int PokemonLinks::chooseItem() const {
 /* * * * * * * * * * * *   Overlapping Coverage via Dancing Links   * * * * * * * * * * * * * * * */
 
 
-std::set<RankedSet<std::string>> PokemonLinks::getOverlappingTypeCoverage() {
+std::set<RankedSet<std::string>> PokemonLinks::getOverlappingTypeCoverages() {
     std::set<RankedSet<std::string>> overlappingCoverages = {};
     RankedSet<std::string> coverage = {};
     hitLimit_ = false;
@@ -846,7 +846,41 @@ STUDENT_TEST("There are two exact covers for this typing combo.") {
     PokemonLinks links(types, PokemonLinks::DEFENSE);
     EXPECT_EQUAL(links.depthLimit_, links.MAX_TEAM_SIZE);
     std::set<RankedSet<std::string>> correct = {{11,{"Ghost","Ground","Poison","Water"}}, {13,{"Electric","Ghost","Poison","Water"}}};
-    EXPECT_EQUAL(links.getExactTypeCoverage(), correct);
+    EXPECT_EQUAL(links.getExactTypeCoverages(), correct);
+}
+
+STUDENT_TEST("There is one exact and a few overlapping covers here. Exact cover first.") {
+    /*
+     *                     Electric    Fire    Grass    Ice    Normal    Water
+     *
+     *   Bug-Ghost                              x.5             x0
+     *
+     *   Electric-Grass     x.25                x.5                       x.5
+     *
+     *   Fire-Flying                   x.5      x.25
+     *
+     *   Ground-Water       x0         x.5
+     *
+     *   Ice-Psychic                                    x.5
+     *
+     *   Ice-Water                                      x.25              x.5
+     */
+    const std::map<std::string,std::set<Resistance>> types = {
+        /* In reality maps will have every type present in every key. But I know the internals
+         * of my implementation and will just enter all types for the first key to make entering
+         * the rest of the test cases easier.
+         */
+        {"Bug-Ghost",{{"Electric",Resistance::NORMAL},{"Fire",Resistance::NORMAL},{"Grass",Resistance::FRAC12},{"Ice",Resistance::NORMAL},{"Normal",Resistance::IMMUNE},{"Water",Resistance::NORMAL}}},
+        {"Electric-Grass",{{"Electric",Resistance::FRAC14},{"Grass",Resistance::FRAC12},{"Water",Resistance::FRAC12}}},
+        {"Fire-Flying",{{"Fire",Resistance::FRAC12},{"Grass",Resistance::FRAC14}}},
+        {"Ground-Water",{{"Electric",Resistance::IMMUNE},{"Fire",Resistance::FRAC12}}},
+        {"Ice-Psychic",{{"Ice",Resistance::FRAC12}}},
+        {"Ice-Water",{{"Ice",Resistance::FRAC14},{"Water",Resistance::FRAC12}}},
+    };
+    PokemonLinks links(types, PokemonLinks::DEFENSE);
+    std::set<RankedSet<std::string>> result = links.getExactTypeCoverages();
+    std::set<RankedSet<std::string>> correct = {{13,{"Bug-Ghost","Ground-Water","Ice-Water",}}};
+    EXPECT_EQUAL(correct, result);
 }
 
 
@@ -922,7 +956,40 @@ STUDENT_TEST("At least test that we can recognize a successful attack coverage")
                                                   {30,{"Fighting","Grass","Ground","Poison"}}};
     PokemonLinks links(types, PokemonLinks::ATTACK);
     EXPECT_EQUAL(links.depthLimit_, 5);
-    EXPECT_EQUAL(links.getExactTypeCoverage(), solutions);
+    EXPECT_EQUAL(links.getExactTypeCoverages(), solutions);
+}
+
+STUDENT_TEST("There is one exact and a few overlapping covers here. Exact cover first.") {
+    /*
+     *            Bug-Ghost   Electric-Grass   Fire-Flying   Ground-Water   Ice-Psychic   Ice-Water
+     *
+     * Electric                                    x2                                        x2
+     *
+     * Fire          x2               x2                                       x2
+     *
+     * Grass                                                      x4                         x2
+     *
+     * Ice                            x2
+     *
+     * Normal
+     *
+     * Water                                       x2
+     *
+     */
+    const std::map<std::string,std::set<Resistance>> types = {
+        {"Bug-Ghost",{{"Electric",Resistance::NORMAL},{"Fire",Resistance::DOUBLE},{"Grass",Resistance::FRAC12},{"Ice",Resistance::NORMAL},{"Normal",Resistance::IMMUNE},{"Water",Resistance::NORMAL}}},
+        {"Electric-Grass",{{"Electric",Resistance::FRAC14},{"Fire",Resistance::DOUBLE},{"Grass",Resistance::FRAC12},{"Ice",Resistance::FRAC12},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
+        {"Fire-Flying",{{"Electric",Resistance::DOUBLE},{"Fire",Resistance::FRAC12},{"Grass",Resistance::FRAC14},{"Ice",Resistance::FRAC12},{"Normal",Resistance::NORMAL},{"Water",Resistance::DOUBLE}}},
+        {"Ground-Water",{{"Electric",Resistance::IMMUNE},{"Fire",Resistance::FRAC12},{"Grass",Resistance::QUADRU},{"Ice",Resistance::NORMAL},{"Normal",Resistance::NORMAL},{"Water",Resistance::NORMAL}}},
+        {"Ice-Psychic",{{"Electric",Resistance::NORMAL},{"Fire",Resistance::DOUBLE},{"Grass",Resistance::NORMAL},{"Ice",Resistance::FRAC12},{"Normal",Resistance::NORMAL},{"Water",Resistance::NORMAL}}},
+        {"Ice-Water",{{"Electric",Resistance::DOUBLE},{"Fire",Resistance::NORMAL},{"Grass",Resistance::DOUBLE},{"Ice",Resistance::FRAC12},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
+    };
+    PokemonLinks links(types, PokemonLinks::ATTACK);
+    std::set<RankedSet<std::string>> result = links.getExactTypeCoverages();
+    std::set<RankedSet<std::string>> correct = {
+        {31,{"Fire","Grass","Water",}}
+    };
+    EXPECT_EQUAL(result, correct);
 }
 
 
@@ -1096,11 +1163,53 @@ STUDENT_TEST("Overlapping allows two types to cover same opposing type i.e. Fire
         {"Water", {{"Electric",Resistance::NORMAL},{"Fire",Resistance::FRAC12},{"Grass",Resistance::NORMAL},{"Ice",Resistance::NORMAL},{"Normal",Resistance::NORMAL},{"Water",Resistance::FRAC12}}},
     };
     PokemonLinks links (types, PokemonLinks::DEFENSE);
-    std::set<RankedSet<std::string>> result = links.getOverlappingTypeCoverage();
+    std::set<RankedSet<std::string>> result = links.getOverlappingTypeCoverages();
     std::set<RankedSet<std::string>> correct = {
         {18,{"Electric","Fire","Ice","Normal",}},
         {18,{"Fire","Grass","Ice","Normal",}},
         {18,{"Fire","Ice","Normal","Water",}}
+    };
+    EXPECT_EQUAL(correct, result);
+}
+
+STUDENT_TEST("There is one exact and a few overlapping covers here. Let's see overlapping.") {
+    /*
+     *                     Electric    Fire    Grass    Ice    Normal    Water
+     *
+     *   Bug-Ghost                              x.5             x0
+     *
+     *   Electric-Grass     x.25                x.5                       x.5
+     *
+     *   Fire-Flying                   x.5      x.25
+     *
+     *   Ground-Water       x0         x.5
+     *
+     *   Ice-Psychic                                    x.5
+     *
+     *   Ice-Water                                      x.25              x.5
+     */
+    const std::map<std::string,std::set<Resistance>> types = {
+        /* In reality maps will have every type present in every key. But I know the internals
+         * of my implementation and will just enter all types for the first key to make entering
+         * the rest of the test cases easier.
+         */
+        {"Bug-Ghost",{{"Electric",Resistance::NORMAL},{"Fire",Resistance::NORMAL},{"Grass",Resistance::FRAC12},{"Ice",Resistance::NORMAL},{"Normal",Resistance::IMMUNE},{"Water",Resistance::NORMAL}}},
+        {"Electric-Grass",{{"Electric",Resistance::FRAC14},{"Grass",Resistance::FRAC12},{"Water",Resistance::FRAC12}}},
+        {"Fire-Flying",{{"Fire",Resistance::FRAC12},{"Grass",Resistance::FRAC14}}},
+        {"Ground-Water",{{"Electric",Resistance::IMMUNE},{"Fire",Resistance::FRAC12}}},
+        {"Ice-Psychic",{{"Ice",Resistance::FRAC12}}},
+        {"Ice-Water",{{"Ice",Resistance::FRAC14},{"Water",Resistance::FRAC12}}},
+    };
+    PokemonLinks links(types, PokemonLinks::DEFENSE);
+    std::set<RankedSet<std::string>> result = links.getOverlappingTypeCoverages();
+    std::set<RankedSet<std::string>> correct = {
+        {13,{"Bug-Ghost","Ground-Water","Ice-Water",}},
+        {14,{"Bug-Ghost","Electric-Grass","Fire-Flying","Ice-Water",}},
+        {14,{"Bug-Ghost","Electric-Grass","Ground-Water","Ice-Psychic",}},
+        {14,{"Bug-Ghost","Electric-Grass","Ground-Water","Ice-Water",}},
+        {14,{"Bug-Ghost","Ground-Water","Ice-Psychic","Ice-Water",}},
+        {15,{"Bug-Ghost","Electric-Grass","Fire-Flying","Ice-Psychic",}},
+        {15,{"Bug-Ghost","Electric-Grass","Ground-Water","Ice-Psychic",}}
     };
     EXPECT_EQUAL(correct, result);
 }

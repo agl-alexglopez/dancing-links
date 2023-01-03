@@ -147,45 +147,49 @@ public:
                           const std::set<std::string>& attackTypes);
 
     /**
-     * @brief getExactTypeCoverage  an exact type coverage is one in which every "option" we choose
-     *                              to cover a given set of "items" will cover each item exactly
-     *                              once. For example, if building a team of Pokemon to defend
-     *                              against attack types, no two Pokemon in that team could be
-     *                              resistant to the same attack types. Sets are ranked by the
-     *                              following criteria:
+     * @brief getExactTypeCoverages  an exact type coverage is one in which every "option" we choose
+     *                               to cover a given set of "items" will cover each item exactly
+     *                               once. For example, if building a team of Pokemon to defend
+     *                               against attack types, no two Pokemon in that team could be
+     *                               resistant to the same attack types. Sets are ranked by the
+     *                               following criteria:
      *
-     *                                  For forming defensive teams we score types based on their
-     *                                  resistance to each attack type as follows.
+     *                                   For forming defensive teams we score types based on their
+     *                                   resistance to each attack type as follows.
      *
-     *                                      - x0.0 multiplier is 1 point.
-     *                                      - x0.25 multiplier is 2 points.
-     *                                      - x0.50 multiplier is 3 points.
-     *                                      - x1.0 multiplier or higher is not considered.
+     *                                       - x0.0 multiplier is 1 point.
+     *                                       - x0.25 multiplier is 2 points.
+     *                                       - x0.50 multiplier is 3 points.
+     *                                       - x1.0 multiplier or higher is not considered.
      *
-     *                                  The lower the score the stronger that typing is. For forming
-     *                                  our choices of attack types we score based on their
-     *                                  damage to each attack type as follows.
+     *                                   The lower the score the stronger that typing is. For
+     *                                   forming our choices of attack types we score based on their
+     *                                   damage to each attack type as follows.
      *
-     *                                      - x2 multiplier is 4 points.
-     *                                      - x4 multiplier is 5 points.
-     *                                      - x1.0 or lower is not considered.
+     *                                       - x2 multiplier is 4 points.
+     *                                       - x4 multiplier is 5 points.
+     *                                       - x1.0 or lower is not considered.
      *
-     *                                  The higher the score the stronger those choices of attack
-     *                                  types are for attacking the selected defensive types.
-     * @return                      the set of Ranked Sets that form all solutions of exact cover.
+     *                                   The higher the score the stronger those choices of attack
+     *                                   types are for attacking the selected defensive types.
+     * @return                       the set of Ranked Sets that form all solutions of exact cover.
      */
-    std::set<RankedSet<std::string>> getExactTypeCoverage();
+    std::set<RankedSet<std::string>> getExactTypeCoverages();
 
     /**
-     * @brief getOverlappingTypeCoverage  an overlapping coverage is when we cover every "item"
-     *                                    with our choices of "options." It is allowable for two
-     *                                    options cover the same item twice, the goal is to cover
-     *                                    the items with any allowable choices. The scoring scheme
-     *                                    for generated sets is the same as described in the
-     *                                    exact cover version of the problem.
-     * @return                            the set of Ranked Sets that form all overlapping covers.
+     * @brief getOverlappingTypeCoverages  an overlapping coverage is when we cover every "item"
+     *                                     with our choices of "options." It is allowable for two
+     *                                     options cover the same item twice, the goal is to cover
+     *                                     the items with any allowable choices. The scoring scheme
+     *                                     for generated sets is the same as described in the
+     *                                     exact cover version of the problem. Currently, this
+     *                                     solution is slow because it generates duplicate
+     *                                     RankedSet solutions. I filter out duplicates by using a
+     *                                     set. I have not yet found a way to prevent generating
+     *                                     duplicate solutions with the Dancing Links method.
+     * @return                             the set of Ranked Sets that form all overlapping covers.
      */
-    std::set<RankedSet<std::string>> getOverlappingTypeCoverage();
+    std::set<RankedSet<std::string>> getOverlappingTypeCoverages();
 
     /**
      * @brief reachedOutputLimit  for usability of Pokemon Planning application I cut off output at

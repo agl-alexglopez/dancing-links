@@ -540,7 +540,7 @@ Here are the results of those choices.
 
 ![overlapping-defense-cover](/images/defense-overlapping-cover.png)
 
-There are a few other **exact** and **overlapping** covers within this example if you want to try finding your own to solidify the concepts. You could also try the Attack version, which operates under the exact same principles.
+There are a few other **overlapping** covers within this example if you want to try finding your own to solidify the concepts. You could also try the Attack version, which operates under the exact same principles.
 
 ### Pokémon Planning Implementation
 

@@ -626,9 +626,9 @@ namespace {
         set<RankedSet<std::string>> solution = {};
 
         if (exactOrOverlapping == EXACT) {
-            solution = dlx.getExactTypeCoverage();
+            solution = dlx.getExactTypeCoverages();
         } else {
-            solution = dlx.getOverlappingTypeCoverage();
+            solution = dlx.getOverlappingTypeCoverages();
         }
 
         mAllCoverages.reset(new set<RankedSet<std::string>>(solution));
@@ -675,8 +675,8 @@ namespace {
         set<RankedSet<std::string>> solution = {};
         PokemonLinks dlx(*genToUse, PokemonLinks::ATTACK);
 
-        req == EXACT ? solution = dlx.getExactTypeCoverage() :
-                       solution = dlx.getOverlappingTypeCoverage();
+        req == EXACT ? solution = dlx.getExactTypeCoverages() :
+                       solution = dlx.getOverlappingTypeCoverages();
 
 
         mAllCoverages.reset(new set<RankedSet<std::string>>(solution));
