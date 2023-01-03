@@ -542,6 +542,24 @@ Here are the results of those choices.
 
 There are a few other **exact** and **overlapping** covers within this example if you want to try finding your own to solidify the concepts. You could also try the Attack version, which operates under the exact same principles.
 
+### Pokémon Planning Implementation
+
+In order to accomplish the in-place, no-copy recursion that comes with Knuth's Dancing Links, I have chosen to use a C++ vector. In older implementations of Dancing Links, Knuth used a 4-way linked grid of nodes with up, down, left, and right fields. Now, the left-right fields of these nodes can be implicit because we place everything in one vector.
+
+Here is the type that I use to manage the recursion and know when every item is covered. The name corresponds to the item.
+
+```c++
+typedef struct typeName {
+    std::string name;
+    int left;
+    int right;
+}typeName;
+```
+
+Here is the type that I use within the dancing links array.
+
+
+
 ### Pokémon Planning Usage Instructions
 
 I have created a small testing ground for the Pokémon Cover Problem. I adapted a graph drawing application written by Keith Schwarz and Stanford course staff to allow you to explore various Pokémon maps. The maps are divided by Pokémon Generation. For example, the Kanto map is based around the attack and defense types available in Generation I of Pokémon. I included a Generation V and Generation IX map as well with more types available as you progress through generations.

@@ -344,7 +344,6 @@ void PokemonLinks::buildDefenseLinks(const std::map<std::string,std::set<Resista
         index++;
     }
     itemTable_[itemTable_.size() - 1].right = 0;
-
     initializeColumns(typeInteractions, columnBuilder, requestedCoverSolution_);
 }
 
@@ -829,7 +828,7 @@ STUDENT_TEST("There are two exact covers for this typing combo.") {
      *      2. Electric, Ghost, Poison, Water
      *
      */
-    const std::map<std::string,std::set<Resistance>> types {
+    const std::map<std::string,std::set<Resistance>> types = {
         {"Electric", {{"Electric",Resistance::FRAC12},{"Grass",Resistance::NORMAL},{"Ice",Resistance::NORMAL},{"Normal",Resistance::NORMAL},{"Water",Resistance::NORMAL}}},
         {"Ghost", {{"Electric",Resistance::NORMAL},{"Grass",Resistance::NORMAL},{"Ice",Resistance::NORMAL},{"Normal",Resistance::IMMUNE},{"Water",Resistance::NORMAL}}},
         {"Ground", {{"Electric",Resistance::IMMUNE},{"Grass",Resistance::NORMAL},{"Ice",Resistance::NORMAL},{"Normal",Resistance::NORMAL},{"Water",Resistance::NORMAL}}},
@@ -841,6 +840,35 @@ STUDENT_TEST("There are two exact covers for this typing combo.") {
     EXPECT_EQUAL(links.depthLimit_, links.MAX_TEAM_SIZE);
     std::set<RankedSet<std::string>> correct = {{11,{"Ghost","Ground","Poison","Water"}}, {13,{"Electric","Ghost","Poison","Water"}}};
     EXPECT_EQUAL(links.getExactTypeCoverage(), correct);
+}
+
+STUDENT_TEST("There are a few exact and overlapping covers here. Exact test first.") {
+    /*
+     *                      Electric   Fire   Grass   Ice   Normal   Water
+     *
+     *   Bug-Ghost                             x.5           x0
+     *
+     *   Electric-Grass      x.25              x.5                    x.5
+     *
+     *   Fire-Flying                   x.5     x.25
+     *
+     *   Ground-Water        x0        x.5
+     *
+     *   Ice-Psychic                                  x.5
+     *
+     *   Ice-Water                                    x.25            x.5
+     */
+    const std::map<std::string,std::set<Resistance>> types = {
+        {"Bug-Ghost", {{"Grass",Resistance::FRAC12},{"Normal",Resistance::IMMUNE}}},
+        {"Electric-Grass", {{"Electric",Resistance::FRAC14},{"Grass",Resistance::FRAC12},{"Water",Resistance::FRAC12}}},
+        {"Fire-Flying", {{"Fire",Resistance::FRAC12},{"Grass",Resistance::FRAC12}}},
+        {"Ground-Water", {{"Electric",Resistance::IMMUNE},{"Fire",Resistance::FRAC12}}},
+        {"Ice-Psychic", {{"Ice",Resistance::FRAC12}}},
+        {"Ice-Water", {{"Ice",Resistance::FRAC14},{"Water",Resistance::FRAC12}}},
+    };
+    PokemonLinks links(types, PokemonLinks::DEFENSE);
+    std::cout << links.getExactTypeCoverage() << std::endl;
+    std::cout << links.getOverlappingTypeCoverage() << std::endl;
 }
 
 
