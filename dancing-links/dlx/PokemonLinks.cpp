@@ -192,8 +192,14 @@ void PokemonLinks::fillOverlappingCoverages(std::set<RankedSet<std::string>>& ov
     if (depthTag <= 0) {
         return;
     }
-    // This algorithm never decreases length of a column so will never return -1 here.
+    /* In certain generations certain types have no weaknesses so we might return -1 here. For
+     * example, in gen 1 there is no effective defense against Dragon attacks. So even though we
+     * never decrease length of a column, we could still have no way to cover an item.
+     */
     int attackType = chooseItem();
+    if (attackType == -1) {
+        return;
+    }
 
     for (int cur = links_[attackType].down; cur != attackType; cur = links_[cur].down) {
         std::pair<int,std::string> typeStrength = overlappingCoverType(cur, depthTag);
