@@ -421,7 +421,7 @@ In Pokémon, trainable animals/monsters battle on your behalf imbued with pseudo
 
 So, there are two cover problems hiding in the complexities of the Pokémon games: one for defense and one for attack. The two essential cover questions we can ask are as follows.
 
-- Which teams of 6 Pokémon--the most you can carry with you at once--give me resistance to every attack type I will encounter? If you consider an entire game, you would want to know the answer to that question for every attack type in the game. If you are considering just the attacks you will face in some portions of the game, then the range of attack type shrinks but the question remains the same.
+- Which teams of at most 6 Pokémon--the most you can carry with you at once--give me resistance to every attack type I will encounter? If you consider an entire game, you would want to know the answer to that question for every attack type in the game. If you are considering just the attacks you will face in some portions of the game, then the range of attack type shrinks but the question remains the same.
 - Which attack types can I choose to be effective against every defensive type I will encounter in the game? Again, considering the entire game versus some smaller sections will change the range of defensive types you will see, but the question remains the same.
 
 To try to answer these questions we can begin to organize Pokémon's data with Knuth's dancing links method. 
@@ -515,7 +515,7 @@ Now that I have summarized how **exact cover** works for the Pokémon type cover
 
 ### Overlapping Coverage
 
-An **exact cover** can be difficult to achieve. Depending on the Pokémon generation, it can be impossible. For example, early generations had certain defensive types which had no weaknesses to any attack types. So, it can be fun to look at cover in a slightly different way, allowing for overlap. With a simple adjustment we can find many more solutions to the cover problem.
+An **exact cover** can be difficult to achieve. Depending on the Pokémon generation, it can be impossible. In addition, most people don't think about being so exact with their choices so that no choice is wasted. Rather, they might just take a sweeping approach, trying to get as much coverage as possible. So, it can be fun to look at cover in a slightly different way, allowing for overlap. With a simple adjustment we can find many more solutions to the cover problem.
 
 ![overlapping-defense](/images/overlapping-defense.png)
 
@@ -543,7 +543,7 @@ There are a few other **exact** and **overlapping** covers within this example i
 
 I have created a small testing ground for the Pokémon Cover Problem. I adapted a graph drawing application written by Keith Schwarz and Stanford course staff to allow you to explore various Pokémon maps. The maps are divided by Pokémon Generation. For example, the Kanto map is based around the attack and defense types available in Generation I of Pokémon. I included a Generation V and Generation IX map as well with more types available as you progress through generations.
 
-You can solve the maps entirely for exact and overlapping cover problems or you can select specific gyms. In Pokémon, you progress through the game by defeating 8 gym leaders and then a final group called the Elite 4 (along with one last champion of that league). You can select any combination of gyms to defend or attack the types there. Interesting results can arise as you plan out your type advantages!
+You can solve the maps entirely for exact and overlapping cover problems or you can select specific gyms. In Pokémon, you progress through the game by defeating 8 gym leaders and then a final group called the Elite 4 (along with one last champion of that league). You can select any combination of gyms to defend against or attack and the cover problem will be adapted to the types in those locations. Interesting results can arise as you plan out your type advantages!
 
 1. Open the project in Qt Creator with the correct Stanford C++ library installed. (See the [Build Note](#build-note)).
 2. Build and run the project.
@@ -552,7 +552,7 @@ You can solve the maps entirely for exact and overlapping cover problems or you 
 5. Select only specific gyms that you would like to cover with the `G1`-`E4` buttons.
 6. Clear all selections at any time with the `CL` button.
 
-I find it interesting that only Generation IX, the `Paldea.dst` map, has an exact cover for all possible types you will encounter in that generation. I am no expert on game design, but perhaps that communicates the variety and balance that Game Freak has achieved in their later games. However, looking at smaller subsets of gyms in the other maps can still produce interesting results!
+I find it interesting that only Generation IX, the `Paldea.dst` map, has an exact cover for all possible types you will encounter in that generation. I am no expert on game design, but perhaps that communicates the variety and balance that Game Freak has achieved in their later games. However, looking at smaller subsets of gyms in the other maps can still plenty of fun!
 
 ## Citations
 
