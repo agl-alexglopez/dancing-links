@@ -566,6 +566,9 @@ This project grew more than I thought it would. I was able to bring in some grea
 - `Matchmaker.cpp`
 - `PartnerLinks.h`
 - `PartnerLinks.cpp`
+- `PokemonLinks.h`
+- `PokemonLinks.cpp`
+- `PokemonParser.cpp`
 
 As mentioned in the intro, the core ideas of Algorithm X via Dancing Links belongs to Knuth, I just implemented it a few different ways.
 
@@ -575,5 +578,6 @@ I made the most significant modifications to the following files to allow me to 
 
 - `DisasterGUI.cpp`
 - `MatchmakerGUI.cpp`
+- `PokemonGUI.cpp`
 
 However, Keith Schwarz and Stanford course staff are completely responsible for making those usable applications in the first place. Finally all files in the `FastMatching` folder are written by Ed Rothberg and ported to C++ by Keith Schwarz. These were included out of my own curiosity to see how a fast solution to the `Max Weight Matching` problem would feel to use in the application GUI.
