@@ -877,7 +877,36 @@ STUDENT_TEST("There is one exact and a few overlapping covers here. Exact cover 
         {"Ice-Psychic",{{"Ice",Resistance::FRAC12}}},
         {"Ice-Water",{{"Ice",Resistance::FRAC14},{"Water",Resistance::FRAC12}}},
     };
+    const std::vector<PokemonLinks::typeName> headers = {
+        {"",6,1},
+        {"Electric",0,2},
+        {"Fire",1,3},
+        {"Grass",2,4},
+        {"Ice",3,5},
+        {"Normal",4,6},
+        {"Water",5,0},
+    };
+    const std::vector<PokemonLinks::pokeLink> dlx = {
+        //        0                            1Electric                       2Fire                            3Grass                            4Ice                        5Normal                      6Water
+        {0,0,0,Resistance::EMPTY_,0},   {2,18,11,Resistance::EMPTY_,0},{2,19,15,Resistance::EMPTY_,0},{3,16,8,Resistance::EMPTY_,0},{2,23,21,Resistance::EMPTY_,0},{1,9,9,Resistance::EMPTY_,0},{2,24,13,Resistance::EMPTY_,0},
+        //        7Bug-Ghost                                                                                    8                                                             9
+        {-1,0,9,Resistance::EMPTY_,0},                                                                {3,3,12,Resistance::FRAC12,0},                               {5,5,5,Resistance::IMMUNE,0},
+        //        10Electric-Grass             11                                                               12                                                                                         13
+        {-2,8,13,Resistance::EMPTY_,0}, {1,1,18,Resistance::FRAC14,0},                                {3,8,16,Resistance::FRAC12,0},                                                            {6,6,24,Resistance::FRAC12,0},
+        //        14Fire-Flying                                                15                               16
+        {-3,11,16,Resistance::EMPTY_,0},                               {2,2,19,Resistance::FRAC12,0}, {3,12,3,Resistance::FRAC14,0},
+        //        17Ground-Water               18                              19
+        {-4,15,19,Resistance::EMPTY_,0},{1,11,1,Resistance::IMMUNE,0}, {2,15,2,Resistance::FRAC12,0},
+        //        20Ice-Psychic                                                                                                                   21
+        {-5,18,21,Resistance::EMPTY_,0},                                                                                            {4,4,23,Resistance::FRAC12,0},
+        //        22Ice-Water                                                                                                                     23                                                        24
+        {-6,21,24,Resistance::EMPTY_,0},                                                                                            {4,21,4,Resistance::FRAC14,0},                              {6,13,6,Resistance::FRAC12,0},
+        //        25
+        {INT_MIN,23,INT_MIN,Resistance::EMPTY_,0},
+    };
     PokemonLinks links(types, PokemonLinks::DEFENSE);
+    EXPECT_EQUAL(links.itemTable_, headers);
+    EXPECT_EQUAL(links.links_, dlx);
     std::set<RankedSet<std::string>> result = links.getExactTypeCoverages();
     std::set<RankedSet<std::string>> correct = {{13,{"Bug-Ghost","Ground-Water","Ice-Water",}}};
     EXPECT_EQUAL(correct, result);
