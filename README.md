@@ -555,7 +555,7 @@ typedef struct typeName {
     int right;
 }typeName;
 
-const std::vector<typeName> itemTable_ = {
+std::vector<typeName> itemTable_ = {
     {"",6,1},
     {"Electric",0,2},
     {"Fire",1,3},
