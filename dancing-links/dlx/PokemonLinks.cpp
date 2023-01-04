@@ -886,7 +886,7 @@ STUDENT_TEST("There is one exact and a few overlapping covers here. Exact cover 
         "Ice-Psychic",
         "Ice-Water"
     };
-    const std::vector<PokemonLinks::typeName> headers = {
+    std::vector<PokemonLinks::typeName> items = {
         {"",6,1},
         {"Electric",0,2},
         {"Fire",1,3},
@@ -915,7 +915,7 @@ STUDENT_TEST("There is one exact and a few overlapping covers here. Exact cover 
     };
     PokemonLinks links(types, PokemonLinks::DEFENSE);
     EXPECT_EQUAL(links.optionTable_, options);
-    EXPECT_EQUAL(links.itemTable_, headers);
+    EXPECT_EQUAL(links.itemTable_, items);
     EXPECT_EQUAL(links.links_, dlx);
     std::set<RankedSet<std::string>> result = links.getExactTypeCoverages();
     std::set<RankedSet<std::string>> correct = {{13,{"Bug-Ghost","Ground-Water","Ice-Water",}}};
