@@ -554,11 +554,65 @@ typedef struct typeName {
     int left;
     int right;
 }typeName;
+
+const std::vector<typeName> itemTable_ = {
+    {"",6,1},
+    {"Electric",0,2},
+    {"Fire",1,3},
+    {"Grass",2,4},
+    {"Ice",3,5},
+    {"Normal",4,6},
+    {"Water",5,0},
+};
 ```
 
 Here is the type that I use within the dancing links array.
 
+```c++
+typedef struct pokeLink {
+    int topOrLen;
+    int up;
+    int down;
+    // x0.0, x0.25, x0.5, x1.0, x2, or x4 damage multipliers.
+    Multiplier multiplier;
+    // Use this to efficiently find Overlapping covers.
+    int depthTag;
+}pokeLink;
+```
 
+The Multiplier is a simple `enum`.
+
+```c++
+typedef enum Multiplier {
+    EMPTY_=0,
+    IMMUNE,  // x0.00
+    FRAC14,  // x0.25
+    FRAC12,  // x0.50
+    NORMAL,  // x1.00
+    DOUBLE,  // x2.00
+    QUADRU   // x4.00
+}Multiplier;
+```
+
+We then place all of this in one array. Here is a illustration of these links as they exist in memory.
+
+![pokelinks-illustrated](/images/pokelinks-illustrated.png)
+
+There is also one node at the end of this array to know we are at the end and that our last option is complete. Finally, to help keep track of the options that we choose to cover items, there is another array consisting only of names of the options.
+
+```c++
+const std::vector<std::string> optionTable_ = {
+    "",
+    "Bug-Ghost",
+    "Electric-Grass",
+    "Fire-Flying",
+    "Ground-Water",
+    "Ice-Psychic",
+    "Ice-Water"
+};
+```
+
+The spacer nodes in the dancing links array have a negative `topOrLen` field that correspond to the index in this options array. There are other subtleties to the implementation that I must consider, especially how to use the depth tag to produce Overlapping Type Coverages, but that can all be gleaned from the code itself.
 
 ### Pokémon Planning Usage Instructions
 
