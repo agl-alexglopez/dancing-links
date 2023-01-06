@@ -318,13 +318,13 @@ std::pair<int,Pair> PartnerLinks::coverWeightedPair(int indexInPair) {
 /* * * * * * * * * * * * * * *   Constructor to Build the Networks  * * * * * * * * * * * * * * * */
 
 
-PartnerLinks::PartnerLinks(const Map<std::string, Set<std::string>>& possibleLinks) :
-                           table_({}),
-                           links_({}),
-                           numPeople_(0),
-                           numPairings_(0),
-                           hasSingleton_(false),
-                           isWeighted_(false) {
+PartnerLinks::PartnerLinks(const Map<std::string, Set<std::string>>& possibleLinks)
+    : table_(),
+      links_(),
+      numPeople_(0),
+      numPairings_(0),
+      hasSingleton_(false),
+      isWeighted_(false) {
 
     HashMap<std::string, int> columnBuilder = {};
 
@@ -346,13 +346,13 @@ PartnerLinks::PartnerLinks(const Map<std::string, Set<std::string>>& possibleLin
     links_.push_back({INT_MIN, index - 2, INT_MIN});
 }
 
-PartnerLinks::PartnerLinks(const Map<std::string, Map<std::string, int>>& possibleLinks) :
-                           table_({}),
-                           links_({}),
-                           numPeople_(0),
-                           numPairings_(0),
-                           hasSingleton_(false),
-                           isWeighted_(true) {
+PartnerLinks::PartnerLinks(const Map<std::string, Map<std::string, int>>& possibleLinks)
+    : table_(),
+      links_(),
+      numPeople_(0),
+      numPairings_(0),
+      hasSingleton_(false),
+      isWeighted_(true) {
 
     HashMap<std::string, int> columnBuilder = {};
 

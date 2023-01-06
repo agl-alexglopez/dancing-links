@@ -170,10 +170,10 @@ void DisasterLinks::unhideCityCol(int indexInCol) {
 /* * * * * * * * * * *  Constructor and Building of Dancing Links Network   * * * * * * * * * * * */
 
 
-DisasterLinks::DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwork) :
-                             table_({}),
-                             grid_({}),
-                             numItemsAndOptions_(0) {
+DisasterLinks::DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwork)
+    : table_(),
+      grid_(),
+      numItemsAndOptions_(0) {
 
     // We will set this up for a reverse build of column links for a given item.
     HashMap<std::string,int> columnBuilder = {};
