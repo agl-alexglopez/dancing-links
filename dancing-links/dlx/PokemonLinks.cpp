@@ -273,14 +273,14 @@ bool PokemonLinks::reachedOutputLimit() {
 
 
 PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions,
-                           const CoverageType requestedCoverSolution) :
-                           optionTable_({}),
-                           itemTable_({}),
-                           links_({}),
-                           numItems_(0),
-                           numOptions_(0),
-                           requestedCoverSolution_(requestedCoverSolution),
-                           hitLimit_(false){
+                           const CoverageType requestedCoverSolution)
+    : optionTable_(),
+      itemTable_(),
+      links_({}),
+      numItems_(0),
+      numOptions_(0),
+      requestedCoverSolution_(requestedCoverSolution),
+      hitLimit_(false) {
     if (requestedCoverSolution == DEFENSE) {
         buildDefenseLinks(typeInteractions);
     } else if (requestedCoverSolution == ATTACK){
@@ -292,14 +292,15 @@ PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typ
 }
 
 PokemonLinks::PokemonLinks(const std::map<std::string,std::set<Resistance>>& typeInteractions,
-                           const std::set<std::string>& attackTypes) :
-                           optionTable_({}),
-                           itemTable_({}),
-                           links_({}),
-                           numItems_(0),
-                           numOptions_(0),
-                           requestedCoverSolution_(DEFENSE),
-                           hitLimit_(false){
+                           const std::set<std::string>& attackTypes)
+    : optionTable_(),
+      itemTable_(),
+      links_(),
+      numItems_(0),
+      numOptions_(0),
+      requestedCoverSolution_(DEFENSE),
+      hitLimit_(false) {
+
     if (attackTypes.empty()) {
         buildDefenseLinks(typeInteractions);
     } else {
