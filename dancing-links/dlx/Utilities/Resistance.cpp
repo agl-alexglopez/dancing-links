@@ -3,9 +3,10 @@
 
 /* * * * * * * * * * * * *     Resistance Helper Class      * * * * * * * * * * * * * * * * * * * */
 
-Resistance::Resistance(const std::string& type, const Multiplier& multiplier) :
-                       type_(type),
-                       multiplier_(multiplier){}
+Resistance::Resistance(const std::string& type, const Multiplier& multiplier)
+    : type_(type),
+      multiplier_(multiplier) {
+}
 
 std::string Resistance::type() const {
     return type_;

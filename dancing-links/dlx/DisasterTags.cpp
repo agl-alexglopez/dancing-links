@@ -164,10 +164,10 @@ void DisasterTags::uncoverCity(int indexInOption) {
 /* * * * * * * * * * *  Constructor and Building of Dancing Links Network   * * * * * * * * * * * */
 
 
-DisasterTags::DisasterTags(const Map<std::string, Set<std::string>>& roadNetwork) :
-                           table_({}),
-                           grid_({}),
-                           numItemsAndOptions_(0) {
+DisasterTags::DisasterTags(const Map<std::string, Set<std::string>>& roadNetwork)
+    : table_(),
+      grid_(),
+      numItemsAndOptions_(0) {
 
     // We will set this up for a reverse build of column links for a given item.
     HashMap<std::string,int> columnBuilder = {};
@@ -183,8 +183,8 @@ DisasterTags::DisasterTags(const Map<std::string, Set<std::string>>& roadNetwork
 }
 
 void DisasterTags::initializeHeaders(const Map<std::string, Set<std::string>>& roadNetwork,
-                                      std::vector<std::pair<std::string,int>>& connectionSizes,
-                                      HashMap<std::string,int>& columnBuilder) {
+                                     std::vector<std::pair<std::string,int>>& connectionSizes,
+                                     HashMap<std::string,int>& columnBuilder) {
     table_.push_back({"", 0, 1});
     grid_.push_back({0,0,0,0});
     int index = 1;
