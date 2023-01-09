@@ -105,26 +105,26 @@ public:
     const int MAX_TEAM_SIZE=6;
 
     // The user is asking us for the defensive team they should build or attacks they need.
-    typedef enum CoverageType {
+    enum CoverageType {
         DEFENSE,
         ATTACK
-    }CoverageType;
+    };
 
     // This type is entered into our dancing links array for the in place recursive algorithm.
-    typedef struct pokeLink {
+    struct pokeLink {
         int topOrLen;
         int up;
         int down;
         Resistance::Multiplier multiplier; // x0.0, x0.25, x0.5, x1.0, x2, or x4 damage multipliers.
         int depthTag;                      // We use this to efficiently generate overlapping sets.
-    }pokeLink;
+    };
 
     // This type, in a seperate vector, controls the base case of our recursion.
-    typedef struct typeName {
+    struct typeName {
         std::string name;
         int left;
         int right;
-    }typeName;
+    };
 
     /**
      * @brief PokemonLinks            this constructor builds the necessary internal data structures

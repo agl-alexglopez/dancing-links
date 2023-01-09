@@ -131,21 +131,21 @@ public:
      * indices in the array. The left right pointers are implicit because these nodes are next to
      * one another in an array.
      */
-    typedef struct personLink {
+    struct personLink {
         int topOrLen;
         int up;
         int down;
-    }personLink;
+    };
 
     /* These nodes control recursion in a seperate array. As partnerships are chosen or individual
      * people are chosen their representation in the lookup array is spliced out of a doubly linked
      * list.
      */
-    typedef struct personName {
+    struct personName {
         std::string name;
         int left;
         int right;
-    }personName;
+    };
 
 
     /* * * * * *   Algorithm X via Dancing Links for Perfect and Max-Weight Matching  * * * * * * */

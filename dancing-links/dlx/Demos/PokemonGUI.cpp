@@ -37,10 +37,10 @@ namespace {
         COVERED_DIRECTLY
     };
 
-    typedef enum MapDrawSelection {
+    enum MapDrawSelection {
         FULL_GENERATION=0,
         SELECTED_GYMS
-    }MapDrawSelection;
+    };
 
     /* Colors to use when drawing cities. */
     const vector<CityColors> kColorOptions = {
@@ -326,15 +326,15 @@ namespace {
 
     private:
 
-        typedef enum CoverageRequested {
+        enum CoverageRequested {
             EXACT,
             OVERLAPPING
-        }CoverageRequested;
+        };
 
-        typedef enum ButtonToggle {
+        enum ButtonToggle {
             NOT_SELECTED=0,
             SELECTED,
-        }ButtonToggle;
+        };
 
         /* Dropdown of all the problems to choose from. */
         Temporary<GComboBox> mProblems;

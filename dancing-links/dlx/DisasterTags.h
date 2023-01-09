@@ -115,7 +115,7 @@ class DisasterTags {
 
 public:
 
-    typedef struct city {
+    struct city {
         int topOrLen;
         int up;
         int down;
@@ -129,13 +129,13 @@ public:
          * supply number.
          */
         int supplyTag;
-    }city;
+    };
 
-    typedef struct cityName {
+    struct cityName {
         std::string name;
         int left;
         int right;
-    }cityName;
+    };
 
 
     /* * * * * * * * * *    Constructor and Dancing Links Solver        * * * * * * * * * * * * * */

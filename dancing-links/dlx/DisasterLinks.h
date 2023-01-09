@@ -103,7 +103,7 @@ public:
     /* The cityItem will carry most of the logic of our problem. These nodes are in the grid we
      * set up in order for the links to "dance" as we recurse and leave the data structure in place.
      */
-    typedef struct cityItem {
+    struct cityItem {
         /* If this item is a column header, this is the number of items in a column.
          * If this item is in the grid, this is the index of the header for an item.
          */
@@ -114,17 +114,17 @@ public:
         // We cut an item within an option out of the world with the left right field to recurse.
         int left;
         int right;
-    }cityItem;
+    };
 
     /* The cityHeader helps us track what items still need to be covered. We also use this as a
      * lookup table for the names of the options in which we find an item. This option is the city
      * we have given supplies to.
      */
-    typedef struct cityHeader {
+    struct cityHeader {
         std::string name;
         int left;
         int right;
-    }cityHeader;
+    };
 
 
     /**

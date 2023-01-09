@@ -41,7 +41,7 @@
  * parsing is undefined.
  */
 
-typedef struct PokemonTest {
+struct PokemonTest {
     /* This map will hold all types--dual types included--and a map of defense multipliers ranging
      * from x0.0,x0.25,x0.5,x1.0,x2.0,x4.0. In these maps will be the type as the key and
      * all the single attack types that have that multiplier against the current type. There are
@@ -52,7 +52,7 @@ typedef struct PokemonTest {
      */
     std::map<std::string,std::set<Resistance>> typeInteractions;
     MapTest pokemonGenerationMap;
-}PokemonTest;
+};
 
 /**
  * @brief loadPokemonGeneration  builds the PokemonTest needed to interact with a generation's map

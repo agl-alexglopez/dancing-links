@@ -28,7 +28,7 @@
 
 class Resistance {
 public:
-    typedef enum Multiplier {
+    enum Multiplier {
         /* It would not make sense for someone to let a multiplier in a Resistance default to
          * IMMUNE, because that is a valuable multiplier to have for a Pokemon. Make sure you
          * initialize multipliers unless you want an EMPTY_ placeholder.
@@ -40,7 +40,7 @@ public:
         NORMAL,
         DOUBLE,
         QUADRU
-    }Multiplier;
+    };
 
     Resistance() = default;
 
