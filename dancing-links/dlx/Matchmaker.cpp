@@ -1057,8 +1057,8 @@ PROVIDED_TEST("getAllPerfectMatching works on a square of people, and produces o
         { "D", "A" }
     });
     Vector<Set<Pair>> allMatches = {
+        {{"A","B"}, {"C","D"}},
         {{"A","D"}, {"B","C"}},
-        {{"A","B"}, {"C","D"}}
     };
     EXPECT_EQUAL(getAllPerfectMatchings(links), allMatches);
 }
@@ -1088,10 +1088,10 @@ STUDENT_TEST("All possible pairings is huge, but all perfect matching configs is
         { "J", {"A", "G", "I"} }
     };
     Vector<Set<Pair>> allMatches = {
-        {{ "A", "J" }, { "B", "E" }, { "C", "D" }, { "F", "G" }, { "H", "I" }},
-        {{ "A", "J" }, { "B", "C" }, { "D", "E" }, { "F", "G" }, { "H", "I" }},
-        {{ "A", "B" }, { "C", "D" }, { "E", "F" }, { "G", "J" }, { "H", "I" }},
         {{ "A", "B" }, { "C", "D" }, { "E", "F" }, { "G", "H" }, { "I", "J" }},
+        {{ "A", "B" }, { "C", "D" }, { "E", "F" }, { "G", "J" }, { "H", "I" }},
+        {{ "A", "J" }, { "B", "C" }, { "D", "E" }, { "F", "G" }, { "H", "I" }},
+        {{ "A", "J" }, { "B", "E" }, { "C", "D" }, { "F", "G" }, { "H", "I" }},
     };
     EXPECT_EQUAL(getAllPerfectMatchings(provided), allMatches);
 }

@@ -498,24 +498,14 @@ std::ostream& operator<<(std::ostream&os, const std::vector<PokemonLinks::typeNa
     return os;
 }
 
-std::ostream& operator<<(std::ostream&os, const std::vector<std::string>& options) {
-    for (const auto& opt : options) {
-        os << "{\"" << opt << "\"},";
-    }
-    os << std::endl;
-    return os;
-}
-
 std::ostream& operator<<(std::ostream&os, const std::vector<PokemonLinks::pokeLink>& links) {
     os << "DLX ARRAY" << std::endl;
-    int index = 0;
     for (const auto& item : links) {
         if (item.topOrLen < 0) {
             os << "\n";
         }
         os << "{" << item.topOrLen << ","
            << item.up << "," << item.down << "," << item.multiplier << "," << item.depthTag << "},";
-        index++;
     }
     os << std::endl;
     return os;
@@ -529,6 +519,17 @@ std::ostream& operator<<(std::ostream&os, const PokemonLinks& links) {
     return os;
 }
 
+namespace std {
+
+std::ostream& operator<<(std::ostream&os, const std::vector<std::string>& options) {
+    for (const auto& opt : options) {
+        os << "{\"" << opt << "\"},";
+    }
+    os << std::endl;
+    return os;
+}
+
+
 std::ostream& operator<<(std::ostream& os, const std::set<RankedSet<std::string>>& solution) {
     for (const auto& s : solution) {
         os << s;
@@ -537,6 +538,7 @@ std::ostream& operator<<(std::ostream& os, const std::set<RankedSet<std::string>
     return os;
 }
 
+} // namespace std
 
 /* * * * * * * * * * * * * * * *   Test Cases Below this Point    * * * * * * * * * * * * * * * * */
 
