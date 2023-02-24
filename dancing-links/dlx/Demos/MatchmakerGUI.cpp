@@ -2,6 +2,10 @@
 #include "GraphEditor/GraphEditor.h"
 #include <fstream>
 #include <algorithm>
+#include <map>
+#include <set>
+#include <vector>
+#include <unordered_map>
 #include "filelib.h"
 #include "Matchmaker.h"
 #include "FastMatching/FastMatchmaker.h"
@@ -77,11 +81,11 @@ namespace {
         shared_ptr<GraphEditor::Editor<>> editor;
 
         /* Current matching, if any. */
-        unique_ptr<Set<Pair>> currMatching;
+        unique_ptr<std::set<Pair>> currMatching;
 
         /* Every perfect matching if requested */
 
-        unique_ptr<Vector<Set<Pair>>> allMatching;
+        unique_ptr<std::vector<std::set<Pair>>> allMatching;
         int currMatchingIndex;
 
         /* Panel layout:
@@ -102,7 +106,7 @@ namespace {
 
         GContainer* graphControls;
         Temporary<GComboBox> solverDropdown;
-        const string setSolver = "Solver: Set Based";
+        const string setSolver = "Solver: std::set Based";
         const string dlxSolver = "Solver: DLX Pairs";
         const string fastRothbergSolver = "Solver: Fast Rothberg";
         const vector<string> solverNames = {setSolver, dlxSolver, fastRothbergSolver};
@@ -518,7 +522,7 @@ namespace {
         maxWeightMatchButton->setEnabled(false);
 
         /* Extract the graph. */
-        Map<string, Set<string>> graph;
+        std::map<string, std::set<string>> graph;
         auto g = editor->viewer();
 
         /* Install nodes. */
@@ -531,8 +535,8 @@ namespace {
             auto src = edge->from()->label();
             auto dst = edge->to()->label();
 
-            graph[src] += dst;
-            graph[dst] += src;
+            graph[src].insert(dst);
+            graph[dst].insert(src);
         });
 
         /* Deselect everything; we aren't working on nodes/edges right now.
@@ -542,7 +546,7 @@ namespace {
          */
         editor->setActive(nullptr);
 
-        Set<Pair> matching;
+        std::set<Pair> matching;
         bool foundMatching = false;
 
         if (solverDropdown->getSelectedItem() == setSolver) {
@@ -560,7 +564,7 @@ namespace {
 
         if (foundMatching) {
             /* Store this matching. */
-            currMatching.reset(new Set<Pair>(matching));
+            currMatching.reset(new std::set<Pair>(matching));
             /* We need to redraw. */
             requestRepaint();
         } else {
@@ -578,7 +582,7 @@ namespace {
             if (--currMatchingIndex < 0) {
                 currMatchingIndex = (*allMatching).size() - 1;
             }
-            currMatching.reset(new Set<Pair>((*allMatching)[currMatchingIndex]));
+            currMatching.reset(new std::set<Pair>((*allMatching)[currMatchingIndex]));
             requestRepaint();
         }
     }
@@ -586,7 +590,7 @@ namespace {
     void MatchmakerGUI::showNextMatching() {
         if (allMatching && (*allMatching).size() > 1) {
             ++currMatchingIndex %= (*allMatching).size();
-            currMatching.reset(new Set<Pair>((*allMatching)[currMatchingIndex]));
+            currMatching.reset(new std::set<Pair>((*allMatching)[currMatchingIndex]));
             requestRepaint();
         }
     }
@@ -598,7 +602,7 @@ namespace {
         allMatchButton->setEnabled(false);
         maxWeightMatchButton->setEnabled(false);
         /* Extract the graph. */
-        Map<string, Set<string>> graph;
+        std::map<string, std::set<string>> graph;
         auto g = editor->viewer();
 
         /* Install nodes. */
@@ -611,8 +615,8 @@ namespace {
             auto src = edge->from()->label();
             auto dst = edge->to()->label();
 
-            graph[src] += dst;
-            graph[dst] += src;
+            graph[src].insert(dst);
+            graph[dst].insert(src);
         });
 
         /* Deselect everything; we aren't working on nodes/edges right now.
@@ -622,7 +626,7 @@ namespace {
          */
         editor->setActive(nullptr);
 
-        Vector<Set<Pair>> allFoundMatchings = {};
+        std::vector<std::set<Pair>> allFoundMatchings = {};
         bool usedRothberg = false;
 
         if (solverDropdown->getSelectedItem() == setSolver) {
@@ -638,12 +642,12 @@ namespace {
         }
 
         if (allFoundMatchings.size()) {
-            allMatching.reset(new Vector<Set<Pair>>(allFoundMatchings));
+            allMatching.reset(new std::vector<std::set<Pair>>(allFoundMatchings));
             prevMatchButton->setEnabled(true);
             nextMatchButton->setEnabled(true);
             currMatchingIndex = 0;
             /* Can we just reset this to a set in the vector or do we have to use new everytime?*/
-            currMatching.reset(new Set<Pair>((*allMatching)[currMatchingIndex]));
+            currMatching.reset(new std::set<Pair>((*allMatching)[currMatchingIndex]));
             requestRepaint();
             GOptionPane::showMessageDialog(&window(), to_string((*allMatching).size()), kAllMatchesFoundTitle);
         } else if (usedRothberg) {
@@ -673,7 +677,7 @@ namespace {
 
 
         /* Extract the graph. */
-        Map<string, Map<string, int>> graph;
+        std::map<string, std::map<string, int>> graph;
         auto g = editor->viewer();
 
         /* Install nodes. */
@@ -698,7 +702,7 @@ namespace {
         editor->setActive(nullptr);
 
         /* Store this matching. */
-        Set<Pair> weightedMatches = {};
+        std::set<Pair> weightedMatches = {};
 
         if (solverDropdown->getSelectedItem() == setSolver) {
             selectedSolver = SET_BASED;
@@ -713,7 +717,7 @@ namespace {
             error("something is wrong with the solver dropdown menu. Invalid solver.");
         }
 
-        currMatching.reset(new Set<Pair>(weightedMatches));
+        currMatching.reset(new std::set<Pair>(weightedMatches));
 
         /* We need to redraw. */
         requestRepaint();
@@ -722,7 +726,7 @@ namespace {
         maxWeightMatchButton->setEnabled(true);
     }
 
-    const vector<string> kSolverMatchedNodeFillColorOptions = {"#ffb000",  // Set Solver
+    const vector<string> kSolverMatchedNodeFillColorOptions = {"#ffb000",  // std::set Solver
                                                                "#dc267f",  // DLX Solver
                                                                "#648fff"}; // Rothberg Solver
     const string kMatchedBorderColor = "#000000"; // Black

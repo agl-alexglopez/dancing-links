@@ -4,9 +4,9 @@
  * --------------------------
  * This file contains the class I use to implement Algorithm X via Dancing Links. This algorithm
  * is adjusted and used to solve the Perfect Matching and Max Weight Matching problems on a graph.
- * If only perfect matching is desired give the class constructor a Map<string,Set<string>> with
+ * If only perfect matching is desired give the class constructor a std::map<string,std::set<string>> with
  * a person and their partners. If you want the max weight matching of a graph, provide a
- * Map<string,Map<string,int>> to the constructor with a person and the weights of their partners.
+ * std::map<string,std::map<string,int>> to the constructor with a person and the weights of their partners.
  * You can ask a weighted or unweighted graph for max weight matching, but if you did not provide
  * weight information, you cannot ask for the max weight matching and must construct a new instance
  * of the class with that information.
@@ -112,13 +112,13 @@
 #pragma once
 #ifndef PartnerLinks_H
 #define PartnerLinks_H
+#include <map>
+#include <set>
+#include <unordered_map>
 #include <string>
 #include <vector>
 #include "GUI/SimpleTest.h"
 #include "Utilities/MatchingUtilities.h"
-#include "hashmap.h"
-#include "map.h"
-#include "set.h"
 
 
 class PartnerLinks {
@@ -158,7 +158,7 @@ public:
      *                       future queries.
      * @param possibleLinks  the map of people and partners they are willing to work with.
      */
-    explicit PartnerLinks(const Map<std::string, Set<std::string>>& possibleLinks);
+    explicit PartnerLinks(const std::map<std::string, std::set<std::string>>& possibleLinks);
 
     /**
      * @brief PartnerLinks   the constructor for a world intended to check for Max Weight Matching.
@@ -168,7 +168,7 @@ public:
      *                       does not exist.
      * @param possibleLinks  the map of people and map of partners and weights.
      */
-    explicit PartnerLinks(const Map<std::string, Map<std::string, int>>& possibleLinks);
+    explicit PartnerLinks(const std::map<std::string, std::map<std::string, int>>& possibleLinks);
 
     /**
      * @brief hasPerfectLinks  determines if an instance of a PartnerLinks matrix can solve the
@@ -177,7 +177,7 @@ public:
      * @param pairs            the output parameter that shows the first perfect matching we found.
      * @return                 true if there is a perfect matching false if not.
      */
-    bool hasPerfectLinks(Set<Pair>& pairs);
+    bool hasPerfectLinks(std::set<Pair>& pairs);
 
     /**
      * @brief getAllPerfectLinks  retrieves every configuration of a graph of people that will
@@ -186,7 +186,7 @@ public:
      *                            Perfect Matching.
      * @return                    vector of sets. Each is a unique Perfect Matching configuration.
      */
-    Vector<Set<Pair>> getAllPerfectLinks();
+    std::vector<std::set<Pair>> getAllPerfectLinks();
 
     /**
      * @brief getMaxWeightMatching  determines the Max Weight Matching of a PartnerLinks matrix. A
@@ -194,7 +194,7 @@ public:
      *                              acheive by partnering up people in a network.
      * @return                      the set representing the Max Weight Matching that we found.
      */
-    Set<Pair> getMaxWeightMatching();
+    std::set<Pair> getMaxWeightMatching();
 
 
     /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
@@ -242,7 +242,7 @@ private:
      * @param pairs              the output parameter of the found matching.
      * @return                   true if the matching is found, false if not.
      */
-    bool isPerfectMatching(Set<Pair>& pairs);
+    bool isPerfectMatching(std::set<Pair>& pairs);
 
     /**
      * @brief fillPerfectMatchings  finds all available Perfect Matchings for a network. Fills the
@@ -251,7 +251,7 @@ private:
      * @param soFar                 the helper set we insert/delete from as we build Matchings.
      * @param result                the output parameter we fill with any Perfect Matchings we find.
      */
-    void fillPerfectMatchings(Set<Pair>& soFar, Vector<Set<Pair>>& result);
+    void fillPerfectMatchings(std::set<Pair>& soFar, std::vector<std::set<Pair>>& result);
 
     /**
      * @brief fillWeights  recusively finds the maximum weight pairings possible given a dancing
@@ -261,7 +261,7 @@ private:
      * @param soFar        the pair of weight and pairs we fill with every possible pairing.
      * @param winner       the pair of weight and pairs that records the best weight found.
      */
-    void fillWeights(std::pair<int,Set<Pair>>& soFar, std::pair<int,Set<Pair>>& winner);
+    void fillWeights(std::pair<int,std::set<Pair>>& soFar, std::pair<int,std::set<Pair>>& winner);
 
     /**
      * @brief choosePerson  chooses a person for the Perfect Matching algorithm. It will simply
@@ -364,8 +364,8 @@ private:
      * @param possibleLinks      the map of unweighted connections for every person in the graph.
      * @param columnBuilder      the helping data structure we use to build columns in one array.
      */
-    void initializeHeaders(const Map<std::string, Set<std::string>>& possibleLinks,
-                           HashMap<std::string,int>& columnBuilder);
+    void initializeHeaders(const std::map<std::string, std::set<std::string>>& possibleLinks,
+                           std::unordered_map<std::string,int>& columnBuilder);
 
     /**
      * @brief initializeHeaders  initializes the headers of the dancing link data structure if
@@ -374,8 +374,8 @@ private:
      * @param possibleLinks      the map of weighted matches for every person in the graph.
      * @param columnBuilder      the helping data structure we use to build columns in one array.
      */
-    void initializeHeaders(const Map<std::string, Map<std::string,int>>& possibleLinks,
-                           HashMap<std::string,int>& columnBuilder);
+    void initializeHeaders(const std::map<std::string, std::map<std::string,int>>& possibleLinks,
+                           std::unordered_map<std::string,int>& columnBuilder);
 
     /**
      * @brief setPerfectPairs  creates the internal rows and columns of the dancing links data
@@ -389,9 +389,9 @@ private:
      * @param spacerTitle      we advance the spacerTitle to number each option.
      */
     void setPerfectPairs(const std::string& person,
-                         const Set<std::string>& preferences,
-                         HashMap<std::string,int>& columnBuilder,
-                         Set<Pair>& seenPairs,
+                         const std::set<std::string>& preferences,
+                         std::unordered_map<std::string,int>& columnBuilder,
+                         std::set<Pair>& seenPairs,
                          int& index,
                          int& spacerTitle);
 
@@ -408,9 +408,9 @@ private:
      * @param index             we advance the index as an output parameter.
      */
     void setWeightedPairs(const std::string& person,
-                          const Map<std::string,int>& preferences,
-                          HashMap<std::string,int>& columnBuilder,
-                          Set<Pair>& seenPairs,
+                          const std::map<std::string,int>& preferences,
+                          std::unordered_map<std::string,int>& columnBuilder,
+                          std::set<Pair>& seenPairs,
                           int& index);
 
     // I need to test the internals of the dlx instance so leave this here.

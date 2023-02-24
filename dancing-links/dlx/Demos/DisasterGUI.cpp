@@ -575,6 +575,15 @@ namespace {
         if (!input) error("Cannot open file.");
 
         mNetwork = loadDisaster(input);
+        cout << "{";
+        for (const auto& n : mNetwork.network) {
+            cout << "{\"" << n << "\", {";
+            for (const auto& s : mNetwork.network[n]) {
+                cout << "\"" << s << "\",";
+            }
+            cout << "}},\n";
+        }
+        cout << "}" << endl;
         mSelected.clear();
         mStoredSolutions.reset();
         mPrevSolution->setEnabled(false);

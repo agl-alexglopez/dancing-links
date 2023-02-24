@@ -1,9 +1,9 @@
 #ifndef MATCHINGUTILITIES_H
 #define MATCHINGUTILITIES_H
 #include <string>
-#include "map.h"
-#include "vector.h"
-#include "set.h"
+#include <map>
+#include <vector>
+#include <set>
 
 /* Unordered pair of strings. */
 class Pair {
@@ -83,6 +83,8 @@ private:
 };
 
 std::ostream& operator<< (std::ostream& out, const Pair& pair);
+std::ostream& operator<< (std::ostream& out, const std::set<Pair>& pairs);
+std::ostream& operator<< (std::ostream& out, const std::vector<std::set<Pair>>& result);
 
 /* Utility to go from a list of triples to a world. */
 struct WeightedLink {
@@ -91,14 +93,14 @@ struct WeightedLink {
     int cost;
 };
 
-Map<std::string, Map<std::string, int>> fromWeightedLinks(const Vector<WeightedLink>& links);
+std::map<std::string, std::map<std::string, int>> fromWeightedLinks(const std::vector<WeightedLink>& links);
 
 /* Pairs to world. */
-Map<std::string, Set<std::string>> fromLinks(const Vector<Pair>& pairs);
+std::map<std::string, std::set<std::string>> fromLinks(const std::vector<Pair>& pairs);
 
 /* Checks if a set of pairs forms a perfect matching. */
-bool isPerfectMatching(const Map<std::string, Set<std::string>>& possibleLinks,
-                       const Set<Pair>& matching);
+bool isPerfectMatching(const std::map<std::string, std::set<std::string>>& possibleLinks,
+                       const std::set<Pair>& matching);
 
 
 #endif // MATCHINGUTILITIES_H

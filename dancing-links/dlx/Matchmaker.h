@@ -1,14 +1,15 @@
 #pragma once
+#include "Utilities/MatchingUtilities.h"
 #include <string>
 #include <ostream>
-#include "map.h"
-#include "set.h"
-#include "Utilities/MatchingUtilities.h"
+#include <map>
+#include <set>
+#include <vector>
 
 
-bool hasPerfectMatching(const Map<std::string, Set<std::string>>& possibleLinks, Set<Pair>& matching);
+bool hasPerfectMatching(const std::map<std::string, std::set<std::string>>& possibleLinks, std::set<Pair>& matching);
 
-Vector<Set<Pair>>
-getAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks);
+std::vector<std::set<Pair>>
+getAllPerfectMatchings(const std::map<std::string, std::set<std::string>>& possibleLinks);
 
-Set<Pair> maximumWeightMatching(const Map<std::string, Map<std::string, int>>& possibleLinks);
+std::set<Pair> maximumWeightMatching(const std::map<std::string, std::map<std::string, int>>& possibleLinks);

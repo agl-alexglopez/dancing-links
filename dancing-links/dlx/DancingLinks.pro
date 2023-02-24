@@ -71,23 +71,14 @@ DEFINES     +=  main=qMain qMain=studentMain
 # entries, so no worries about duplicates
 SOURCES         *=  "" \
     Demos/MapParser.cpp \
-    Demos/PokemonGUI.cpp \
-    Demos/PokemonParser.cpp \
     DisasterLinks.cpp \
     DisasterTags.cpp \
-    PartnerLinks.cpp \
-    PokemonLinks.cpp \
-    res/pokemon/htmlToJSON.cpp \
-    Utilities/Resistance.cpp
+    PartnerLinks.cpp
 HEADERS         *=  "" \
     Demos/MapParser.h \
-    Demos/PokemonParser.h \
     DisasterLinks.h \
     DisasterTags.h \
-    PartnerLinks.h \
-    PokemonLinks.h \
-    Utilities/RankedSet.h \
-    Utilities/Resistance.h
+    PartnerLinks.h
 
 # Gather any .cpp or .h files within the project folder (student/starter code).
 # Second argument true makes search recursive

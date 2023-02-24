@@ -34,51 +34,51 @@
  */
 #include "Matchmaker.h"
 #include "GUI/SimpleTest.h"
-#include "hashset.h"
+#include <unordered_set>
 #include <climits>
 using namespace std;
 
 /* Function Prototypes */
 
 // Perfect Pairs
-bool hasPerfectMatching(const Map<string, Set<string>>& possibleLinks,
-                        Set<Pair>& matching);
-bool hasPerfectMatchRec(const Map<string, Set<string>>& possibleLinks,
-                        const HashSet<string> linkKeys,
-                        Set<Pair> &perfectMatch);
+bool hasPerfectMatching(const std::map<string, std::set<string>>& possibleLinks,
+                        std::set<Pair>& matching);
+bool hasPerfectMatchRec(const std::map<string, std::set<string>>& possibleLinks,
+                          std::unordered_set<string>& linkKeys,
+                          std::set<Pair> &perfectMatch);
 
-Vector<Set<Pair>>
-getAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks);
+std::vector<std::set<Pair>>
+getAllPerfectMatchings(const std::map<std::string, std::set<std::string>>& possibleLinks);
 
-Vector<Set<Pair>>
-fillAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks,
-                        const HashSet<string> toMatch,
-                        const Set<Pair> matching);
+void fillAllPerfectMatchings(const std::map<std::string, std::set<std::string>>& possibleLinks,
+                               std::unordered_set<string>& toMatch,
+                               std::set<Pair>& matching,
+                               std::vector<set<Pair>>& result);
 
 // Weighted pairs
-Set<Pair> maximumWeightMatching(const Map<string, Map<string, int>>& possibleLinks);
-Set<Pair> maxWeightRec(const Map<string, Map<string, int>> &possibleLinks,
-                       const HashSet<string> linkKeys,
-                       const Set<Pair> bestSet);
-int sumWeights(const Map<string, Map<string, int>> &possibleLinks,
-               const Set<Pair> &pairsToWeigh);
+std::set<Pair> maximumWeightMatching(const std::map<string, std::map<string, int>>& possibleLinks);
+std::set<Pair> maxWeightRec(const std::map<string, std::map<string, int>> &possibleLinks,
+                             std::unordered_set<string>& linkKeys,
+                             std::set<Pair>& bestSet);
+int sumWeights(const std::map<string, std::map<string, int>> &possibleLinks,
+               const std::set<Pair> &pairsToWeigh);
 
 /* Function Implementations */
 
 /**
- * @brief hasPerfectMatching  takes in a Map of possible partner connections and returns a boolean
+ * @brief hasPerfectMatching  takes in a std::map of possible partner connections and returns a boolean
  *                            representing whether or not everyone in the group can be paired based
  *                            on preference.
  * --------------------------------------------------------------
- * @param possibleLinks       the Map representing the possible connections for partners
+ * @param possibleLinks       the std::map representing the possible connections for partners
  * @param matching            the designated output paramater for this function. The perfect pairs.
  * @return                    true if everone was matched, false if not.
  */
-bool hasPerfectMatching(const Map<string, Set<string>>& possibleLinks, Set<Pair>& matching) {
+bool hasPerfectMatching(const std::map<string, std::set<string>>& possibleLinks, std::set<Pair>& matching) {
     // Working with a set will make recursion and base case easier in our recursive function.
-    HashSet<string> toMatch = {};
+    std::unordered_set<string> toMatch = {};
     for (auto &key : possibleLinks) {
-        toMatch += key;
+        toMatch.insert(key.first);
     }
     // Now hand our recursive function a map with all required pairs removed. See what we find.
     return hasPerfectMatchRec(possibleLinks, toMatch, matching);
@@ -90,15 +90,15 @@ bool hasPerfectMatching(const Map<string, Set<string>>& possibleLinks, Set<Pair>
  *                           parameter of the pairs.
  * --------------------------------------------------------
  * @param possibleLinks      the reference map that tells us who people prefer for partners.
- * @param toMatch            the HashSet representing each key in the map. Progresses recursion.
+ * @param toMatch            the std::unordered_set representing each key in the map. Progresses recursion.
  * @param perfectMatch       the output parameter that carries the perfect matches if they are found.
  * @return                   true if matches are found false if there is not a perfect match.
  */
-bool hasPerfectMatchRec(const Map<string, Set<string>>& possibleLinks,
-                        const HashSet<string> toMatch,
-                        Set<Pair> &perfectMatch) {
+bool hasPerfectMatchRec(const std::map<string, std::set<string>>& possibleLinks,
+                        std::unordered_set<string>& toMatch,
+                        std::set<Pair> &perfectMatch) {
     // We have examined all possible partners.
-    if (toMatch.isEmpty()) {
+    if (toMatch.empty()) {
         return true;
     }
 
@@ -107,23 +107,26 @@ bool hasPerfectMatchRec(const Map<string, Set<string>>& possibleLinks,
         return false;
     }
 
-    string needsMatch = toMatch.first();
-    Set<string> preferences = possibleLinks[needsMatch];
+    string needsMatch = *toMatch.begin();
 
     // Much smaller problem if we loop through the preferences not the entire map
-    for (const string &preference : preferences) {
+    for (const string &preference : possibleLinks.at(needsMatch)) {
         // Someone in these preferences might have been taken out of the matches already during rec
-        if (toMatch.contains(preference)) {
+        if (toMatch.count(preference)) {
             Pair match (needsMatch, preference);
 
+            toMatch.erase(needsMatch);
+            toMatch.erase(preference);
             if (hasPerfectMatchRec(possibleLinks,
-                                   toMatch - needsMatch - preference,
+                                   toMatch,
                                    perfectMatch)) {
 
                 // One extra step for the output parameter.
-                perfectMatch += match;
+                perfectMatch.insert(match);
                 return true;
             }
+            toMatch.insert(needsMatch);
+            toMatch.insert(preference);
         }
     }
     // Cleanup our output parameter.
@@ -137,13 +140,16 @@ bool hasPerfectMatchRec(const Map<string, Set<string>>& possibleLinks,
  * @param possibleLinks           the map of people and their partner preferences
  * @return                        a vector of sets of valid perfect matchings.
  */
-Vector<Set<Pair>>
-getAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks) {
-    HashSet<string> toMatch = {};
+std::vector<std::set<Pair>>
+getAllPerfectMatchings(const std::map<std::string, std::set<std::string>>& possibleLinks) {
+    std::unordered_set<string> toMatch = {};
     for (auto &key : possibleLinks) {
-        toMatch += key;
+        toMatch.insert(key.first);
     }
-    return fillAllPerfectMatchings(possibleLinks, toMatch, {});
+    std::set<Pair> matching;
+    std::vector<std::set<Pair>> result;
+    fillAllPerfectMatchings(possibleLinks, toMatch, matching, result);
+    return result;
 }
 
 /**
@@ -153,48 +159,52 @@ getAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks) 
  * @param possibleLinks            the map of people and their preferences.
  * @param toMatch                  the hashset that helps us know when everyone is matched.
  * @param matching                 a helper set we build with partners to place in our return.
- * @return                         a Vector of sets of valid perfect matches.
+ * @return                         a std::vector of sets of valid perfect matches.
  */
-Vector<Set<Pair>>
-fillAllPerfectMatchings(const Map<std::string, Set<std::string>>& possibleLinks,
-                        const HashSet<string> toMatch,
-                        const Set<Pair> matching) {
-    if (toMatch.isEmpty()) {
-        return {matching};
+void fillAllPerfectMatchings(const std::map<std::string, std::set<std::string>>& possibleLinks,
+                               std::unordered_set<string>& toMatch,
+                               std::set<Pair>& matching,
+                               std::vector<std::set<Pair>>& result) {
+    if (toMatch.empty()) {
+        result.push_back(matching);
+        return;
     }
     if (toMatch.size() == 1) {
-        return {};
+        return;
     }
 
-    string needsMatch = toMatch.first();
+    string needsMatch = *toMatch.begin();
 
-    Vector<Set<Pair>> result = {};
-    for (const string& preference : possibleLinks[needsMatch]) {
-        if (toMatch.contains(preference)) {
+    for (const string& preference : possibleLinks.at(needsMatch)) {
+        if (toMatch.count(preference)) {
             Pair match (needsMatch, preference);
-            result += fillAllPerfectMatchings(possibleLinks,
-                                              toMatch - needsMatch - preference,
-                                              matching + match);
+            toMatch.erase(needsMatch);
+            toMatch.erase(preference);
+            matching.insert(match);
+            fillAllPerfectMatchings(possibleLinks, toMatch, matching, result);
+            matching.erase(match);
+            toMatch.insert(needsMatch);
+            toMatch.insert(preference);
         }
     }
-    return result;
 }
 
 /**
  * @brief maximumWeightMatching takes in a map with a nested map of partners and their partner
- *                              strength score. The function returns a Set of the highest weight
+ *                              strength score. The function returns a std::set of the highest weight
  *                              pairings possible to achieve for the group
  * -----------------------------------------------------------------------------------------
- * @param possibleLinks         the Map of strings and nested maps with strings and ints with weights.
- * @return                      the Set representing the highest weight possible to achieve.
+ * @param possibleLinks         the std::map of strings and nested maps with strings and ints with weights.
+ * @return                      the std::set representing the highest weight possible to achieve.
  * @warning                     negative weights and 0 are valid in this map. Negative = dislike.
  */
-Set<Pair> maximumWeightMatching(const Map<string, Map<string, int>>& possibleLinks) {
-    HashSet<string> toMatch = {};
+std::set<Pair> maximumWeightMatching(const std::map<string, std::map<string, int>>& possibleLinks) {
+    std::unordered_set<string> toMatch = {};
     for (const auto &key : possibleLinks) {
-        toMatch += key;
+        toMatch.insert(key.first);
     }
-    return maxWeightRec(possibleLinks, toMatch, {});
+    std::set<Pair> maxWeight;
+    return maxWeightRec(possibleLinks, toMatch, maxWeight);
 }
 
 /**
@@ -202,37 +212,44 @@ Set<Pair> maximumWeightMatching(const Map<string, Map<string, int>>& possibleLin
  *                       possible partner scores. The function uses an include, exclude recursive
  *                       pattern to compare possible choices for the best weight.
  * --------------------------------------------------------------------------------------------
- * @param possibleLinks  the Map of strings and nested maps with strings and ints with weights.
- * @param toMatch        the HashSet of highest level keys from possibleLinks.
- * @param maxWeight      the Set to be returned that represents the partners with the highest score.
- * @return               the Set of Pairs that represent the highest weight possible.
+ * @param possibleLinks  the std::map of strings and nested maps with strings and ints with weights.
+ * @param toMatch        the std::unordered_set of highest level keys from possibleLinks.
+ * @param maxWeight      the std::set to be returned that represents the partners with the highest score.
+ * @return               the std::set of Pairs that represent the highest weight possible.
  */
-Set<Pair> maxWeightRec(const Map<string, Map<string, int>> &possibleLinks,
-                       const HashSet<string> toMatch,
-                       const Set<Pair> maxWeight) {
+std::set<Pair> maxWeightRec(const std::map<string, std::map<string, int>> &possibleLinks,
+                             std::unordered_set<string>& toMatch,
+                             std::set<Pair>& maxWeight) {
     // Once we have found the highest weight return it.
-    if (toMatch.isEmpty()) {
+    if (toMatch.empty()) {
         return maxWeight;
     }
-    string p1 = toMatch.first();
+    string p1 = *toMatch.begin();
     // We exclude person in our potential matches and then run again.
-    Set<Pair> exclude = maxWeightRec(possibleLinks, toMatch - p1, maxWeight);
+    toMatch.erase(p1);
+    std::set<Pair> exclude = maxWeightRec(possibleLinks, toMatch, maxWeight);
     int excludeWeight = sumWeights(possibleLinks, exclude);
+    toMatch.insert(p1);
 
     // We don't need to loop through everything in the map, our recursion does, just loop weights
-    const Map<string, int> weights = possibleLinks[p1];
+    const std::map<string, int> weights = possibleLinks.at(p1);
 
     // We need to setup for including this person in the potential weighting. Need the best set.
-    Set<Pair> bestInclude = {};
+    std::set<Pair> bestInclude = {};
     int includeWeight = -INT_MAX;
     for (auto &p2 : weights) {
-        if (toMatch.contains(p2)) {
-            Pair match(p1, p2);
+        if (toMatch.count(p2.first)) {
+            Pair match(p1, p2.first);
+            toMatch.erase(p1);
+            toMatch.erase(p2.first);
+            maxWeight.insert(match);
 
             // We include person in our potential matches
-            Set<Pair> include = maxWeightRec(possibleLinks,
-                                             toMatch - p1 - p2,
-                                             maxWeight + match);
+            std::set<Pair> include = maxWeightRec(possibleLinks, toMatch, maxWeight);
+
+            maxWeight.erase(match);
+            toMatch.insert(p1);
+            toMatch.insert(p2.first);
             int totalWeight = sumWeights(possibleLinks, include);
 
             if (totalWeight > includeWeight) {
@@ -246,19 +263,19 @@ Set<Pair> maxWeightRec(const Map<string, Map<string, int>> &possibleLinks,
 }
 
 /**
- * @brief sumWeights     takes in a Map with a nested Map of string int pairs to sum up the weight
- *                       of a given Set. The Set has Pairs. Each pair has a weight that must found
+ * @brief sumWeights     takes in a std::map with a nested std::map of string int pairs to sum up the weight
+ *                       of a given std::set. The std::set has Pairs. Each pair has a weight that must found
  *                       in the map and totaled.
  * -------------------------------------------------------------------------------------------
- * @param possibleLinks  the reference Map used to find the weights of a partnership.
- * @param pairsToWeigh   the Set of pairs to weigh. Score is symmetrical. Search for either partner.
- * @return               the integer representing the total weight of the Set.
+ * @param possibleLinks  the reference std::map used to find the weights of a partnership.
+ * @param pairsToWeigh   the std::set of pairs to weigh. Score is symmetrical. Search for either partner.
+ * @return               the integer representing the total weight of the std::set.
  */
-int sumWeights(const Map<string, Map<string, int>> &possibleLinks,
-               const Set<Pair> &pairsToWeigh) {
+int sumWeights(const std::map<string, std::map<string, int>> &possibleLinks,
+               const std::set<Pair> &pairsToWeigh) {
     int totalWeight = 0;
     for (const Pair &p : pairsToWeigh) {
-        totalWeight += possibleLinks[p.first()][p.second()];
+        totalWeight += possibleLinks.at(p.first()).at(p.second());
     }
     return totalWeight;
 }
@@ -272,7 +289,7 @@ STUDENT_TEST("Line of six but tricky due to natural order.") {
      *
      *
      */
-    const Map<string, Set<string>> provided = {
+    const std::map<string, std::set<string>> provided = {
         {"A", {"D", "F"}},
         {"B", {"E", "F"}},
         {"C", {"D"}},
@@ -280,7 +297,7 @@ STUDENT_TEST("Line of six but tricky due to natural order.") {
         {"E", {"B"}},
         {"F", {"A", "B"}},
     };
-    Set<Pair> matching = {};
+    std::set<Pair> matching = {};
     EXPECT_EQUAL(hasPerfectMatching(provided, matching), true);
 }
 
@@ -294,12 +311,12 @@ STUDENT_TEST("hasPerfectMatching works on a triangle of people.") {
      *
      * There is no perfect matching here, unfortunately.
      */
-    const Map<string, Set<string>> provided = {
+    const std::map<string, std::set<string>> provided = {
         { "A", {"B"} },
         { "B", {"C"} },
         { "C", {"A"} }
     };
-    Set<Pair> matching = {};
+    std::set<Pair> matching = {};
     EXPECT_EQUAL(hasPerfectMatching(provided, matching), false);
 }
 
@@ -315,7 +332,7 @@ STUDENT_TEST("hasPerfectMatching works on a hexagon of people.") {
      * out due to natural order of the map.
      *
      */
-    const Map<string, Set<string>> provided = {
+    const std::map<string, std::set<string>> provided = {
         { "A", {"D", "F"} },
         { "B", {"C", "F"} },
         { "C", {"B", "E"} },
@@ -324,7 +341,7 @@ STUDENT_TEST("hasPerfectMatching works on a hexagon of people.") {
         { "F", {"A", "B"} }
     };
 
-    Set<Pair> matching = {};
+    std::set<Pair> matching = {};
     EXPECT_EQUAL(hasPerfectMatching(provided, matching), true);
 }
 
@@ -340,7 +357,7 @@ STUDENT_TEST("hasPerfectMatching works on a disconnected hexagon of people.") {
      *
      *
      */
-    const Map<string, Set<string>> provided = {
+    const std::map<string, std::set<string>> provided = {
         { "A", {} },
         { "B", {"C", "F"} },
         { "C", {"B", "E"} },
@@ -349,7 +366,7 @@ STUDENT_TEST("hasPerfectMatching works on a disconnected hexagon of people.") {
         { "F", {"B"} }
     };
 
-    Set<Pair> matching = {};
+    std::set<Pair> matching = {};
     EXPECT_EQUAL(hasPerfectMatching(provided, matching), false);
 }
 
@@ -365,7 +382,7 @@ STUDENT_TEST("hasPerfectMatching works on a difficult shape with no single pairs
      *
      *
      */
-    const Map<string, Set<string>> provided = {
+    const std::map<string, std::set<string>> provided = {
         { "A", {"D", "F"} },
         { "B", {"C", "F", "G"} },
         { "C", {"B", "E"} },
@@ -378,7 +395,7 @@ STUDENT_TEST("hasPerfectMatching works on a difficult shape with no single pairs
         { "J", {"D", "I"} }
     };
 
-    Set<Pair> matching = {};
+    std::set<Pair> matching = {};
     EXPECT_EQUAL(hasPerfectMatching(provided, matching), true);
 }
 
@@ -394,7 +411,7 @@ STUDENT_TEST("hasPerfectMatching works on a difficult shape in alpha order.") {
      *
      *
      */
-    const Map<string, Set<string>> provided = {
+    const std::map<string, std::set<string>> provided = {
         { "A", {"B", "J"} },
         { "B", {"A", "C", "E"} },
         { "C", {"B", "D"} },
@@ -407,24 +424,24 @@ STUDENT_TEST("hasPerfectMatching works on a difficult shape in alpha order.") {
         { "J", {"A", "G", "I"} }
     };
 
-    Set<Pair> matching = {};
+    std::set<Pair> matching = {};
     EXPECT_EQUAL(hasPerfectMatching(provided, matching), true);
 }
 
 STUDENT_TEST("Simple case of one. Can't have a partner.") {
-    const Map<string, Set<string>> provided = {
+    const std::map<string, std::set<string>> provided = {
         { "A", {} },
     };
-    Set<Pair> matching = {};
+    std::set<Pair> matching = {};
     EXPECT_EQUAL(hasPerfectMatching(provided, matching), false);
 }
 
 STUDENT_TEST("Simple case of two. Should Work") {
-    const Map<string, Set<string>> provided = {
+    const std::map<string, std::set<string>> provided = {
         { "A", {"B"} },
         { "B", {"A"} },
     };
-    Set<Pair> matching = {};
+    std::set<Pair> matching = {};
     EXPECT_EQUAL(hasPerfectMatching(provided, matching), true);
 }
 
@@ -435,7 +452,7 @@ STUDENT_TEST("Line of six but easier to test this way.") {
      *
      *
      */
-    const Map<string, Set<string>> provided = {
+    const std::map<string, std::set<string>> provided = {
         {"A", {"B"}},
         {"B", {"A", "E"}},
         {"C", {"D"}},
@@ -443,7 +460,7 @@ STUDENT_TEST("Line of six but easier to test this way.") {
         {"E", {"B", "F"}},
         {"F", {"D", "E"}},
     };
-    Set<Pair> matching = {};
+    std::set<Pair> matching = {};
     EXPECT_EQUAL(hasPerfectMatching(provided, matching), true);
 }
 
@@ -459,7 +476,7 @@ PROVIDED_TEST("hasPerfectMatching works on a world with just one person.") {
      * There is no perfect matching.
      */
 
-    Set<Pair> unused;
+    std::set<Pair> unused;
     EXPECT(!hasPerfectMatching({ { "A", {} } }, unused));
 }
 
@@ -467,7 +484,7 @@ PROVIDED_TEST("hasPerfectMatching works on an empty set of people.") {
     /* There actually is a perfect matching - the set of no links meets the
      * requirements.
      */
-    Set<Pair> unused;
+    std::set<Pair> unused;
     EXPECT(hasPerfectMatching({}, unused));
 }
 
@@ -482,7 +499,7 @@ PROVIDED_TEST("hasPerfectMatching works on a world with two linked people.") {
         { "A", "B" }
     });
 
-    Set<Pair> unused;
+    std::set<Pair> unused;
     EXPECT(hasPerfectMatching(links, unused));
 }
 
@@ -497,11 +514,11 @@ PROVIDED_TEST("hasPerfectMatching works on a world with two linked people, and p
         { "A", "B" }
     });
 
-    Set<Pair> expected = {
+    std::set<Pair> expected = {
         { "A", "B" }
     };
 
-    Set<Pair> matching;
+    std::set<Pair> matching;
     EXPECT(hasPerfectMatching(links, matching));
     EXPECT_EQUAL(matching, expected);
 }
@@ -522,7 +539,7 @@ PROVIDED_TEST("hasPerfectMatching works on a triangle of people.") {
         { "C", "A" }
     });
 
-    Set<Pair> unused;
+    std::set<Pair> unused;
     EXPECT(!hasPerfectMatching(links, unused));
 }
 
@@ -544,7 +561,7 @@ PROVIDED_TEST("hasPerfectMatching works on a square of people.") {
         { "D", "A" }
     });
 
-    Set<Pair> unused;
+    std::set<Pair> unused;
     EXPECT(hasPerfectMatching(links, unused));
 }
 
@@ -566,7 +583,7 @@ PROVIDED_TEST("hasPerfectMatching works on a square of people, and produces outp
         { "D", "A" }
     });
 
-    Set<Pair> matching;
+    std::set<Pair> matching;
     EXPECT(hasPerfectMatching(links, matching));
     EXPECT(isPerfectMatching(links, matching));
 }
@@ -591,12 +608,12 @@ PROVIDED_TEST("hasPerfectMatching works on a pentagon of people.") {
         { "E", "A" }
     });
 
-    Set<Pair> unused;
+    std::set<Pair> unused;
     EXPECT(!hasPerfectMatching(links, unused));
 }
 
 PROVIDED_TEST("hasPerfectMatching works on a line of six people.") {
-    /* Because Map and Set internally store items in sorted order, the order
+    /* Because std::map and std::set internally store items in sorted order, the order
      * in which you iterate over people when making decisions is sensitive
      * to the order of those peoples' names. This test looks at a group like
      * this one, trying out all possible orderings of peoples' names:
@@ -614,9 +631,9 @@ PROVIDED_TEST("hasPerfectMatching works on a line of six people.") {
      * issues here, it may indicate that there's a bug in how you mark who's
      * paired and who isn't.
      */
-    Vector<string> people = { "A", "B", "C", "D", "E", "F" };
+    std::vector<string> people = { "A", "B", "C", "D", "E", "F" };
     do {
-        Map<string, Set<string>> links = fromLinks({
+        std::map<string, std::set<string>> links = fromLinks({
             { people[0], people[1] },
             { people[1], people[2] },
             { people[2], people[3] },
@@ -624,14 +641,14 @@ PROVIDED_TEST("hasPerfectMatching works on a line of six people.") {
             { people[4], people[5] }
         });
 
-        Set<Pair> matching;
+        std::set<Pair> matching;
         EXPECT(hasPerfectMatching(links, matching));
         EXPECT(isPerfectMatching(links, matching));
     } while (next_permutation(people.begin(), people.end()));
 }
 
 PROVIDED_TEST("hasPerfectMatching works on a more complex negative example.") {
-    /* Because Map and Set internally store items in sorted order, the order
+    /* Because std::map and std::set internally store items in sorted order, the order
      * in which you iterate over people when making decisions is sensitive
      * to the order of those peoples' names. This test looks at a group like
      * this one, trying out all possible orderings of peoples' names:
@@ -650,9 +667,9 @@ PROVIDED_TEST("hasPerfectMatching works on a more complex negative example.") {
      * issues here, it may indicate that there's a bug in how you mark who's
      * paired and who isn't.
      */
-    Vector<string> people = { "A", "B", "C", "D", "E", "F" };
+    std::vector<string> people = { "A", "B", "C", "D", "E", "F" };
     do {
-        Map<string, Set<string>> links = fromLinks({
+        std::map<string, std::set<string>> links = fromLinks({
             { people[0], people[2] },
             { people[1], people[2] },
             { people[2], people[3] },
@@ -660,13 +677,13 @@ PROVIDED_TEST("hasPerfectMatching works on a more complex negative example.") {
             { people[3], people[5] },
         });
 
-        Set<Pair> matching;
+        std::set<Pair> matching;
         EXPECT(!hasPerfectMatching(links, matching));
     } while (next_permutation(people.begin(), people.end()));
 }
 
 PROVIDED_TEST("hasPerfectMatching works on a more complex positive example.") {
-    /* Because Map and Set internally store items in sorted order, the order
+    /* Because std::map and std::set internally store items in sorted order, the order
      * in which you iterate over people when making decisions is sensitive
      * to the order of those peoples' names. This test looks at a group like
      * this one, trying out all possible orderings of peoples' names:
@@ -686,9 +703,9 @@ PROVIDED_TEST("hasPerfectMatching works on a more complex positive example.") {
      * issues here, it may indicate that there's a bug in how you mark who's
      * paired and who isn't.
      */
-    Vector<string> people = { "A", "B", "C", "D", "E", "F" };
+    std::vector<string> people = { "A", "B", "C", "D", "E", "F" };
     do {
-        Map<string, Set<string>> links = fromLinks({
+        std::map<string, std::set<string>> links = fromLinks({
             { people[0], people[1] },
             { people[1], people[2] },
             { people[2], people[3] },
@@ -697,14 +714,14 @@ PROVIDED_TEST("hasPerfectMatching works on a more complex positive example.") {
             { people[3], people[5] },
         });
 
-        Set<Pair> matching;
+        std::set<Pair> matching;
         EXPECT(hasPerfectMatching(links, matching));
         EXPECT(isPerfectMatching(links, matching));
     } while (next_permutation(people.begin(), people.end()));
 }
 
 PROVIDED_TEST("hasPerfectMatching works on a caterpillar.") {
-    /* Because Map and Set internally store items in sorted order, the order
+    /* Because std::map and std::set internally store items in sorted order, the order
      * in which you iterate over people when making decisions is sensitive
      * to the order of those peoples' names. This test looks at a group like
      * this one, trying out all possible orderings of peoples' names:
@@ -720,9 +737,9 @@ PROVIDED_TEST("hasPerfectMatching works on a caterpillar.") {
      * issues here, it may indicate that there's a bug in how you mark who's
      * paired and who isn't.
      */
-    Vector<string> people = { "A", "B", "C", "D", "E", "F" };
+    std::vector<string> people = { "A", "B", "C", "D", "E", "F" };
     do {
-        Map<string, Set<string>> links = fromLinks({
+        std::map<string, std::set<string>> links = fromLinks({
             { people[0], people[1] },
             { people[1], people[2] },
             { people[0], people[3] },
@@ -730,7 +747,7 @@ PROVIDED_TEST("hasPerfectMatching works on a caterpillar.") {
             { people[2], people[5] },
         });
 
-        Set<Pair> matching;
+        std::set<Pair> matching;
         EXPECT(hasPerfectMatching(links, matching));
         EXPECT(isPerfectMatching(links, matching));
     } while (next_permutation(people.begin(), people.end()));
@@ -764,18 +781,18 @@ PROVIDED_TEST("hasPerfectMatching stress test: negative example (should take und
     /* Number of "body segments". */
     const int kRowSize = 10;
 
-    Vector<Pair> links;
+    std::vector<Pair> links;
     for (int i = 0; i < kRowSize - 1; i++) {
-        links.add({ to_string(i), to_string(i + 1) });
+        links.push_back({ to_string(i), to_string(i + 1) });
     }
     for (int i = 0; i < kRowSize; i++) {
-        links.add({ to_string(i), to_string(i + kRowSize) });
+        links.push_back({ to_string(i), to_string(i + kRowSize) });
     }
     for (int i = 0; i < kRowSize; i++) {
-        links.add({ to_string(i), to_string(i + 2 * kRowSize) });
+        links.push_back({ to_string(i), to_string(i + 2 * kRowSize) });
     }
 
-    Set<Pair> matching;
+    std::set<Pair> matching;
     EXPECT(!hasPerfectMatching(fromLinks(links), matching));
 }
 
@@ -806,15 +823,15 @@ PROVIDED_TEST("hasPerfectMatching stress test: positive example (should take und
     /* Number of "body segments". */
     const int kRowSize = 10;
 
-    Vector<Pair> links;
+    std::vector<Pair> links;
     for (int i = 0; i < kRowSize - 1; i++) {
-        links.add({ to_string(i), to_string(i + 1) });
+        links.push_back({ to_string(i), to_string(i + 1) });
     }
     for (int i = 0; i < kRowSize; i++) {
-        links.add({ to_string(i), to_string(i + kRowSize) });
+        links.push_back({ to_string(i), to_string(i + kRowSize) });
     }
 
-    Set<Pair> matching;
+    std::set<Pair> matching;
     EXPECT(hasPerfectMatching(fromLinks(links), matching));
     EXPECT(isPerfectMatching(fromLinks(links), matching));
 }
@@ -824,7 +841,7 @@ PROVIDED_TEST("maximumWeightMatching: Works for empty group.") {
 }
 
 PROVIDED_TEST("maximumWeightMatching: Works for group of one person.") {
-    Map<string, Map<string, int>> links = {
+    std::map<string, std::map<string, int>> links = {
         { "A", {} }
     };
 
@@ -943,7 +960,7 @@ PROVIDED_TEST("maximumWeightMatching: Works on a line of four people.") {
 }
 
 PROVIDED_TEST("maximumWeightMatching: Small stress test (should take at most a second or two).") {
-    /* Because Map and Set internally store items in sorted order, the order
+    /* Because std::map and std::set internally store items in sorted order, the order
      * in which you iterate over people when making decisions is sensitive
      * to the order of those peoples' names. This test looks at a group like
      * this one, trying out all possible orderings of peoples' names:
@@ -966,7 +983,7 @@ PROVIDED_TEST("maximumWeightMatching: Small stress test (should take at most a s
      * issues here, it may indicate that there's a bug in how you mark who's
      * paired and who isn't.
      */
-    Vector<string> people = { "A", "B", "C", "D", "E", "F" };
+    std::vector<string> people = { "A", "B", "C", "D", "E", "F" };
     do {
         auto links = fromWeightedLinks({
             { people[0], people[1], 5 },
@@ -977,7 +994,7 @@ PROVIDED_TEST("maximumWeightMatching: Small stress test (should take at most a s
             { people[5], people[2], 1 },
         });
 
-        Set<Pair> expected = {
+        std::set<Pair> expected = {
             { people[0], people[1] },
             { people[2], people[5] }
         };
@@ -1008,22 +1025,22 @@ PROVIDED_TEST("maximumWeightMatching: Large stress test (should take at most a s
      * multiple times.
      */
     const int kNumPeople = 21;
-    Vector<WeightedLink> links;
+    std::vector<WeightedLink> links;
     for (int i = 0; i < kNumPeople - 1; i++) {
-        links.add({ to_string(i), to_string(i + 1), 1 });
+        links.push_back({ to_string(i), to_string(i + 1), 1 });
     }
 
     auto matching = maximumWeightMatching(fromWeightedLinks(links));
     EXPECT_EQUAL(matching.size(), kNumPeople / 2);
 
     /* Confirm it's a matching. */
-    Set<string> used;
+    std::set<string> used;
     for (Pair p: matching) {
         /* No people paired more than once. */
-        EXPECT(!used.contains(p.first()));
-        EXPECT(!used.contains(p.second()));
-        used += p.first();
-        used += p.second();
+        EXPECT(!used.count(p.first()));
+        EXPECT(!used.count(p.second()));
+        used.insert(p.first());
+        used.insert(p.second());
 
         /* Must be a possible links. */
         EXPECT_EQUAL(abs(stringToInteger(p.first()) - stringToInteger(p.second())), 1);
@@ -1056,9 +1073,9 @@ PROVIDED_TEST("getAllPerfectMatching works on a square of people, and produces o
         { "C", "D" },
         { "D", "A" }
     });
-    Vector<Set<Pair>> allMatches = {
-        {{"A","D"}, {"B","C"}},
-        {{"A","B"}, {"C","D"}}
+    std::vector<std::set<Pair>> allMatches = {
+        {{"A","B"}, {"C","D"}},
+        {{"A","D"}, {"B","C"}}
     };
     EXPECT_EQUAL(getAllPerfectMatchings(links), allMatches);
 }
@@ -1075,7 +1092,7 @@ STUDENT_TEST("All possible pairings is huge, but all perfect matching configs is
      *
      *
      */
-    const Map<std::string, Set<std::string>> provided = {
+    const std::map<std::string, std::set<std::string>> provided = {
         { "A", {"B", "J"} },
         { "B", {"A", "C", "E"} },
         { "C", {"B", "D"} },
@@ -1087,7 +1104,7 @@ STUDENT_TEST("All possible pairings is huge, but all perfect matching configs is
         { "I", {"H", "J"} },
         { "J", {"A", "G", "I"} }
     };
-    Vector<Set<Pair>> allMatches = {
+    std::vector<std::set<Pair>> allMatches = {
         {{ "A", "J" }, { "B", "E" }, { "C", "D" }, { "F", "G" }, { "H", "I" }},
         {{ "A", "J" }, { "B", "C" }, { "D", "E" }, { "F", "G" }, { "H", "I" }},
         {{ "A", "B" }, { "C", "D" }, { "E", "F" }, { "G", "J" }, { "H", "I" }},

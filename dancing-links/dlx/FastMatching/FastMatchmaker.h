@@ -1,12 +1,12 @@
 #pragma once
 #include <string>
 #include <ostream>
-#include "map.h"
-#include "set.h"
+#include <map>
+#include <set>
 #include "Utilities/MatchingUtilities.h"
 
-bool hasFastPerfectMatching(const Map<std::string, Set<std::string>>& possibleLinks, Set<Pair>& matching);
-Set<Pair> fastMaxWeightMatching(const Map<std::string, Map<std::string, int>>& possibleLinks);
-Set<Pair> fastMWMCMatching(const Map<std::string, Map<std::string, int>>& possibleLinks);
+bool hasFastPerfectMatching(const std::map<std::string, std::set<std::string>>& possibleLinks, std::set<Pair>& matching);
+std::set<Pair> fastMaxWeightMatching(const std::map<std::string, std::map<std::string, int>>& possibleLinks);
+std::set<Pair> fastMWMCMatching(const std::map<std::string, std::map<std::string, int>>& possibleLinks);
 
 std::ostream& operator<< (std::ostream& out, const Pair& pair);
