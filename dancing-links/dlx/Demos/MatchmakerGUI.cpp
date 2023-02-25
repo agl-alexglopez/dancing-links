@@ -7,7 +7,6 @@
 #include <vector>
 #include <unordered_map>
 #include "filelib.h"
-#include "Matchmaker.h"
 #include "FastMatching/FastMatchmaker.h"
 #include "PartnerLinks.h"
 using namespace std;
@@ -25,9 +24,8 @@ namespace {
      * of the nodes for a matching solution. Different colors distinguish different solvers.
      */
     enum MatchSolver {
-        SET_BASED=0,
-        DLX_PAIRS=1,
-        FAST_ROTHBERG=2
+        DLX_PAIRS=0,
+        FAST_ROTHBERG=1
     };
 
     const string kUnsavedChanges = "You have unsaved changes.\n\nDo you want to save?";
@@ -106,10 +104,9 @@ namespace {
 
         GContainer* graphControls;
         Temporary<GComboBox> solverDropdown;
-        const string setSolver = "Solver: std::set Based";
         const string dlxSolver = "Solver: DLX Pairs";
         const string fastRothbergSolver = "Solver: Fast Rothberg";
-        const vector<string> solverNames = {setSolver, dlxSolver, fastRothbergSolver};
+        const vector<string> solverNames = {dlxSolver, fastRothbergSolver};
         MatchSolver selectedSolver;
 
         GButton* perfectMatchButton;
@@ -195,7 +192,7 @@ namespace {
 
         /* Select the implementation you want to solve the problems, initially sets.*/
         solverDropdown = Temporary<GComboBox>(solvers, window(), "SOUTH");
-        selectedSolver = SET_BASED;
+        selectedSolver = DLX_PAIRS;
 
         perfectMatchButton = new GButton("Find Perfect Matching");
         prevMatchButton = new GButton("<<");
@@ -549,10 +546,7 @@ namespace {
         std::set<Pair> matching;
         bool foundMatching = false;
 
-        if (solverDropdown->getSelectedItem() == setSolver) {
-            selectedSolver = SET_BASED;
-            foundMatching = hasPerfectMatching(graph, matching);
-        } else if (solverDropdown->getSelectedItem() == dlxSolver) {
+        if (solverDropdown->getSelectedItem() == dlxSolver) {
             selectedSolver = DLX_PAIRS;
             foundMatching = PartnerLinks(graph).hasPerfectLinks(matching);
         } else if (solverDropdown->getSelectedItem() == fastRothbergSolver){
@@ -629,10 +623,7 @@ namespace {
         std::vector<std::set<Pair>> allFoundMatchings = {};
         bool usedRothberg = false;
 
-        if (solverDropdown->getSelectedItem() == setSolver) {
-            selectedSolver = SET_BASED;
-            allFoundMatchings = getAllPerfectMatchings(graph);
-        } else if (solverDropdown->getSelectedItem() == dlxSolver) {
+        if (solverDropdown->getSelectedItem() == dlxSolver) {
             selectedSolver = DLX_PAIRS;
             allFoundMatchings = PartnerLinks(graph).getAllPerfectLinks();
         } else if (solverDropdown->getSelectedItem() == fastRothbergSolver){
@@ -704,10 +695,7 @@ namespace {
         /* Store this matching. */
         std::set<Pair> weightedMatches = {};
 
-        if (solverDropdown->getSelectedItem() == setSolver) {
-            selectedSolver = SET_BASED;
-            weightedMatches = maximumWeightMatching(graph);
-        } else if (solverDropdown->getSelectedItem() == dlxSolver) {
+        if (solverDropdown->getSelectedItem() == dlxSolver) {
             selectedSolver = DLX_PAIRS;
             weightedMatches = PartnerLinks(graph).getMaxWeightMatching();
         } else if (solverDropdown->getSelectedItem() == fastRothbergSolver) {

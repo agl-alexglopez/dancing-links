@@ -11,7 +11,6 @@
 #include "strlib.h"
 #include "gthread.h"
 #include "simpio.h"
-#include "DisasterPlanning.h"
 #include "DisasterLinks.h"
 #include "DisasterTags.h"
 #include <regex>
@@ -41,19 +40,12 @@ namespace {
 
     /* This communicates solver used and index in kSolverColorOptions to use as well. */
     enum CitySolver {
-        SET_BASED=0,
-        QUAD_DLX=1,
-        TAGGED_DLX=2,
+        QUAD_DLX=0,
+        TAGGED_DLX=1,
     };
 
     /* Colors to use when drawing cities. */
     const vector<vector<CityColors>> kSolverColorOptions = {
-        /* SET_BASED */
-        {
-            { "#101010", "#202020", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#A0A0A0") },   // Uncovered
-            { "#303060", "#404058", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#C0C0C0") },   // Indirectly covered
-            { "#806030", "#FFB000", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#000000") },   // Directly covered
-        },
         /* QUAD_DLX */
         {
             { "#101010", "#202020", Font(FontFamily::MONOSPACE, FontStyle::BOLD, 12, "#A0A0A0") },   // Uncovered
@@ -325,39 +317,6 @@ namespace {
      * with a function pointer. Instead just do the same functions many times.
      */
 
-    /* Uses binary search to find the optimal number of cities to use for disaster
-     * preparedness, populating the result field with the minimum group of cities
-     * that ended up being needed.
-     */
-    void solveOptimallyWithSets(const MapTest& test, Set<string>& result) {
-        /* The variable 'low' is the lowest number that might be feasible.
-         * The variable 'high' is the highest number that we know is feasible.
-         */
-        int low = 0, high = test.network.size();
-
-        /* Begin with a feasible solution that uses as many cities as we'd like. */
-        (void) canBeMadeDisasterReady(test.network, high, result);
-
-        while (low < high) {
-            /* This line looks weird, but it's designed to avoid integer overflows
-             * on large inputs. The idea that (high + low) can overflow, but
-             * (high - low) / 2 never will.
-             */
-            int mid = low + (high - low) / 2;
-            Set<string> thisResult;
-
-            /* If this option works, decrease high to it, since we know all is good. */
-            if (canBeMadeDisasterReady(test.network, mid, thisResult)) {
-                high = mid;
-                result = thisResult; // Remember this result for later.
-            }
-            /* Otherwise, rule out anything less than or equal to it. */
-            else {
-                low = mid + 1;
-            }
-        }
-    }
-
     void solveOptimallyWithQuadDLX(const MapTest& test, Set<string>& result) {
         int low = 0, high = test.network.size();
         DisasterLinks network(test.network);
@@ -398,28 +357,6 @@ namespace {
      * coverage schemes so I can use a vector from the beggining. I haven't figured it out.
      */
 
-    void solveAllWithSets(const MapTest& test, unique_ptr<vector<Set<string>>>& allSolutions) {
-        int low = 0, high = test.network.size();
-        Set<string> result = {};
-        (void) canBeMadeDisasterReady(test.network, high, result);
-        while (low < high) {
-            int mid = low + (high - low) / 2;
-            Set<string> thisResult;
-            if (canBeMadeDisasterReady(test.network, mid, thisResult)) {
-                high = mid;
-                result = thisResult;
-            }
-            else {
-                low = mid + 1;
-            }
-        }
-        /* We need a heap allocated vector so we have persistent accessible solutions in the GUI. */
-        int optimalSupplies = result.size();
-        Set<Set<string>> allFoundConfigs = findAllSupplySchemes(test.network, optimalSupplies);
-        for (const auto& found : allFoundConfigs) {
-            (*allSolutions).push_back(found);
-        }
-    }
 
     void solveAllWithQuadDLX(const MapTest& test,
                              unique_ptr<vector<Set<string>>>& allSolutions) {
@@ -534,7 +471,7 @@ namespace {
         mProblems = Temporary<GComboBox>(choices, window, "SOUTH");
         /* Select the implementation you want to solve the problems, initially sets.*/
         mSolver = Temporary<GComboBox>(solvers, window, "SOUTH");
-        mSolverUsed = SET_BASED;
+        mSolverUsed = QUAD_DLX;
         mSolve = Temporary<GButton>(new GButton("Solve"), window, "SOUTH");
         mPrevSolution = Temporary<GButton>(new GButton("<<"), window, "SOUTH");
         /* These implementations are fast enough to find all optimal solutions in good time. */
@@ -604,10 +541,7 @@ namespace {
         mPrevSolution->setEnabled(false);
         mNextSolution->setEnabled(false);
 
-        if (mSolver->getSelectedItem() == mSetSolver) {
-            mSolverUsed = SET_BASED;
-            solveOptimallyWithSets(mNetwork, mSelected);
-        } else if (mSolver->getSelectedItem() == mQuadDLXSolver) {
+        if (mSolver->getSelectedItem() == mQuadDLXSolver) {
             mSolverUsed = QUAD_DLX;
             solveOptimallyWithQuadDLX(mNetwork, mSelected);
         } else if (mSolver->getSelectedItem() == mSupplyTagDLXSolver) {
@@ -654,10 +588,7 @@ namespace {
         mAllSolutions->setEnabled(false);
         mCurrentSolutionIndex = 0;
 
-        if (mSolver->getSelectedItem() == mSetSolver) {
-            mSolverUsed = SET_BASED;
-            solveAllWithSets(mNetwork, mStoredSolutions);
-        } else if (mSolver->getSelectedItem() == mQuadDLXSolver) {
+        if (mSolver->getSelectedItem() == mQuadDLXSolver) {
             mSolverUsed = QUAD_DLX;
             solveAllWithQuadDLX(mNetwork, mStoredSolutions);
         } else if (mSolver->getSelectedItem() == mSupplyTagDLXSolver) {
@@ -717,7 +648,7 @@ namespace {
 
             cout << "Running your code to find the fewest number of cities needed... " << flush;
             Set<string> cities;
-            solveOptimallyWithSets(scenario, cities);
+            solveOptimallyWithQuadDLX(scenario, cities);
             cout << "done!" << endl;
 
             displayBestCities(cities);
