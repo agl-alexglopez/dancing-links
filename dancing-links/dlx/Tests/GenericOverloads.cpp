@@ -1,5 +1,7 @@
 #include "GenericOverloads.h"
 
+namespace std {
+
 std::ostream& operator<<(std::ostream& os, const std::vector<std::string>& v) {
     for (const std::string& s: v) {
         os << s << ',';
@@ -21,3 +23,5 @@ std::ostream& operator<<(std::ostream& os, const std::set<std::set<std::string>>
     return os;
 
 }
+
+} // namespace std
