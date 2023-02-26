@@ -2,6 +2,8 @@
 
 ## Navigation
 
+- Dancing Links Functions
+	- Free Functions **([`DancingLinks.h`](/dancing-links/dlx/DancingLinks.h))**
 - Disaster Planning
 	- Dancing Links Class **([`DisasterLinks.h`](/dancing-links/dlx/Src/DisasterLinks.h))**
 	- Dancing Links Implementation **([`DisasterLinks.cpp`](dancing-links/dlx/Src/DisasterLinks.cpp))**
