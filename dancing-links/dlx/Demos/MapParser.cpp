@@ -78,11 +78,11 @@ namespace {
             }
 
             /* Confirm this isn't a dupe. */
-            if (result.network[cityName].contains(cleanName)) {
+            if (result.network[cityName].count(cleanName)) {
                 error("City appears twice in outgoing list?");
             }
 
-            result.network[cityName] += cleanName;
+            result.network[cityName].insert(cleanName);
         }
     }
 
@@ -119,24 +119,24 @@ namespace {
      * the reverse edges to the graph.
      */
     void addReverseEdges(MapTest& result) {
-        for (const string& source: result.network) {
-            for (const string& dest: result.network[source]) {
-                if (!result.network.containsKey(dest)) {
+        for (const auto& source: result.network) {
+            for (const string& dest: source.second) {
+                if (!result.network.count(dest)) {
                     error("Outgoing link found to nonexistent city '" + dest + "'");
                 }
-                result.network[dest] += source;
+                result.network[dest].insert(source.first);
             }
         }
     }
 
     /* Given a graph, confirms all nodes are at distinct locations. */
     void validateLocations(const MapTest& test) {
-        Map<GPoint, string> locations;
-        for (auto loc: test.cityLocations) {
-            if (locations.containsKey(test.cityLocations[loc])) {
-                throw runtime_error(loc + " is at the same location as " + locations[test.cityLocations[loc]]);
+        std::map<GPoint, string> locations;
+        for (const auto& loc: test.cityLocations) {
+            if (locations.count(test.cityLocations.at(loc.first))) {
+                throw runtime_error(loc.first + " is at the same location as " + locations[test.cityLocations.at(loc.first)]);
             }
-            locations[test.cityLocations[loc]] = loc;
+            locations[test.cityLocations.at(loc.first)] = loc.first;
         }
     }
 }

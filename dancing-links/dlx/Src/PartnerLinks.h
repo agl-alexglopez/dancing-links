@@ -109,7 +109,6 @@
  *      Pg.65-70,
  *      Knuth
  */
-#pragma once
 #ifndef PartnerLinks_H
 #define PartnerLinks_H
 #include <map>
@@ -118,35 +117,13 @@
 #include <string>
 #include <vector>
 #include "GUI/SimpleTest.h"
-#include "Utilities/MatchingUtilities.h"
+#include "MatchingUtilities.h"
 
+namespace DancingLinks {
 
 class PartnerLinks {
 
 public:
-
-    /* These are the nodes that live in our matrix representation of the network. If the node is
-     * a header for a column topOrLen is the number of options that a person appears in. If the node
-     * is in the column topOrLen is the index of the header for that column. Up down pointers are
-     * indices in the array. The left right pointers are implicit because these nodes are next to
-     * one another in an array.
-     */
-    struct personLink {
-        int topOrLen;
-        int up;
-        int down;
-    };
-
-    /* These nodes control recursion in a seperate array. As partnerships are chosen or individual
-     * people are chosen their representation in the lookup array is spliced out of a doubly linked
-     * list.
-     */
-    struct personName {
-        std::string name;
-        int left;
-        int right;
-    };
-
 
     /* * * * * *   Algorithm X via Dancing Links for Perfect and Max-Weight Matching  * * * * * * */
 
@@ -197,29 +174,34 @@ public:
     std::set<Pair> getMaxWeightMatching();
 
 
-    /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
-
-
-    friend bool operator==(const personLink& lhs, const personLink& rhs);
-
-    friend bool operator!=(const personLink& lhs, const personLink& rhs);
-
-    friend bool operator==(const personName& lhs, const personName& rhs);
-
-    friend bool operator!=(const personName& lhs, const personName& rhs);
-
-    friend std::ostream& operator<<(std::ostream& os, const personLink& city);
-
-    friend std::ostream& operator<<(std::ostream& os, const personName& city);
-
-    friend std::ostream& operator<<(std::ostream&os, const std::vector<personLink>& links);
-
-    friend std::ostream& operator<<(std::ostream&os, const std::vector<personName>& table);
-
-    friend std::ostream& operator<<(std::ostream&os, const PartnerLinks& links);
 
 
 private:
+
+
+    /* These are the nodes that live in our matrix representation of the network. If the node is
+     * a header for a column topOrLen is the number of options that a person appears in. If the node
+     * is in the column topOrLen is the index of the header for that column. Up down pointers are
+     * indices in the array. The left right pointers are implicit because these nodes are next to
+     * one another in an array.
+     */
+    struct personLink {
+        int topOrLen;
+        int up;
+        int down;
+    };
+
+    /* These nodes control recursion in a seperate array. As partnerships are chosen or individual
+     * people are chosen their representation in the lookup array is spliced out of a doubly linked
+     * list.
+     */
+    struct personName {
+        std::string name;
+        int left;
+        int right;
+    };
+
+
 
     /* An instance of a Network can solve either the Perfect Matching or Max Weight Matching
      * problem. However, it must be given the correct information. If a Max Weight Matching is
@@ -413,8 +395,23 @@ private:
                           std::set<Pair>& seenPairs,
                           int& index);
 
+
+    /* * * * * * * * * * * * *  Overloaded Debugging Operators  * * * * * * * * * * * * * * * * * */
+
+
+    friend bool operator==(const personLink& lhs, const personLink& rhs);
+    friend bool operator!=(const personLink& lhs, const personLink& rhs);
+    friend bool operator==(const personName& lhs, const personName& rhs);
+    friend bool operator!=(const personName& lhs, const personName& rhs);
+    friend std::ostream& operator<<(std::ostream& os, const personLink& city);
+    friend std::ostream& operator<<(std::ostream& os, const personName& city);
+    friend std::ostream& operator<<(std::ostream&os, const std::vector<personLink>& links);
+    friend std::ostream& operator<<(std::ostream&os, const std::vector<personName>& table);
+    friend std::ostream& operator<<(std::ostream&os, const PartnerLinks& links);
     // I need to test the internals of the dlx instance so leave this here.
     ALLOW_TEST_ACCESS();
 };
+
+} // namespace DancingLinks
 
 #endif // PartnerLinks_H

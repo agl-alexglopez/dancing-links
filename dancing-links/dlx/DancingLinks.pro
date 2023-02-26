@@ -71,14 +71,19 @@ DEFINES     +=  main=qMain qMain=studentMain
 # entries, so no worries about duplicates
 SOURCES         *=  "" \
     Demos/MapParser.cpp \
-    DisasterLinks.cpp \
-    DisasterTags.cpp \
-    PartnerLinks.cpp
+    Src/DisasterLinks.cpp \
+    Src/DisasterTags.cpp \
+    Src/PartnerLinks.cpp \
+    Tests/DisasterLinksTests.cpp \
+    Tests/DisasterTagsTests.cpp \
+    Tests/GenericOverloads.cpp \
+    Tests/PartnerLinksTests.cpp
 HEADERS         *=  "" \
+    DancingLinks.h \
     Demos/MapParser.h \
-    DisasterLinks.h \
-    DisasterTags.h \
-    PartnerLinks.h
+    Src/DisasterLinks.h \
+    Src/DisasterTags.h \
+    Src/PartnerLinks.h
 
 # Gather any .cpp or .h files within the project folder (student/starter code).
 # Second argument true makes search recursive
@@ -86,9 +91,8 @@ SOURCES         *=  $$files(*.cpp, true)
 HEADERS         *=  $$files(*.h, true)
 
 # Gather resource files (image/sound/etc) from res dir, list under "Other files"
-OTHER_FILES     *=  $$files(res/*, true)
+OTHER_FILES     *=  $$files(Data/*, true)
 OTHER_FILES     *=  $$files(FastMatching/*,true)
-OTHER_FILES     *=  $$files(Utilities/*,true)
 # Gather text files from root dir or anywhere recursively
 OTHER_FILES     *=  $$files(*.txt, true)
 

@@ -85,19 +85,54 @@
  *      Knuth
  *
  */
-#pragma once
 #ifndef DISASTERLINKS_H
 #define DISASTERLINKS_H
 #include <vector>
 #include "GUI/SimpleTest.h"
-#include "map.h"
-#include "hashmap.h"
-#include "set.h"
+#include <map>
+#include <unordered_map>
+#include <set>
 
+namespace DancingLinks {
 
 class DisasterLinks {
 
 public:
+
+
+    /**
+     * @brief DisasterLinks  a custom constructor for this class that can turn a std::map representation
+     *                       of a transportation grid into a vector grid prepared for exact cover
+     *                       search via dancing links.
+     * @param roadNetwork    the transportation grid passed in via map form.
+     */
+    explicit DisasterLinks(const std::map<std::string, std::set<std::string>>& roadNetwork);
+
+    /**
+     * @brief isDisasterReady  performs a recursive search to determine if a transportation grid
+     *                         can be covered with the specified number of emergency supplies. It
+     *                         will also place the found cities in the output parameter if there
+     *                         exists a solution. A city is covered or safe if it has supplies or
+     *                         is adjacent to a city with supplies. The solution may not use all
+     *                         of the provided supplies.
+     * @param numSupplies      the limiting number of supplies we must distribute.
+     * @param suppliedCities   the output parameter telling which cities received supplies.
+     * @return                 true if we have found a viable supply scheme, false if not.
+     */
+    bool isDisasterReady(int numSupplies, std::set<std::string>& suppliedCities);
+
+    /**
+     * @brief getAllDisasterConfigurations  returns every possible disaster configuration possible
+     *                                      with a given supply count. I advise finding the optimal
+     *                                      number of supplies before running this function or it
+     *                                      will work very hard. It is slow.
+     * @param numSupplies                   the number of supplies we have to distribute.
+     * @return                              all possible distributions of the supplies.
+     */
+    std::set<std::set<std::string>> getAllDisasterConfigurations(int numSupplies);
+
+
+private:
 
 
     /* The cityItem will carry most of the logic of our problem. These nodes are in the grid we
@@ -125,65 +160,6 @@ public:
         int left;
         int right;
     };
-
-
-    /**
-     * @brief DisasterLinks  a custom constructor for this class that can turn a Map representation
-     *                       of a transportation grid into a vector grid prepared for exact cover
-     *                       search via dancing links.
-     * @param roadNetwork    the transportation grid passed in via map form.
-     */
-    explicit DisasterLinks(const Map<std::string, Set<std::string>>& roadNetwork);
-
-    /**
-     * @brief isDisasterReady  performs a recursive search to determine if a transportation grid
-     *                         can be covered with the specified number of emergency supplies. It
-     *                         will also place the found cities in the output parameter if there
-     *                         exists a solution. A city is covered or safe if it has supplies or
-     *                         is adjacent to a city with supplies. The solution may not use all
-     *                         of the provided supplies.
-     * @param numSupplies      the limiting number of supplies we must distribute.
-     * @param suppliedCities   the output parameter telling which cities received supplies.
-     * @return                 true if we have found a viable supply scheme, false if not.
-     */
-    bool isDisasterReady(int numSupplies, Set<std::string>& suppliedCities);
-
-    /**
-     * @brief getAllDisasterConfigurations  returns every possible disaster configuration possible
-     *                                      with a given supply count. I advise finding the optimal
-     *                                      number of supplies before running this function or it
-     *                                      will work very hard. It is slow.
-     * @param numSupplies                   the number of supplies we have to distribute.
-     * @return                              all possible distributions of the supplies.
-     */
-    Set<Set<std::string>> getAllDisasterConfigurations(int numSupplies);
-
-
-    /* The following operators are nothing special. The fields of these types are simple integers.
-     * We just need to define how to compare the fields in the structs. I also need helpful
-     * printing information for the structs while debugging.
-     */
-
-    friend bool operator==(const cityItem& lhs, const cityItem& rhs);
-
-    friend bool operator!=(const cityItem& lhs, const cityItem& rhs);
-
-    friend bool operator==(const cityHeader& lhs, const cityHeader& rhs);
-
-    friend bool operator!=(const cityHeader& lhs, const cityHeader& rhs);
-
-    friend std::ostream& operator<<(std::ostream& os, const cityItem& city);
-
-    friend std::ostream& operator<<(std::ostream& os, const cityHeader& city);
-
-    friend std::ostream& operator<<(std::ostream&os, const std::vector<cityItem>& grid);
-
-    friend std::ostream& operator<<(std::ostream&os, const std::vector<cityHeader>& grid);
-
-    friend std::ostream& operator<<(std::ostream&os, const DisasterLinks& network);
-
-
-private:
 
     /* This is our world. These data structures will remain in place during the recursive
      * algorithm. We do not need to make any copies, only modify the indices of the cityItems in
@@ -217,11 +193,11 @@ private:
      * @param suppliedCities  the output parameter showing the cities we have chosen to supply.
      * @return                true if all cities are safe with given supplies, false if not.
      */
-    bool isCovered(int numSupplies, Set<std::string>& suppliedCities);
+    bool isCovered(int numSupplies, std::set<std::string>& suppliedCities);
 
     /**
      * @brief fillConfigurations  finds all possible distributions of the given number of supplies.
-     *                            It generates duplicate configurations and uses a Set to filter
+     *                            It generates duplicate configurations and uses a std::set to filter
      *                            them out. This is slow and I want to only generate unique
      *                            configurations but am having trouble finding a way.
      * @param numSupplies         the number of supplies we have to distribute.
@@ -229,8 +205,8 @@ private:
      * @param allConfigurations   the set that records all configurations found.
      */
     void fillConfigurations(int numSupplies,
-                            Set<std::string>& suppliedCities,
-                            Set<Set<std::string>>& allConfigurations);
+                            std::set<std::string>& suppliedCities,
+                            std::set<std::set<std::string>>& allConfigurations);
 
     /**
      * @brief chooseIsolatedCity  selects a city we are trying to cover either by giving it supplies
@@ -291,9 +267,9 @@ private:
      * @param connectionSizes    a city and the size of the set of adjacent cities.
      * @param columnBuilder      the hash map we will use to connect newly added items to a column.
      */
-    void initializeHeaders(const Map<std::string, Set<std::string>>& roadNetwork,
+    void initializeHeaders(const std::map<std::string, std::set<std::string>>& roadNetwork,
                            std::vector<std::pair<std::string,int>>& connectionSizes,
-                           HashMap<std::string,int>& columnBuilder);
+                           std::unordered_map<std::string,int>& columnBuilder);
 
     /**
      * @brief initializeItems  builds the structure needed to perform the dancing links algorithm.
@@ -305,9 +281,9 @@ private:
      * @param columnBuilder    the map we use to help build an accurate column for each city item.
      * @param index            we are passed in a starting index to begin building
      */
-    void initializeItems(const Map<std::string, Set<std::string>>& roadNetwork,
+    void initializeItems(const std::map<std::string, std::set<std::string>>& roadNetwork,
                          const std::vector<std::pair<std::string,int>>& connectionSizes,
-                         HashMap<std::string,int>& columnBuilder);
+                         std::unordered_map<std::string,int>& columnBuilder);
 
     /**
      * @brief initializeColumns  this is the set builder for each row. When a city is given supplies
@@ -319,13 +295,34 @@ private:
      * @param index              the index of the array at which we start building.
      * @return                   the new index of the grid after adding all items in a row.
      */
-    int initializeColumns(const Set<std::string>& connections,
-                          HashMap<std::string,int>& columnBuilder,
+    int initializeColumns(const std::set<std::string>& connections,
+                          std::unordered_map<std::string,int>& columnBuilder,
                           int index);
 
 
+    /* The following operators are nothing special. The fields of these types are simple integers.
+     * We just need to define how to compare the fields in the structs. I also need helpful
+     * printing information for the structs while debugging.
+     */
+
+    friend bool operator==(const cityItem& lhs, const cityItem& rhs);
+    friend bool operator!=(const cityItem& lhs, const cityItem& rhs);
+    friend bool operator==(const cityHeader& lhs, const cityHeader& rhs);
+    friend bool operator!=(const cityHeader& lhs, const cityHeader& rhs);
+    friend std::ostream& operator<<(std::ostream& os, const cityItem& city);
+    friend std::ostream& operator<<(std::ostream& os, const cityHeader& city);
+    friend std::ostream& operator<<(std::ostream&os, const std::vector<cityItem>& grid);
+    friend std::ostream& operator<<(std::ostream&os, const std::vector<cityHeader>& grid);
+    friend std::ostream& operator<<(std::ostream&os, const DisasterLinks& network);
     // I like to test the private internals of a class rather than just unit tests so add this here.
     ALLOW_TEST_ACCESS();
 };
+
+
+} // namespace DancingLinks
+
+std::ostream& operator<<(std::ostream& os, const std::vector<std::string>& v);
+std::ostream& operator<<(std::ostream& os, const std::set<std::string>& s);
+std::ostream& operator<<(std::ostream& os, const std::set<std::set<std::string>>& s);
 
 #endif // DISASTERLINKS_H

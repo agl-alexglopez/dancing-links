@@ -8,9 +8,11 @@
 #include <unordered_map>
 #include "filelib.h"
 #include "FastMatching/FastMatchmaker.h"
-#include "PartnerLinks.h"
+#include "DancingLinks.h"
 using namespace std;
 using namespace MiniGUI;
+
+namespace Dx = DancingLinks;
 
 ostream& operator<< (ostream& out, const Pair& pair) {
     ostringstream builder;
@@ -33,7 +35,7 @@ namespace {
 
     const string kUntitledGraph = "(Untitled)";
 
-    const string kBaseDir = "res/matchmaker/";
+    const string kBaseDir = "Data/matchmaker/";
     const string kFileExtension = "";
 
     const string kWelcome = R"(Click "Load Graph" to choose a graph, or "New Graph" to make a new graph.)";
@@ -548,7 +550,8 @@ namespace {
 
         if (solverDropdown->getSelectedItem() == dlxSolver) {
             selectedSolver = DLX_PAIRS;
-            foundMatching = PartnerLinks(graph).hasPerfectLinks(matching);
+            Dx::PartnerLinks links(graph);
+            foundMatching = Dx::hasExactCover(links, matching);
         } else if (solverDropdown->getSelectedItem() == fastRothbergSolver){
             selectedSolver = FAST_ROTHBERG;
             foundMatching = hasFastPerfectMatching(graph, matching);
@@ -625,7 +628,8 @@ namespace {
 
         if (solverDropdown->getSelectedItem() == dlxSolver) {
             selectedSolver = DLX_PAIRS;
-            allFoundMatchings = PartnerLinks(graph).getAllPerfectLinks();
+            Dx::PartnerLinks links(graph);
+            allFoundMatchings = Dx::getAllExactCovers(links);
         } else if (solverDropdown->getSelectedItem() == fastRothbergSolver){
             usedRothberg = true;
         } else {
@@ -697,7 +701,8 @@ namespace {
 
         if (solverDropdown->getSelectedItem() == dlxSolver) {
             selectedSolver = DLX_PAIRS;
-            weightedMatches = PartnerLinks(graph).getMaxWeightMatching();
+            Dx::PartnerLinks links(graph);
+            weightedMatches = Dx::getMaxWeightMatching(links);
         } else if (solverDropdown->getSelectedItem() == fastRothbergSolver) {
             selectedSolver = FAST_ROTHBERG;
             weightedMatches = fastMaxWeightMatching(graph);

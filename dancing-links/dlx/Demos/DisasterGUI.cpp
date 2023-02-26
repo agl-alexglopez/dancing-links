@@ -7,20 +7,23 @@
 #include <iomanip>
 #include <sstream>
 #include <vector>
+#include <map>
+#include <set>
 #include "filelib.h"
 #include "strlib.h"
 #include "gthread.h"
 #include "simpio.h"
-#include "DisasterLinks.h"
-#include "DisasterTags.h"
+#include "DancingLinks.h"
 #include <regex>
 using namespace std;
 using namespace MiniGUI;
 
+namespace Dx = DancingLinks;
+
 namespace {
     /* File constants. */
     const string kProblemSuffix = ".dst";
-    const string kBasePath = "res/disaster-planning/";
+    const string kBasePath = "Data/disaster-planning/";
 
     /* Background color. */
     const string kBackgroundColor  = "#000000";
@@ -103,12 +106,12 @@ namespace {
         geo.minDataX = geo.minDataY = numeric_limits<double>::infinity();
         geo.maxDataX = geo.maxDataY = -numeric_limits<double>::infinity();
 
-        for (const string& cityName: network.cityLocations) {
-            geo.minDataX = min(geo.minDataX, network.cityLocations[cityName].x);
-            geo.minDataY = min(geo.minDataY, network.cityLocations[cityName].y);
+        for (const auto& cityName: network.cityLocations) {
+            geo.minDataX = min(geo.minDataX, network.cityLocations.at(cityName.first).x);
+            geo.minDataY = min(geo.minDataY, network.cityLocations.at(cityName.first).y);
 
-            geo.maxDataX = max(geo.maxDataX, network.cityLocations[cityName].x);
-            geo.maxDataY = max(geo.maxDataY, network.cityLocations[cityName].y);
+            geo.maxDataX = max(geo.maxDataX, network.cityLocations.at(cityName.first).x);
+            geo.maxDataY = max(geo.maxDataY, network.cityLocations.at(cityName.first).y);
         }
 
         /* Pad the boundaries. This accounts for the edge case where one set of bounds is
@@ -180,23 +183,23 @@ namespace {
     void drawRoads(GWindow& window,
                    const Geometry& geo,
                    const MapTest& network,
-                   const Set<string>& selected) {
+                   const set<string>& selected) {
         /* For efficiency's sake, just create one line. */
         GLine toDraw;
         toDraw.setLineWidth(kRoadWidth);
 
-        for (const string& source: network.network) {
-            for (const string& dest: network.network[source]) {
+        for (const auto& source: network.network) {
+            for (const string& dest: source.second) {
                 /* Selected roads draw in the bright color; deselected
                  * roads draw in a the dark color.
                  */
-                toDraw.setColor((selected.contains(source) || selected.contains(dest))? kLightRoadColor : kDarkRoadColor);
+                toDraw.setColor((selected.count(source.first) || selected.count(dest))? kLightRoadColor : kDarkRoadColor);
 
                 /* Draw the line, remembering that the coordinates are in
                  * logical rather than physical space.
                  */
-                auto src = logicalToPhysical(network.cityLocations[source], geo);
-                auto dst = logicalToPhysical(network.cityLocations[dest], geo);
+                auto src = logicalToPhysical(network.cityLocations.at(source.first), geo);
+                auto dst = logicalToPhysical(network.cityLocations.at(dest), geo);
                 toDraw.setStartPoint(src.x, src.y);
                 toDraw.setEndPoint(dst.x, dst.y);
 
@@ -238,7 +241,7 @@ namespace {
     void drawCities(GWindow& window,
                     const Geometry& geo,
                     const MapTest& network,
-                    const Set<string>& selected,
+                    const set<string>& selected,
                     const enum CitySolver solverUsed) {
 
         /* For simplicity, just make a single oval. */
@@ -246,14 +249,22 @@ namespace {
         oval.setLineWidth(kCityWidth);
         oval.setFilled(true);
 
-        for (const string& city: network.network) {
+        for (const auto& city: network.network) {
             /* Figure out the center of the city on the screen. */
-            auto center = logicalToPhysical(network.cityLocations[city], geo);
+            auto center = logicalToPhysical(network.cityLocations.at(city.first), geo);
 
             /* See what state the city is in with regards to coverage. */
             CityState state = UNCOVERED;
-            if (selected.contains(city)) state = COVERED_DIRECTLY;
-            else if (!(selected * network.network[city]).isEmpty()) state = COVERED_INDIRECTLY;
+            if (selected.count(city.first)) {
+                state = COVERED_DIRECTLY;
+            } else {
+                set<string> intersect;
+                const set<string>& inMap = network.network.at(city.first);
+                set_intersection(selected.begin(), selected.end(),
+                                 inMap.begin(), inMap.end(),
+                                 inserter(intersect, intersect.begin()));
+                if (!intersect.empty()) state = COVERED_INDIRECTLY;
+            }
 
             /* There's no way to draw a filled circle with a boundary as one call. */
             oval.setColor(kSolverColorOptions[solverUsed][state].borderColor);
@@ -262,8 +273,8 @@ namespace {
                         center.x - kCityRadius,
                         center.y - kCityRadius);
 
-            /* Set the label text and color. */
-            auto render = TextRender::construct(shorthandFor(city), {
+            /* set the label text and color. */
+            auto render = TextRender::construct(shorthandFor(city.first), {
                                                     center.x - kCityRadius,
                                                     center.y - kCityRadius,
                                                     2 * kCityRadius,
@@ -277,7 +288,7 @@ namespace {
 
     void visualizeNetwork(GWindow& window,
                           const MapTest& network,
-                          const Set<string>& selected,
+                          const set<string>& selected,
                           const enum CitySolver solverUsed) {
         clearDisplay(window, kBackgroundColor);
 
@@ -291,7 +302,7 @@ namespace {
          * the window geometry can't be calculated properly. Therefore,
          * we're going skip all this logic if there's nothing to draw.
          */
-        if (!network.network.isEmpty()) {
+        if (!network.network.empty()) {
             Geometry geo = geometryFor(window, network);
 
             /* Draw the roads under the cities to avoid weird graphics
@@ -317,14 +328,14 @@ namespace {
      * with a function pointer. Instead just do the same functions many times.
      */
 
-    void solveOptimallyWithQuadDLX(const MapTest& test, Set<string>& result) {
+    void solveOptimallyWithQuadDLX(const MapTest& test, set<string>& result) {
         int low = 0, high = test.network.size();
-        DisasterLinks network(test.network);
-        (void) network.isDisasterReady(high, result);
+        Dx::DisasterLinks network(test.network);
+        (void) Dx::hasOverlappingCover(network, high, result);
         while (low < high) {
             int mid = low + (high - low) / 2;
-            Set<string> thisResult;
-            if (network.isDisasterReady(mid, thisResult)) {
+            set<string> thisResult;
+            if (Dx::hasOverlappingCover(network, mid, thisResult)) {
                 high = mid;
                 result = thisResult;
             }
@@ -334,14 +345,14 @@ namespace {
         }
     }
 
-    void solveOptimallyWithSupplyTagDLX(const MapTest& test, Set<string>& result) {
+    void solveOptimallyWithSupplyTagDLX(const MapTest& test, set<string>& result) {
         int low = 0, high = test.network.size();
-        DisasterTags network(test.network);
-        (void) network.hasDisasterCoverage(high, result);
+        Dx::DisasterTags network(test.network);
+        (void) Dx::hasOverlappingCover(network, high, result);
         while (low < high) {
             int mid = low + (high - low) / 2;
-            Set<string> thisResult;
-            if (network.hasDisasterCoverage(mid, thisResult)) {
+            set<string> thisResult;
+            if (Dx::hasOverlappingCover(network, mid, thisResult)) {
                 high = mid;
                 result = thisResult;
             }
@@ -352,23 +363,23 @@ namespace {
     }
 
     /* These are all bad and slow. Right now I can only generate all viable configurations by
-     * filtering out duplicate configurations with a Set. I then transfer all solutions from the
+     * filtering out duplicate configurations with a set. I then transfer all solutions from the
      * set to the vector to make it work better with the GUI. I would like to only generate unique
      * coverage schemes so I can use a vector from the beggining. I haven't figured it out.
      */
 
 
     void solveAllWithQuadDLX(const MapTest& test,
-                             unique_ptr<vector<Set<string>>>& allSolutions) {
+                             unique_ptr<vector<set<string>>>& allSolutions) {
         int low = 0, high = test.network.size();
-        Set<string> result = {};
-        DisasterLinks network(test.network);
-        (void) network.isDisasterReady(high, result);
+        set<string> result = {};
+        Dx::DisasterLinks network(test.network);
+        (void) Dx::hasOverlappingCover(network, high, result);
         while (low < high) {
             int mid = low + (high - low) / 2;
-            Set<string> thisResult;
+            set<string> thisResult;
 
-            if (network.isDisasterReady(mid, thisResult)) {
+            if (Dx::hasOverlappingCover(network, mid, thisResult)) {
                 high = mid;
                 result = thisResult;
             }
@@ -377,22 +388,22 @@ namespace {
             }
         }
         int optimalSupplies = result.size();
-        Set<Set<string>> allFoundConfigs = network.getAllDisasterConfigurations(optimalSupplies);
+        set<set<string>> allFoundConfigs = Dx::getAllOverlappingCovers(network, optimalSupplies);
         for (const auto& found : allFoundConfigs) {
             (*allSolutions).push_back(found);
         }
     }
 
     void solveAllWithSupplyTagDLX(const MapTest& test,
-                                  unique_ptr<vector<Set<string>>>& allSolutions) {
+                                  unique_ptr<vector<set<string>>>& allSolutions) {
         int low = 0, high = test.network.size();
-        Set<string> result = {};
-        DisasterTags network(test.network);
-        (void) network.hasDisasterCoverage(high, result);
+        set<string> result = {};
+        Dx::DisasterTags network(test.network);
+        (void) Dx::hasOverlappingCover(network, high, result);
         while (low < high) {
             int mid = low + (high - low) / 2;
-            Set<string> thisResult;
-            if (network.hasDisasterCoverage(mid, thisResult)) {
+            set<string> thisResult;
+            if (Dx::hasOverlappingCover(network, mid, thisResult)) {
                 high = mid;
                 result = thisResult;
             }
@@ -401,7 +412,7 @@ namespace {
             }
         }
         int optimalSupplies = result.size();
-        Set<Set<string>> allFoundConfigs = network.getAllDisasterConfigurations(optimalSupplies);
+        set<set<string>> allFoundConfigs = Dx::getAllOverlappingCovers(network, optimalSupplies);
         for (const auto& found : allFoundConfigs) {
             (*allSolutions).push_back(found);
         }
@@ -424,10 +435,9 @@ namespace {
         /* Dropdown of the solver you want to use for the problem */
         Temporary<GComboBox> mSolver;
         enum CitySolver mSolverUsed;
-        const string mSetSolver = "Solver: Set Based";
         const string mQuadDLXSolver = "Solver: Quadruple Linked DLX";
         const string mSupplyTagDLXSolver = "Solver: Supply Tag DLX";
-        const vector<string> mSolverNames = {mSetSolver, mQuadDLXSolver, mSupplyTagDLXSolver};
+        const vector<string> mSolverNames = {mQuadDLXSolver, mSupplyTagDLXSolver};
 
         /* Button to trigger the solver. */
         Temporary<GButton> mSolve;
@@ -436,13 +446,13 @@ namespace {
         Temporary<GButton> mPrevSolution;
         Temporary<GButton> mAllSolutions;
         Temporary<GButton> mNextSolution;
-        unique_ptr<vector<Set<string>>> mStoredSolutions;
+        unique_ptr<vector<set<string>>> mStoredSolutions;
         int mCurrentSolutionIndex;
         const string mAllSolutionsMessage = "Solutions Found:";
 
         /* Current network and solution. */
         MapTest mNetwork;
-        Set<string> mSelected;
+        set<string> mSelected;
 
         /* Loads the world with the given name. */
         void loadWorld(const string& filename);
@@ -512,15 +522,6 @@ namespace {
         if (!input) error("Cannot open file.");
 
         mNetwork = loadDisaster(input);
-        cout << "{";
-        for (const auto& n : mNetwork.network) {
-            cout << "{\"" << n << "\", {";
-            for (const auto& s : mNetwork.network[n]) {
-                cout << "\"" << s << "\",";
-            }
-            cout << "}},\n";
-        }
-        cout << "}" << endl;
         mSelected.clear();
         mStoredSolutions.reset();
         mPrevSolution->setEnabled(false);
@@ -579,7 +580,7 @@ namespace {
     void DisasterGUI::solveAll() {
         /* Clear out any old solution. We're going to get a new one. */
         mSelected.clear();
-        mStoredSolutions.reset(new vector<Set<string>>{});
+        mStoredSolutions.reset(new vector<set<string>>{});
 
         /* Disable all controls until the operation finishes. */
         mSolve->setEnabled(false);
@@ -618,20 +619,20 @@ GRAPHICS_HANDLER("Disaster Planning", GWindow& window) {
 
 namespace {
     /* Displays the given transportation grid. */
-    void displayMap(const Map<string, Set<string>>& network) {
+    void displayMap(const map<string, set<string>>& network) {
         cout << "This transportation grid has " << pluralize(network.size(), "city", "cities") << "." << endl;
-        for (string city: network) {
-            cout << "  The city " << city << " is adjacent to " << pluralize(network[city].size(), "city", "cities") << "." << endl;
-            for (string neighbor: network[city]) {
+        for (const auto& city: network) {
+            cout << "  The city " << city.first << " is adjacent to " << pluralize(city.second.size(), "city", "cities") << "." << endl;
+            for (const string& neighbor: city.second) {
                 cout << "    " << neighbor << endl;
             }
         }
     }
 
     /* Displays the cities used in an optimal solution. */
-    void displayBestCities(const Set<string>& cities) {
+    void displayBestCities(const set<string>& cities) {
         cout << "You need to stockpile in " << pluralize(cities.size(), "city", "cities") << " to provide coverage." << endl;
-        for (string city: cities) {
+        for (const string& city: cities) {
             cout << "  " << city << endl;
         }
     }
@@ -647,7 +648,7 @@ namespace {
             displayMap(scenario.network);
 
             cout << "Running your code to find the fewest number of cities needed... " << flush;
-            Set<string> cities;
+            set<string> cities;
             solveOptimallyWithQuadDLX(scenario, cities);
             cout << "done!" << endl;
 

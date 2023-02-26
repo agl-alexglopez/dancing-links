@@ -1,282 +1,7 @@
-/**
- * Author: Alexander G. Lopez
- * File DisasterTags.cpp
- * --------------------------
- * This file contains the implementation for Algorithm X via Dancing Links with a new method I'm
- * calling Supply Tags. For more information, see the mini-writeup in the .h file or the detailed
- * write up in the README.md.
- */
-#include <cmath>
-#include <limits.h>
-#include "DisasterTags.h"
-#include "Utilities/DisasterUtilities.h"
+#include "Src/DisasterTags.h"
+#include "Src/DisasterUtilities.h"
 
-
-/* * * * * * * * * * * * *  Algorithm X via Dancing Links with Depth Tags * * * * * * * * * * * * */
-
-
-bool DisasterTags::hasDisasterCoverage(int numSupplies, Set<std::string>& supplyLocations) {
-    if (numSupplies < 0) {
-        error("negative supplies");
-    }
-    if (numItemsAndOptions_ == 0) {
-        return true;
-    }
-    return isDLXCovered(numSupplies, supplyLocations);
-}
-
-bool DisasterTags::isDLXCovered(int numSupplies, Set<std::string>& supplyLocations) {
-    if (table_[0].right == 0 && numSupplies >= 0) {
-        return true;
-    }
-    if (numSupplies <= 0) {
-        return false;
-    }
-
-    int chosenIndex = chooseIsolatedCity();
-
-    /* Try to cover this city by first supplying the most connected city nearby. Try cities with
-     * successively fewer connections then if all else fails supply the isolated city itself.
-     */
-    for (int cur = grid_[chosenIndex].down; cur != chosenIndex; cur = grid_[cur].down) {
-
-        // Tag every city with the supply number so we know which cities to uncover if this fails.
-        std::string supplyLocation = coverCity(cur, numSupplies);
-
-        if (isDLXCovered(numSupplies - 1, supplyLocations)) {
-            // Only add to the output if successful and be sure to cleanup in case it runs again.
-            supplyLocations.add(supplyLocation);
-            uncoverCity(cur);
-            return true;
-        }
-
-        // We will know which cities to uncover thanks to which we tagged on the way down.
-        uncoverCity(cur);
-    }
-    return false;
-}
-
-Set<Set<std::string>> DisasterTags::getAllDisasterConfigurations(int numSupplies) {
-    if (numSupplies < 0) {
-        error("Negative supply count.");
-    }
-
-    Set<std::string> suppliedCities {};
-    Set<Set<std::string>> allConfigurations = {};
-    fillConfigurations(numSupplies, suppliedCities, allConfigurations);
-    return allConfigurations;
-}
-
-void DisasterTags::fillConfigurations(int numSupplies,
-                                      Set<std::string>& suppliedCities,
-                                      Set<Set<std::string>>& allConfigurations) {
-
-    if (table_[0].right == 0 && numSupplies >= 0) {
-        allConfigurations.add(suppliedCities);
-        return;
-    }
-    if (numSupplies <= 0) {
-        return;
-    }
-    int chosenIndex = chooseIsolatedCity();
-
-    for (int cur = grid_[chosenIndex].down; cur != chosenIndex; cur = grid_[cur].down) {
-
-        std::string supplyLocation = coverCity(cur, numSupplies);
-        suppliedCities.add(supplyLocation);
-
-        fillConfigurations(numSupplies - 1, suppliedCities, allConfigurations);
-
-        suppliedCities.remove(supplyLocation);
-        uncoverCity(cur);
-    }
-
-}
-
-int DisasterTags::chooseIsolatedCity() const {
-    int min = INT_MAX;
-    int chosenIndex = 0;
-    int head = 0;
-    for (int cur = table_[0].right; cur != head; cur = table_[cur].right) {
-        if (grid_[cur].topOrLen < min) {
-            chosenIndex = cur;
-            min = grid_[cur].topOrLen;
-        }
-    }
-    return chosenIndex;
-}
-
-std::string DisasterTags::coverCity(int indexInOption, const int supplyTag) {
-    int i = indexInOption;
-    std::string result = "";
-    do {
-        int top = grid_[i].topOrLen;
-        if (top <= 0) {
-            /* We are always guaranteed to pass the spacer tile so we will collect the name of the
-             * city we have chosen to supply to prove our algorithm chose correctly.
-            */
-            i = grid_[i].up;
-            result = table_[std::abs(grid_[i - 1].topOrLen)].name;
-        } else {
-            /* Cities are "tagged" at the recursive depth at which they were given supplies, the
-             * number of supplies remaining when distributed. Only give supplies to cities that
-             * are still in need and have not been tagged.
-             */
-            if (!grid_[top].supplyTag) {
-                grid_[top].supplyTag = supplyTag;
-                table_[table_[top].left].right = table_[top].right;
-                table_[table_[top].right].left = table_[top].left;
-            }
-            grid_[i++].supplyTag = supplyTag;
-        }
-    } while (i != indexInOption);
-
-    return result;
-}
-
-void DisasterTags::uncoverCity(int indexInOption) {
-    /* We must go in the reverse direction we started, fixing the first city we covered in the
-     * lookup table last. This a requirement due to leaving the pointers of doubly linked left-right
-     * list in place. Otherwise, table will not be fixed correctly.
-     */
-    int i = --indexInOption;
-    do {
-        int top = grid_[i].topOrLen;
-        if (top < 0) {
-            i = grid_[i].down;
-        } else {
-            /* This is the key optimization of this algorithm. Only reset a city to uncovered if
-             * we know we are taking away the same supply we gave when covering this city. A simple
-             * O(1) check beats an up,down,left,right pointer implementation that needs to splice
-             * from a left right doubly linked list for an entire column.
-             */
-            if (grid_[top].supplyTag == grid_[i].supplyTag) {
-                grid_[top].supplyTag = 0;
-                table_[table_[top].left].right = top;
-                table_[table_[top].right].left = top;
-            }
-            grid_[i--].supplyTag = 0;
-        }
-    } while (i != indexInOption);
-}
-
-
-/* * * * * * * * * * *  Constructor and Building of Dancing Links Network   * * * * * * * * * * * */
-
-
-DisasterTags::DisasterTags(const Map<std::string, Set<std::string>>& roadNetwork)
-    : table_(),
-      grid_(),
-      numItemsAndOptions_(0) {
-
-    // We will set this up for a reverse build of column links for a given item.
-    HashMap<std::string,int> columnBuilder = {};
-    std::vector<std::pair<std::string,int>> connectionSizes = {};
-
-    // We need to start preparing items in the grid immediately after the headers.
-    initializeHeaders(roadNetwork, connectionSizes, columnBuilder);
-
-    /* The second pass will fill in the columns and keep the headers and all elements appropriately
-     * updated. We can hang on to helpful index info.
-     */
-    initializeItems(roadNetwork, connectionSizes, columnBuilder);
-}
-
-void DisasterTags::initializeHeaders(const Map<std::string, Set<std::string>>& roadNetwork,
-                                     std::vector<std::pair<std::string,int>>& connectionSizes,
-                                     HashMap<std::string,int>& columnBuilder) {
-    table_.push_back({"", 0, 1});
-    grid_.push_back({0,0,0,0});
-    int index = 1;
-    // The first pass will set up the name headers and the column headers in the two vectors.
-    for (const std::string& city : roadNetwork) {
-
-        // Add one to the connection size because we will add a city to its own connections later.
-        connectionSizes.push_back({city, roadNetwork[city].size() + 1});
-
-        // We need to set up multiple columns, so begin tracking the previous item for a column.
-        columnBuilder[city] = index;
-
-        table_.push_back({city, index - 1, index + 1});
-        table_[0].left++;
-        // Add the first headers for the item vector. They need count up and down.
-        grid_.push_back({0, index, index,0});
-        numItemsAndOptions_++;
-        index++;
-    }
-
-    /* We want the most isolated cities to try to cover themselves by supplying adjacent neighbor
-     * with the most other connections. This is not garunteed to work every time, but most times
-     * this is the best strategy to not waste time supplying very isolated cities first. So organize
-     * the options by most connections to fewest.
-     */
-    std::sort(connectionSizes.begin(), connectionSizes.end(), [](auto &left, auto &right) {
-        return left.second > right.second;
-    });
-
-    table_[table_.size() - 1].right = 0;
-}
-
-void DisasterTags::initializeItems(const Map<std::string, Set<std::string>>& roadNetwork,
-                                   const std::vector<std::pair<std::string,int>>& connectionSizes,
-                                   HashMap<std::string,int>& columnBuilder) {
-    int previousSetSize = grid_.size();
-    int index = grid_.size();
-
-    for (const auto& [city, connectionSize] : connectionSizes) {
-        // This algorithm includes a city in its own set of connections.
-        Set<std::string> connections = roadNetwork[city] + city;
-
-        /* We will know which supplying city option an item is in by the spacerTitle.
-         * lookupTable[abs(-grid_[columnBuilder[city]].down)] will give us the name of the option
-         * of that row. This accesses the last city in a column's down field to get the header.
-         */
-        grid_.push_back({-grid_[columnBuilder[city]].down,  // Negative index of city as option.
-                         index - previousSetSize,           // First item in previous option
-                         index + connections.size(),        // Last item in current option
-                         0});                               // Supply number tag.
-
-        // Manage column pointers for items connected across options. Update index.
-        index = initializeColumns(connections, columnBuilder, index);
-
-        previousSetSize = connections.size();
-    }
-    grid_.push_back({INT_MIN, index - previousSetSize, INT_MIN,0});
-}
-
-int DisasterTags::initializeColumns(const Set<std::string>& connections,
-                                     HashMap<std::string,int>& columnBuilder,
-                                     int index) {
-    for (const auto& c : connections) {
-        // Circular lists give us access to header with down field of last city in a column.
-        grid_[grid_[columnBuilder[c]].down].topOrLen++;
-        index++;
-
-        // A single item in a circular doubly linked list points to itself.
-        grid_.push_back({grid_[columnBuilder[c]].down, index, index,0});
-
-        /* Now we need to handle building the up and down pointers for a column of items.
-         * We also must make sure to keep the most recent element pointing down to the
-         * first of a column because this is circular. The first elem in the column must
-         * also point up to the most recently added element because this is circular.
-         */
-
-        // This is the necessary adjustment to the column header's up field for a given item.
-        grid_[grid_[columnBuilder[c]].down].up = index;
-
-        // The current node is now the new tail in a vertical circular linked list for an item.
-        grid_[index].up = columnBuilder[c];
-        grid_[index].down = grid_[columnBuilder[c]].down;
-
-        // Update the old tail to reflect the new addition of an item in its option.
-        grid_[columnBuilder[c]].down = index;
-
-        // Similar to a previous/current coding pattern but in an above/below column.
-        columnBuilder[c] = index;
-    }
-    return ++index;
-}
-
+namespace DancingLinks {
 
 /* * * * * * * * * * * * * * * * *        Debugging Operators           * * * * * * * * * * * * * */
 
@@ -362,6 +87,9 @@ std::ostream& operator<<(std::ostream&os, const DisasterTags& links) {
     return os;
 }
 
+} // namespace DancingLinks
+
+namespace Dx = DancingLinks;
 
 /* * * * * * * * * * * * * * * * *     Test Cases Below This Point      * * * * * * * * * * * * * */
 
@@ -379,18 +107,18 @@ STUDENT_TEST("Initialize a small dancing links.") {
      *
      *
      */
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"C"}},
         {"B", {"C"}},
         {"C", {"A", "B"}},
     };
-    std::vector<DisasterTags::cityName> networkHeaders = {
+    std::vector<Dx::DisasterTags::cityName> networkHeaders = {
         {"",  3, 1},
         {"A", 0, 2},
         {"B", 1, 3},
         {"C", 2, 0}
     };
-    std::vector<DisasterTags::city> dlxItems = {
+    std::vector<Dx::DisasterTags::city> dlxItems = {
         // 0           1A        2B        3C
         {0,0,0,0},  {2,9,5,0},{2,12,6,0},{3,13,7,0},
         // 4           5A        6B        7C
@@ -401,7 +129,7 @@ STUDENT_TEST("Initialize a small dancing links.") {
         {-2,9,13,0},          {2,6,2,0}, {3,10,3,0},
         {INT_MIN,12,INT_MIN,0},
     };
-    DisasterTags network(cities);
+    Dx::DisasterTags network(cities);
     EXPECT_EQUAL(network.table_, networkHeaders);
     EXPECT_EQUAL(network.grid_, dlxItems);
 }
@@ -412,7 +140,7 @@ STUDENT_TEST("Initialize larger dancing links.") {
      *        F -- D -- B -- E -- C -- A
      *
      */
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"C"}},
         {"B", {"D", "E"}},
         {"C", {"A", "E"}},
@@ -420,7 +148,7 @@ STUDENT_TEST("Initialize larger dancing links.") {
         {"E", {"B", "C"}},
         {"F", {"D"}},
     };
-    std::vector<DisasterTags::cityName> networkHeaders = {
+    std::vector<Dx::DisasterTags::cityName> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -429,7 +157,7 @@ STUDENT_TEST("Initialize larger dancing links.") {
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    std::vector<DisasterTags::city> dlxItems = {
+    std::vector<Dx::DisasterTags::city> dlxItems = {
         //  0            1A          2B          3C         4D           5E          6F
         {0,0,0,0},   {2,24,12,0},{3,20,8,0}, {3,25,13,0},{3,27,9,0}, {3,22,10,0},{2,28,18,0},
         //  7                       8B                      9D          10E
@@ -446,7 +174,7 @@ STUDENT_TEST("Initialize larger dancing links.") {
         {-6,24,28,0},                                    {4,17,4,0}, {6,18,6,0},
         {INT_MIN,27,INT_MIN,0},
     };
-    DisasterTags network(cities);
+    Dx::DisasterTags network(cities);
     EXPECT_EQUAL(network.table_, networkHeaders);
     EXPECT_EQUAL(network.grid_, dlxItems);
 }
@@ -461,7 +189,7 @@ STUDENT_TEST("Simple Ethene Network initialization.") {
      *                  E
      *
      */
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"D"}},
         {"B", {"D", "E", "F"}},
         {"C", {"D"}},
@@ -469,7 +197,7 @@ STUDENT_TEST("Simple Ethene Network initialization.") {
         {"E", {"B"}},
         {"F", {"B"}},
     };
-    std::vector<DisasterTags::cityName> networkHeaders = {
+    std::vector<Dx::DisasterTags::cityName> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -478,7 +206,7 @@ STUDENT_TEST("Simple Ethene Network initialization.") {
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    std::vector<DisasterTags::city> dlxItems = {
+    std::vector<Dx::DisasterTags::city> dlxItems = {
         //  0            1A          2B         3C          4D         5E          6F
         {0,0,0,0},   {2,18,13,0},{4,27,8,0},{2,21,15,0},{4,22,9,0},{2,25,10,0},{2,28,11,0},
         //  7                        8B                     9D         10E         11F
@@ -495,7 +223,7 @@ STUDENT_TEST("Simple Ethene Network initialization.") {
         {-6,24,28,0},            {2,24,2,0},                                    {6,11,6,0},
         {INT_MIN,27,INT_MIN,0},
     };
-    DisasterTags network (cities);
+    Dx::DisasterTags network (cities);
     EXPECT_EQUAL(network.table_, networkHeaders);
     EXPECT_EQUAL(network.grid_, dlxItems);
 }
@@ -514,18 +242,18 @@ STUDENT_TEST("Cover uncover A should only cover A and C from header list.") {
      *
      *
      */
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"C"}},
         {"B", {"C"}},
         {"C", {"A", "B"}},
     };
-    std::vector<DisasterTags::cityName> networkHeaders = {
+    std::vector<Dx::DisasterTags::cityName> networkHeaders = {
         {"",  3, 1},
         {"A", 0, 2},
         {"B", 1, 3},
         {"C", 2, 0}
     };
-    std::vector<DisasterTags::city> dlxItems = {
+    std::vector<Dx::DisasterTags::city> dlxItems = {
         // 0           1A        2B        3C
         {0,0,0,0},  {2,9,5,0},{2,12,6,0},{3,13,7,0},
         // 4           5A        6B        7C
@@ -536,19 +264,19 @@ STUDENT_TEST("Cover uncover A should only cover A and C from header list.") {
         {-2,9,13,0},          {2,6,2,0}, {3,10,3,0},
         {INT_MIN,12,INT_MIN,0},
     };
-    DisasterTags network(cities);
+    Dx::DisasterTags network(cities);
     EXPECT_EQUAL(network.table_, networkHeaders);
     EXPECT_EQUAL(network.grid_, dlxItems);
 
     std::string location = network.coverCity(9,1);
     EXPECT_EQUAL(location, "A");
-    std::vector<DisasterTags::cityName> headersCoverA {
+    std::vector<Dx::DisasterTags::cityName> headersCoverA {
         {"",  2, 2},
         {"A", 0, 2},
         {"B", 0, 0},
         {"C", 2, 0}
     };
-    std::vector<DisasterTags::city> dlxCoverA = {
+    std::vector<Dx::DisasterTags::city> dlxCoverA = {
         // 0           1A        2B        3C
         {0,0,0,0},  {2,9,5,1},{2,12,6,0},{3,13,7,1},
         // 4           5A        6B        7C
@@ -577,7 +305,7 @@ STUDENT_TEST("Recursive depth field prevents uncovering cities that should remai
      *                  E
      *
      */
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"D"}},
         {"B", {"D", "E", "F"}},
         {"C", {"D"}},
@@ -585,7 +313,7 @@ STUDENT_TEST("Recursive depth field prevents uncovering cities that should remai
         {"E", {"B"}},
         {"F", {"B"}},
     };
-    std::vector<DisasterTags::cityName> networkHeaders = {
+    std::vector<Dx::DisasterTags::cityName> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -594,7 +322,7 @@ STUDENT_TEST("Recursive depth field prevents uncovering cities that should remai
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    std::vector<DisasterTags::city> dlxItems = {
+    std::vector<Dx::DisasterTags::city> dlxItems = {
         //  0            1A          2B         3C          4D         5E          6F
         {0,0,0,0},   {2,18,13,0},{4,27,8,0},{2,21,15,0},{4,22,9,0},{2,25,10,0},{2,28,11,0},
         //  7                        8B                     9D         10E         11F
@@ -611,13 +339,13 @@ STUDENT_TEST("Recursive depth field prevents uncovering cities that should remai
         {-6,24,28,0},            {2,24,2,0},                                    {6,11,6,0},
         {INT_MIN,27,INT_MIN,0},
     };
-    DisasterTags network (cities);
+    Dx::DisasterTags network (cities);
     EXPECT_EQUAL(network.table_, networkHeaders);
     EXPECT_EQUAL(network.grid_, dlxItems);
 
     std::string location = network.coverCity(13,1);
     EXPECT_EQUAL(location, "D");
-    std::vector<DisasterTags::cityName> headersCoverD = {
+    std::vector<Dx::DisasterTags::cityName> headersCoverD = {
         {"",  6, 5},
         {"A", 0, 2},
         {"B", 0, 3},
@@ -626,7 +354,7 @@ STUDENT_TEST("Recursive depth field prevents uncovering cities that should remai
         {"E", 0, 6},
         {"F", 5, 0}
     };
-    std::vector<DisasterTags::city> dlxCoverD = {
+    std::vector<Dx::DisasterTags::city> dlxCoverD = {
         //  0            1A          2B         3C          4D         5E          6F
         {0,0,0,0},   {2,18,13,1},{4,27,8,1},{2,21,15,1},{4,22,9,1},{2,25,10,0},{2,28,11,0},
         //  7                        8B                     9D         10E         11F
@@ -648,7 +376,7 @@ STUDENT_TEST("Recursive depth field prevents uncovering cities that should remai
 
     location = network.coverCity(10,2);
     EXPECT_EQUAL(location, "B");
-    std::vector<DisasterTags::cityName> headersCoverB = {
+    std::vector<Dx::DisasterTags::cityName> headersCoverB = {
         {"",  0, 0},
         {"A", 0, 2},
         {"B", 0, 3},
@@ -657,7 +385,7 @@ STUDENT_TEST("Recursive depth field prevents uncovering cities that should remai
         {"E", 0, 6},
         {"F", 0, 0}
     };
-    std::vector<DisasterTags::city> dlxCoverB = {
+    std::vector<Dx::DisasterTags::city> dlxCoverB = {
         //  0            1A          2B         3C          4D         5E          6F
         {0,0,0,0},   {2,18,13,1},{4,27,8,1},{2,21,15,1},{4,22,9,1},{2,25,10,2},{2,28,11,2},
         //  7                        8B                     9D         10E         11F
@@ -699,18 +427,18 @@ STUDENT_TEST("Can cover this map with one supply.") {
      *
      *
      */
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"C"}},
         {"B", {"C"}},
         {"C", {"A", "B"}},
     };
-    std::vector<DisasterTags::cityName> networkHeaders = {
+    std::vector<Dx::DisasterTags::cityName> networkHeaders = {
         {"",  3, 1},
         {"A", 0, 2},
         {"B", 1, 3},
         {"C", 2, 0}
     };
-    std::vector<DisasterTags::city> dlxItems = {
+    std::vector<Dx::DisasterTags::city> dlxItems = {
         // 0           1A        2B        3C
         {0,0,0,0},  {2,9,5,0},{2,12,6,0},{3,13,7,0},
         // 4           5A        6B        7C
@@ -721,9 +449,9 @@ STUDENT_TEST("Can cover this map with one supply.") {
         {-2,9,13,0},          {2,6,2,0}, {3,10,3,0},
         {INT_MIN,12,INT_MIN,0},
     };
-    Set<std::string> locations = {};
+    std::set<std::string> locations = {};
 
-    DisasterTags network(cities);
+    Dx::DisasterTags network(cities);
 
     EXPECT(network.hasDisasterCoverage(1,locations));
     EXPECT_EQUAL(locations, {"C"});
@@ -741,7 +469,7 @@ STUDENT_TEST("Can cover Ethene with two supplies.") {
      *                  E
      *
      */
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"D"}},
         {"B", {"D", "E", "F"}},
         {"C", {"D"}},
@@ -749,7 +477,7 @@ STUDENT_TEST("Can cover Ethene with two supplies.") {
         {"E", {"B"}},
         {"F", {"B"}},
     };
-    std::vector<DisasterTags::cityName> networkHeaders = {
+    std::vector<Dx::DisasterTags::cityName> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -758,7 +486,7 @@ STUDENT_TEST("Can cover Ethene with two supplies.") {
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    std::vector<DisasterTags::city> dlxItems = {
+    std::vector<Dx::DisasterTags::city> dlxItems = {
         //  0            1A          2B         3C          4D         5E          6F
         {0,0,0,0},   {2,18,13,0},{4,27,8,0},{2,21,15,0},{4,22,9,0},{2,25,10,0},{2,28,11,0},
         //  7                        8B                     9D         10E         11F
@@ -775,8 +503,8 @@ STUDENT_TEST("Can cover Ethene with two supplies.") {
         {-6,24,28,0},            {2,24,2,0},                                    {6,11,6,0},
         {INT_MIN,27,INT_MIN,0},
     };
-    Set<std::string> locations = {};
-    DisasterTags network (cities);
+    std::set<std::string> locations = {};
+    Dx::DisasterTags network (cities);
     EXPECT(network.hasDisasterCoverage(2,locations));
     EXPECT_EQUAL(locations, {"D","B"});
     EXPECT_EQUAL(network.table_, networkHeaders);
@@ -789,7 +517,7 @@ STUDENT_TEST("Passes Straight Line test with two supplies.") {
      *        F -- D -- B -- E -- C -- A
      *
      */
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"C"}},
         {"B", {"D", "E"}},
         {"C", {"A", "E"}},
@@ -797,7 +525,7 @@ STUDENT_TEST("Passes Straight Line test with two supplies.") {
         {"E", {"B", "C"}},
         {"F", {"D"}},
     };
-    std::vector<DisasterTags::cityName> networkHeaders = {
+    std::vector<Dx::DisasterTags::cityName> networkHeaders = {
         {"",  6, 1},
         {"A", 0, 2},
         {"B", 1, 3},
@@ -806,7 +534,7 @@ STUDENT_TEST("Passes Straight Line test with two supplies.") {
         {"E", 4, 6},
         {"F", 5, 0}
     };
-    std::vector<DisasterTags::city> dlxItems = {
+    std::vector<Dx::DisasterTags::city> dlxItems = {
         //  0            1A          2B          3C         4D           5E          6F
         {0,0,0,0},   {2,24,12,0},{3,20,8,0}, {3,25,13,0},{3,27,9,0}, {3,22,10,0},{2,28,18,0},
         //  7                       8B                      9D          10E
@@ -823,8 +551,8 @@ STUDENT_TEST("Passes Straight Line test with two supplies.") {
         {-6,24,28,0},                                    {4,17,4,0}, {6,18,6,0},
         {INT_MIN,27,INT_MIN,0},
     };
-    Set<std::string> locations = {};
-    DisasterTags network (cities);
+    std::set<std::string> locations = {};
+    Dx::DisasterTags network (cities);
     EXPECT(network.hasDisasterCoverage(2,locations));
     EXPECT_EQUAL(locations, {"D","C"});
     EXPECT_EQUAL(network.table_, networkHeaders);
@@ -842,7 +570,7 @@ STUDENT_TEST("Do not be greedy with our algorithm in terms of most connected cit
      *
      */
 
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"B"}},
         {"B", {"A", "C", "D"}},
         {"C", {"B", "D"}},
@@ -851,8 +579,8 @@ STUDENT_TEST("Do not be greedy with our algorithm in terms of most connected cit
         {"F", {"D", "E", "G"}},
         {"G", {"D", "F"}},
     };
-    DisasterTags network(cities);
-    Set<std::string> chosen = {};
+    Dx::DisasterTags network(cities);
+    std::set<std::string> chosen = {};
     EXPECT(!network.hasDisasterCoverage(1, chosen));
     chosen.clear();
     EXPECT(network.hasDisasterCoverage(2, chosen));
@@ -870,15 +598,15 @@ STUDENT_TEST("Supply an island city when we must.") {
      *
      */
 
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"B"}},
         {"B", {"A", "C"}},
         {"C", {"B", "D"}},
         {"D", {"C"}},
         {"E", {}}
     };
-    DisasterTags network(cities);
-    Set<std::string> chosen = {};
+    Dx::DisasterTags network(cities);
+    std::set<std::string> chosen = {};
     EXPECT(!network.hasDisasterCoverage(1, chosen));
     EXPECT(!network.hasDisasterCoverage(2, chosen));
     EXPECT(network.hasDisasterCoverage(3, chosen));
@@ -895,15 +623,15 @@ STUDENT_TEST("Supply 5 island cities when we must.") {
      *
      */
 
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {}},
         {"B", {}},
         {"C", {}},
         {"D", {}},
         {"E", {}}
     };
-    DisasterTags network(cities);
-    Set<std::string> chosen = {};
+    Dx::DisasterTags network(cities);
+    std::set<std::string> chosen = {};
     EXPECT(!network.hasDisasterCoverage(1, chosen));
     EXPECT(!network.hasDisasterCoverage(2, chosen));
     EXPECT(!network.hasDisasterCoverage(3, chosen));
@@ -912,7 +640,7 @@ STUDENT_TEST("Supply 5 island cities when we must.") {
 }
 
 PROVIDED_TEST("Can solve ethene example, regardless of ordering, with output.") {
-    /* Because Map and Set internally store items in sorted order, the order
+    /* Because std::map and std::set internally store items in sorted order, the order
      * in which you iterate over the cities when making decisions is sensitive
      * to the order of those cities' names. This test looks at a map like
      * this one, trying out all possible orderings of the city names:
@@ -939,18 +667,18 @@ PROVIDED_TEST("Can solve ethene example, regardless of ordering, with output.") 
          *       1234
          *         5
          */
-        Map<std::string, Set<std::string>> map = makeMap({
+        std::map<std::string, std::set<std::string>> map = makeMap({
             { cities[2], { cities[0], cities[1], cities[3] } },
             { cities[3], { cities[4], cities[5] } }
         });
 
-        DisasterTags network(map);
-        Set<std::string> chosen = {};
+        Dx::DisasterTags network(map);
+        std::set<std::string> chosen = {};
         EXPECT(network.hasDisasterCoverage(2, chosen));
 
         EXPECT_EQUAL(chosen.size(), 2);
-        EXPECT(chosen.contains(cities[2]));
-        EXPECT(chosen.contains(cities[3]));
+        EXPECT(chosen.count(cities[2]));
+        EXPECT(chosen.count(cities[3]));
 
         chosen.clear();
 
@@ -959,7 +687,7 @@ PROVIDED_TEST("Can solve ethene example, regardless of ordering, with output.") 
 }
 
 PROVIDED_TEST("Works for six cities in a line, regardless of order with output.") {
-    /* Because Map and Set internally store items in sorted order, the order
+    /* Because std::map and std::set internally store items in sorted order, the order
      * in which you iterate over the cities when making decisions is sensitive
      * to the order of those cities' names. This test looks at a map like
      * this one, trying out all possible orderings of the city names:
@@ -977,20 +705,20 @@ PROVIDED_TEST("Works for six cities in a line, regardless of order with output."
     Vector<std::string> cities = { "A", "B", "C", "D", "E", "F" };
     do {
         /* Linear arrangement. */
-        Map<std::string, Set<std::string>> map;
+        std::map<std::string, std::set<std::string>> map;
         for (int i = 1; i + 1 < cities.size(); i++) {
             map[cities[i]] = { cities[i - 1], cities[i + 1] };
         }
 
-        Set<std::string> chosen = {};
+        std::set<std::string> chosen = {};
         map = makeMap(map);
 
-        DisasterTags network(map);
+        Dx::DisasterTags network(map);
         EXPECT(network.hasDisasterCoverage(2, chosen));
 
         EXPECT_EQUAL(chosen.size(), 2);
-        EXPECT(chosen.contains(cities[1]));
-        EXPECT(chosen.contains(cities[4]));
+        EXPECT(chosen.count(cities[1]));
+        EXPECT(chosen.count(cities[4]));
 
         chosen.clear();
 
@@ -999,7 +727,7 @@ PROVIDED_TEST("Works for six cities in a line, regardless of order with output."
 }
 
 PROVIDED_TEST("Solves \"Don't be Greedy,\" regardless of ordering with output.") {
-    /* Because Map and Set internally store items in sorted order, the order
+    /* Because std::map and std::set internally store items in sorted order, the order
      * in which you iterate over the cities when making decisions is sensitive
      * to the order of those cities' names. This test looks at a map like
      * this one, trying out all possible orderings of the city names:
@@ -1020,15 +748,15 @@ PROVIDED_TEST("Solves \"Don't be Greedy,\" regardless of ordering with output.")
      */
     Vector<std::string> cities = { "A", "B", "C", "D", "E", "F", "G" };
     do {
-        Map<std::string, Set<std::string>> map = makeMap({
+        std::map<std::string, std::set<std::string>> map = makeMap({
             { cities[1], { cities[0], cities[2], cities[5] } },
             { cities[2], { cities[3], cities[5], cities[6] } },
             { cities[3], { cities[4], cities[6] } },
         });
 
-        Set<std::string> chosen = {};
+        std::set<std::string> chosen = {};
 
-        DisasterTags network(map);
+        Dx::DisasterTags network(map);
         /* We should be able to cover everything with two cities. */
         EXPECT(network.hasDisasterCoverage(2, chosen));
 
@@ -1066,7 +794,7 @@ STUDENT_TEST("We should still be quick if we start by focussing on most isolated
         "Q", "R", "S", "T", "U", "V", "W", "X",
         "Y", "Z", "?", "@", "#", "$", "%", ")","*",
     };
-    Map<std::string, Set<std::string>> map = makeMap({
+    std::map<std::string, std::set<std::string>> map = makeMap({
         { cities[0], { cities[1], cities[2], cities[3], cities[4], cities[5], cities[6],
                        cities[7],cities[8],cities[9],cities[10],cities[11],cities[12],
                        cities[13],cities[14],cities[15],cities[16],} },
@@ -1088,9 +816,9 @@ STUDENT_TEST("We should still be quick if we start by focussing on most isolated
         { cities[32], { cities[16]} },
     });
 
-    Set<std::string> chosen = {};
+    std::set<std::string> chosen = {};
 
-    DisasterTags network(map);
+    Dx::DisasterTags network(map);
     /* We should be able to cover everything with two cities. */
     EXPECT(network.hasDisasterCoverage(16, chosen));
 
@@ -1105,7 +833,7 @@ STUDENT_TEST("We should still be quick if we start by focussing on most isolated
 }
 
 PROVIDED_TEST("Stress test: 6 x 6 grid. (This should take at most a few seconds.)") {
-    Map<std::string, Set<std::string>> grid;
+    std::map<std::string, std::set<std::string>> grid;
 
     /* Build the grid. */
     char maxRow = 'F';
@@ -1113,22 +841,22 @@ PROVIDED_TEST("Stress test: 6 x 6 grid. (This should take at most a few seconds.
     for (char row = 'A'; row <= maxRow; row++) {
         for (int col = 1; col <= maxCol; col++) {
             if (row != maxRow) {
-                grid[row + std::to_string(col)] += (char(row + 1) + std::to_string(col));
+                grid[row + std::to_string(col)].insert((char(row + 1) + std::to_string(col)));
             }
             if (col != maxCol) {
-                grid[row + std::to_string(col)] += (char(row) + std::to_string(col + 1));
+                grid[row + std::to_string(col)].insert((char(row) + std::to_string(col + 1)));
             }
         }
     }
     grid = makeMap(grid);
 
-    DisasterTags network(grid);
-    Set<std::string> locations;
+    Dx::DisasterTags network(grid);
+    std::set<std::string> locations;
     EXPECT(network.hasDisasterCoverage(10, locations));
 }
 
 PROVIDED_TEST("Stress test: 6 x 6 grid, with output. (This should take at most a few seconds.)") {
-    Map<std::string, Set<std::string>> grid;
+    std::map<std::string, std::set<std::string>> grid;
 
     /* Build the grid. */
     char maxRow = 'F';
@@ -1136,17 +864,17 @@ PROVIDED_TEST("Stress test: 6 x 6 grid, with output. (This should take at most a
     for (char row = 'A'; row <= maxRow; row++) {
         for (int col = 1; col <= maxCol; col++) {
             if (row != maxRow) {
-                grid[row + std::to_string(col)] += (char(row + 1) + std::to_string(col));
+                grid[row + std::to_string(col)].insert((char(row + 1) + std::to_string(col)));
             }
             if (col != maxCol) {
-                grid[row + std::to_string(col)] += (char(row) + std::to_string(col + 1));
+                grid[row + std::to_string(col)].insert((char(row) + std::to_string(col + 1)));
             }
         }
     }
     grid = makeMap(grid);
 
-    DisasterTags network(grid);
-    Set<std::string> locations;
+    Dx::DisasterTags network(grid);
+    std::set<std::string> locations;
     EXPECT(network.hasDisasterCoverage(10, locations));
 
     for (char row = 'A'; row <= maxRow; row++) {
@@ -1157,7 +885,7 @@ PROVIDED_TEST("Stress test: 6 x 6 grid, with output. (This should take at most a
 }
 
 PROVIDED_TEST("Stress test: 8 x 8 grid, with output. (This should take at most a few seconds.)") {
-    Map<std::string, Set<std::string>> grid;
+    std::map<std::string, std::set<std::string>> grid;
 
     /* Build the grid. */
     char maxRow = 'G';
@@ -1165,17 +893,17 @@ PROVIDED_TEST("Stress test: 8 x 8 grid, with output. (This should take at most a
     for (char row = 'A'; row <= maxRow; row++) {
         for (int col = 1; col <= maxCol; col++) {
             if (row != maxRow) {
-                grid[row + std::to_string(col)] += (char(row + 1) + std::to_string(col));
+                grid[row + std::to_string(col)].insert((char(row + 1) + std::to_string(col)));
             }
             if (col != maxCol) {
-                grid[row + std::to_string(col)] += (char(row) + std::to_string(col + 1));
+                grid[row + std::to_string(col)].insert((char(row) + std::to_string(col + 1)));
             }
         }
     }
     grid = makeMap(grid);
 
-    DisasterTags network(grid);
-    Set<std::string> locations;
+    Dx::DisasterTags network(grid);
+    std::set<std::string> locations;
     EXPECT(network.hasDisasterCoverage(14, locations));
 
     for (char row = 'A'; row <= maxRow; row++) {
@@ -1195,13 +923,13 @@ STUDENT_TEST("All possible configurations of a square.") {
      *
      *
      */
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"B","C"}},
         {"B", {"A","D"}},
         {"C", {"A","D"}},
         {"D", {"B","C"}},
     };
-    Set<Set<std::string>> allConfigs = {
+    std::set<std::set<std::string>> allConfigs = {
         {"A","C"},
         {"A","B"},
         {"A","D"},
@@ -1209,8 +937,8 @@ STUDENT_TEST("All possible configurations of a square.") {
         {"B","D"},
         {"C","D"},
     };
-    DisasterTags grid(cities);
-    Set<Set<std::string>> allFound = grid.getAllDisasterConfigurations(2);
+    Dx::DisasterTags grid(cities);
+    std::set<std::set<std::string>> allFound = grid.getAllDisasterConfigurations(2);
     EXPECT_EQUAL(allFound,allConfigs);
 }
 
@@ -1224,7 +952,7 @@ STUDENT_TEST("All possible configurations with 4 supplies are many.") {
      *      C     G
      *
      */
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"H","B"}},
         {"B", {"A","C","D"}},
         {"C", {"B"}},
@@ -1235,9 +963,9 @@ STUDENT_TEST("All possible configurations with 4 supplies are many.") {
         {"H", {"A"}},
         {"I", {"E"}},
     };
-    DisasterTags grid(cities);
-    Set<Set<std::string>> allFound = grid.getAllDisasterConfigurations(4);
-    Set<Set<std::string>> allConfigs = {
+    Dx::DisasterTags grid(cities);
+    std::set<std::set<std::string>> allFound = grid.getAllDisasterConfigurations(4);
+    std::set<std::set<std::string>> allConfigs = {
         {"A", "B", "E", "F"},
         {"A", "B", "E", "G"},
         {"A", "B", "F", "I"},
@@ -1273,7 +1001,7 @@ STUDENT_TEST("Larger maps are more difficult to filter out duplicates.") {
      *                             \
      *                              D
      */
-    const Map<std::string, Set<std::string>> cities = {
+    const std::map<std::string, std::set<std::string>> cities = {
         {"A", {"B"}},
         {"B", {"A","C","U"}},
         {"C", {"B","D","E"}},
@@ -1296,9 +1024,9 @@ STUDENT_TEST("Larger maps are more difficult to filter out duplicates.") {
         {"T", {"S","U"}},
         {"U", {"B","R","T"}},
     };
-    DisasterTags grid(cities);
-    Set<Set<std::string>> allFound = grid.getAllDisasterConfigurations(7);
-    Set<Set<std::string>> allConfigs = {
+    Dx::DisasterTags grid(cities);
+    std::set<std::set<std::string>> allFound = grid.getAllDisasterConfigurations(7);
+    std::set<std::set<std::string>> allConfigs = {
         {"A", "C", "E", "H", "L", "R", "S"}, {"A", "C", "F", "I", "L", "Q", "T"},
         {"A", "C", "G", "I", "L", "Q", "T"}, {"A", "C", "G", "J", "L", "Q", "T"},
         {"A", "C", "G", "J", "O", "Q", "T"}, {"A", "D", "E", "H", "L", "R", "S"},
