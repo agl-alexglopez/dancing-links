@@ -223,7 +223,7 @@ Unfortunately, this implementation is still not fast enough to crack the code on
 
 ## Disaster Planning Usage Instructions
 
-I chose to implement the solution to these problems as classes that can be found in the **[`DisasterLinks.h`](/dancing-links/dlx/DisasterLinks.h)**/**[`DisasterLinks.cpp`](/dancing-links/dlx/DisasterLinks.cpp)** and **[`DisasterTags.h`](/dancing-links/dlx/DisasterTags.h)**/**[`DisasterTags.cpp`](/dancing-links/dlx/DisasterTags.cpp)** files, respectively. There are tests at the bottom of the all `.cpp` files that make the internals of the dancing links data structure more understandable.
+I chose to implement the solution to these problems as classes that can be found in the **[`DisasterLinks.h`](/dancing-links/dlx/Src/DisasterLinks.h)**/**[`DisasterLinks.cpp`](/dancing-links/dlx/Src/DisasterLinks.cpp)** and **[`DisasterTags.h`](/dancing-links/dlx/DisasterTags.h)**/**[`DisasterTags.cpp`](/dancing-links/dlx/DisasterTags.cpp)** files, respectively. There are tests at the bottom of the all `.cpp` files that make the internals of the dancing links data structure more understandable.
 
 I then included these implementations in the **[`DisasterGUI.cpp`](/dancing-links/dlx/Demos/DisasterGUI.cpp)** file as the solvers for the maps included in this repository. If you want to see how each implementation solves the provided maps use the following steps.
 
@@ -398,7 +398,7 @@ Notice that we include the weight for a pairing in as a negative number. This te
 
 ### Partner Links Usage Instructions
 
-I chose to implement the solution to this problem as a class that can be found in the **[`PartnerLinks.h`](/dancing-links/dlx/PartnerLinks.h)**, and **[`PartnerLinks.cpp`](/dancing-links/dlx/PartnerLinks.cpp)** files. There are tests at the bottom of the **[`PartnerLinks.cpp`](/dancing-links/dlx/DisasterLinks.cpp)** file that make the internals of the dancing links data structure more understandable.
+I chose to implement the solution to this problem as a class that can be found in the **[`PartnerLinks.h`](/dancing-links/dlx/Src/PartnerLinks.h)**, and **[`PartnerLinks.cpp`](/dancing-links/dlx/Src/PartnerLinks.cpp)** files. There are tests at the bottom of the **[`PartnerLinksTests.cpp`](/dancing-links/dlx/Tests/PartnerLinksTests.cpp)** file that make the internals of the dancing links data structure more understandable.
 
 I then included this implementation in the **[`MatchmakerGUI.cpp`](/dancing-links/dlx/Demos/MatchmakerGUI.cpp)** file as the solver for grid illustration tool. If you want to see how this implementation finds matches complete the following steps.
 
