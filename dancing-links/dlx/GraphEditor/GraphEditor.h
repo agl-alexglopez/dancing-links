@@ -20,6 +20,12 @@ namespace GraphEditor {
      */
     class EditorBase {
     public:
+
+        /* I added the public virtual destructor to supress the shared pointer warning in gui
+         * graph drawing applications.
+         */
+        virtual ~EditorBase() = default;
+
         /* Handles these mouse events to support dragging, adding new lines,
          * etc. Forward these messages to have the editor handle dragging,
          * creation of new items, etc.

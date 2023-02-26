@@ -339,8 +339,13 @@ inline UTFException::UTFException(const std::string& message) : std::logic_error
 
 }
 
-class utf8Reader::const_iterator: public std::iterator<std::input_iterator_tag, const char32_t> {
+class utf8Reader::const_iterator {
 public:
+    using iterator_category = std::input_iterator_tag;
+    using value_type = const char32_t;
+    using difference_type = int;
+    using pointer = const char32_t*;
+    using reference = const char32_t&;
     const_iterator() = default;
 
     /* We're only equal if we're end-of-range iterators or if both of us are at the end. */
