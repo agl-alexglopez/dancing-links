@@ -223,7 +223,7 @@ Unfortunately, this implementation is still not fast enough to crack the code on
 
 ## Disaster Planning Usage Instructions
 
-I chose to implement the solution to these problems as classes that can be found in the **[`DisasterLinks.h`](/dancing-links/dlx/Src/DisasterLinks.h)**/**[`DisasterLinks.cpp`](/dancing-links/dlx/Src/DisasterLinks.cpp)** and **[`DisasterTags.h`](/dancing-links/dlx/DisasterTags.h)**/**[`DisasterTags.cpp`](/dancing-links/dlx/DisasterTags.cpp)** files, respectively. There are tests at the bottom of the all `.cpp` files that make the internals of the dancing links data structure more understandable.
+I chose to implement the solution to these problems as classes that can be found in the **[`DisasterLinks.h`](/dancing-links/dlx/Src/DisasterLinks.h)**/**[`DisasterLinks.cpp`](/dancing-links/dlx/Src/DisasterLinks.cpp)** and **[`DisasterTags.h`](/dancing-links/dlx/Src/DisasterTags.h)**/**[`DisasterTags.cpp`](/dancing-links/dlx/Src/DisasterTags.cpp)** files, respectively. There are tests at the bottom of the all `.cpp` files that make the internals of the dancing links data structure more understandable.
 
 I then included these implementations in the **[`DisasterGUI.cpp`](/dancing-links/dlx/Demos/DisasterGUI.cpp)** file as the solvers for the maps included in this repository. If you want to see how each implementation solves the provided maps use the following steps.
 
