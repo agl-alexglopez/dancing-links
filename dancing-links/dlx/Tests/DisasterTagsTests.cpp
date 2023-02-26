@@ -1,5 +1,6 @@
 #include "Src/DisasterTags.h"
 #include "Src/DisasterUtilities.h"
+#include "GenericOverloads.h"
 
 namespace DancingLinks {
 

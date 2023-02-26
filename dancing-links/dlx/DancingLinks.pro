@@ -83,7 +83,8 @@ HEADERS         *=  "" \
     Demos/MapParser.h \
     Src/DisasterLinks.h \
     Src/DisasterTags.h \
-    Src/PartnerLinks.h
+    Src/PartnerLinks.h \
+    Tests/GenericOverloads.h
 
 # Gather any .cpp or .h files within the project folder (student/starter code).
 # Second argument true makes search recursive

@@ -205,8 +205,8 @@ private:
      * @param allConfigurations   the set that records all configurations found.
      */
     void fillConfigurations(int numSupplies,
-                            std::set<std::string>& suppliedCities,
-                            std::set<std::set<std::string>>& allConfigurations);
+                              std::set<std::string>& suppliedCities,
+                              std::set<std::set<std::string>>& allConfigurations);
 
     /**
      * @brief chooseIsolatedCity  selects a city we are trying to cover either by giving it supplies
@@ -268,8 +268,8 @@ private:
      * @param columnBuilder      the hash map we will use to connect newly added items to a column.
      */
     void initializeHeaders(const std::map<std::string, std::set<std::string>>& roadNetwork,
-                           std::vector<std::pair<std::string,int>>& connectionSizes,
-                           std::unordered_map<std::string,int>& columnBuilder);
+                            std::vector<std::pair<std::string,int>>& connectionSizes,
+                            std::unordered_map<std::string,int>& columnBuilder);
 
     /**
      * @brief initializeItems  builds the structure needed to perform the dancing links algorithm.
@@ -282,8 +282,8 @@ private:
      * @param index            we are passed in a starting index to begin building
      */
     void initializeItems(const std::map<std::string, std::set<std::string>>& roadNetwork,
-                         const std::vector<std::pair<std::string,int>>& connectionSizes,
-                         std::unordered_map<std::string,int>& columnBuilder);
+                          const std::vector<std::pair<std::string,int>>& connectionSizes,
+                          std::unordered_map<std::string,int>& columnBuilder);
 
     /**
      * @brief initializeColumns  this is the set builder for each row. When a city is given supplies
@@ -296,8 +296,8 @@ private:
      * @return                   the new index of the grid after adding all items in a row.
      */
     int initializeColumns(const std::set<std::string>& connections,
-                          std::unordered_map<std::string,int>& columnBuilder,
-                          int index);
+                           std::unordered_map<std::string,int>& columnBuilder,
+                           int index);
 
 
     /* The following operators are nothing special. The fields of these types are simple integers.
@@ -321,8 +321,5 @@ private:
 
 } // namespace DancingLinks
 
-std::ostream& operator<<(std::ostream& os, const std::vector<std::string>& v);
-std::ostream& operator<<(std::ostream& os, const std::set<std::string>& s);
-std::ostream& operator<<(std::ostream& os, const std::set<std::set<std::string>>& s);
 
 #endif // DISASTERLINKS_H
