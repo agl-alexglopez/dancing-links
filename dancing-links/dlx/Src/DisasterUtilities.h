@@ -11,7 +11,8 @@
  * function when writing tests, though you won't need it in your implementation of the main
  * canBeMadeDisasterReady function.
  */
-std::map<std::string, std::set<std::string>> makeMap(const std::map<std::string, std::set<std::string>>& source);
+std::map<std::string, std::set<std::string>> makeMap(const std::map<std::string,
+                                                      std::set<std::string>>& source);
 
 /* This helper function tests whether a city has been covered by a set of supply locations
  * and is used by our testing code. You're welcome to use it in your tests as well!
@@ -26,7 +27,8 @@ bool checkCovered(const std::string& city,
  * function when writing tests, though you won't need it in your implementation of the main
  * canBeMadeDisasterReady function.
  */
-std::map<std::string, std::set<std::string>> makeSymmetric(const std::map<std::string, std::set<std::string>>& source);
+std::map<std::string, std::set<std::string>> makeSymmetric(const std::map<std::string,
+                                                            std::set<std::string>>& source);
 
 /* This helper function tests whether a city has been covered by a set of supply locations
  * and is used by our testing code. You're welcome to use it in your tests as well!

@@ -3,8 +3,8 @@
  * File DisasterTags.cpp
  * --------------------------
  * This file contains the implementation for Algorithm X via Dancing Links with a new method I'm
- * calling Supply Tags. For more information, see the mini-writeup in the .h file or the detailed
- * write up in the README.md.
+ * calling Supply Tags. For more information, see the mini-writeup in the DancingLinks.h file or the
+ * detailed write up in the README.md.
  */
 #include <cmath>
 #include <limits.h>

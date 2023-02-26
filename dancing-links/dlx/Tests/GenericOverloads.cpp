@@ -1,6 +1,4 @@
 #include "GenericOverloads.h"
-#include "Src/DisasterLinks.h"
-#include "Src/DisasterTags.h"
 
 std::ostream& operator<<(std::ostream& os, const std::vector<std::string>& v) {
     for (const std::string& s: v) {

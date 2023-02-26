@@ -4,8 +4,8 @@
  * --------------------------
  * This file contains the implementation of Algorithm X via Dancing Links as applied to a Disaster
  * Planning problem. For more details on the thought process behind the implmenetation, please see
- * the .h file or the readme. Comments are detailed for my own understanding and because some of
- * the implementation is complicated, especially the building of the dancing links grid.
+ * the DancingLinks.h file or the readme. Comments are detailed for my own understanding and because
+ * some of the implementation is complicated, especially the building of the dancing links grid.
  */
 #include <cmath>
 #include <limits.h>

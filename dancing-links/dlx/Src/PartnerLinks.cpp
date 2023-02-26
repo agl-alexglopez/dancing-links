@@ -6,7 +6,7 @@
  * Algorithm X via Dancing Links as outlined by Donald Knuth. There is modification to this
  * algorithm as necessary in order to solve two graph problems: Perfect Matching and Max Weight
  * Matching. For more details on the concepts behind the algorithm see the mini write up in the
- * PartnerLinks.h file or the full write up in the README.md for the repository.
+ * DancingLinks.h file or the full write up in the README.md for the repository.
  */
 #include <cmath>
 #include <limits.h>
