@@ -631,13 +631,40 @@ STUDENT_TEST("Supply 5 island cities when we must.") {
         {"D", {}},
         {"E", {}}
     };
+    std::vector<Dx::DisasterTags::cityName> networkHeaders = {
+        {"",5,1},
+        {"A",0,2},
+        {"B",1,3},
+        {"C",2,4},
+        {"D",3,5},
+        {"E",4,0},
+    };
+    std::vector<Dx::DisasterTags::city> dlxItems = {
+        {0,0,0,0},   {1,7,7,0},{1,9,9,0},{1,11,11,0},{1,13,13,0},{1,15,15,0},
+        {-1,0,7,0},  {1,1,1,0},
+        {-2,7,9,0},            {2,2,2,0},
+        {-3,9,11,0},                     {3,3,3,0},
+        {-4,11,13,0},                                 {4,4,4,0},
+        {-5,13,15,0},                                             {5,5,5,0},
+        {INT_MIN,15,INT_MIN,0},
+    };
     Dx::DisasterTags network(cities);
     std::set<std::string> chosen = {};
     EXPECT(!network.hasDisasterCoverage(1, chosen));
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
     EXPECT(!network.hasDisasterCoverage(2, chosen));
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
     EXPECT(!network.hasDisasterCoverage(3, chosen));
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
     EXPECT(!network.hasDisasterCoverage(4, chosen));
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
     EXPECT(network.hasDisasterCoverage(5, chosen));
+    EXPECT_EQUAL(network.table_, networkHeaders);
+    EXPECT_EQUAL(network.grid_, dlxItems);
 }
 
 PROVIDED_TEST("Can solve ethene example, regardless of ordering, with output.") {

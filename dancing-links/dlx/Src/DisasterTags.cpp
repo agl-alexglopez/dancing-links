@@ -7,7 +7,7 @@
  * detailed write up in the README.md.
  */
 #include <cmath>
-#include <limits.h>
+#include <climits>
 #include "DisasterTags.h"
 
 namespace DancingLinks {
