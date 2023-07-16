@@ -110,8 +110,7 @@ void DisasterTags::fillConfigurations(int numSupplies,
 int DisasterTags::chooseIsolatedCity() const {
     int min = INT_MAX;
     int chosenIndex = 0;
-    int head = 0;
-    for (int cur = table_[0].right; cur != head; cur = table_[cur].right) {
+    for (int cur = table_[0].right; cur != 0; cur = table_[cur].right) {
         if (grid_[cur].topOrLen < min) {
             chosenIndex = cur;
             min = grid_[cur].topOrLen;
