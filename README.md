@@ -14,9 +14,13 @@
 	- Dancing Links Implementation **([`PartnerLinks.cpp`](/dancing-links/dlx/Src/PartnerLinks.cpp))**
 - [Citations](#citations)
 
+## Disclaimer
+
+This repository contains **no code** that I wrote or submitted as part of the Disaster Planning or Matchmaker assignments at Stanford University for CS106B. It is not possible to implement a working solution to any Stanford assignment from this code directly as it uses completely different data structures, algorithms, and interfaces to those usually used in a Stanford assignment. If you beleive otherwise please contact me. This is an exploration of applying an interesting technique, Dancing Links, to interesting problems. Enjoy!
+
 ## Build Note
 
-If you are reading this now you are on `gitfront.io`. If you want to use the programs for this project, you can clone the project with the `clone` button at the top right of the screen when in the root of the repository. In order to build this project, you will need a copy of the CS106 C++ library from the Winter of 2022. To the best of my knowledge, newer libraries from Stanford's class websites have some graphics conflicts that prevent this assignment from building. I have included a copy of this library as a `.zip` file in the `/packages/` folder. Unzip the folder in a separate location on your computer because it will need to built as its own Qt project. You can then follow the same instructions to build this library that Stanford normally provides on their course websites [HERE](https://web.stanford.edu/dept/cs_edu/resources/qt/). Instead of building their new libraries, however, you will just build this older version. It will install all the necessary Stanford specific libraries on your system for use with Qt.
+In order to build this project, you will need a copy of the CS106 C++ library from the Winter of 2022. To the best of my knowledge, newer libraries from Stanford's class websites have some graphics conflicts that prevent this assignment from building. I have included a copy of this library as a `.zip` file in the `/packages/` folder. Unzip the folder in a separate location on your computer because it will need to built as its own Qt project. You can then follow the same instructions to build this library that Stanford normally provides on their course websites [HERE](https://web.stanford.edu/dept/cs_edu/resources/qt/). Instead of building their new libraries, however, you will just build this older version. It will install all the necessary Stanford specific libraries on your system for use with Qt.
 
 ## Overview
 
@@ -93,7 +97,7 @@ The previous selection process will always start by covering a city by giving it
 - If all else fails, give the isolated city supplies.
 - If that fails the grid cannot be covered.
 
-There is no need to adjust the dancing links algorithm to achieve this. Instead we will alter how we build the grid. Organize the rows of the grid by the cities with the most connections to least. Then, our selection process will naturally follow the heuristic. 
+There is no need to adjust the dancing links algorithm to achieve this. Instead we will alter how we build the grid. Organize the rows of the grid by the cities with the most connections to least. Then, our selection process will naturally follow the heuristic.
 
 ![matrix-grid-optimized](/images/matrix-grid-optimized.png)
 
@@ -232,7 +236,7 @@ I then included these implementations in the **[`DisasterGUI.cpp`](/dancing-link
 3. Select the `Disaster Planning` option from the top menu.
 4. Select any map from the drop down menu at the bottom of the window.
 5. Select the implementation that you want to solve the map in the drop down menu: a traditional set based implementation, a quadruple linked dancing links solver, or the supply tag implementation. You can distinguish the solvers by the colors they paint the cities.
-6. Press `Solve` to find the first Optimal Map coverage found or press `All Optimal Solutions` to find all possible supply distributions with the optimal number of supplies. You can cycle through configurations with the next and previous arrows if you find all solutions. 
+6. Press `Solve` to find the first Optimal Map coverage found or press `All Optimal Solutions` to find all possible supply distributions with the optimal number of supplies. You can cycle through configurations with the next and previous arrows if you find all solutions.
 
 It is interesting to note which cities have more flexibility with their disaster supplies. For example, Colorado is a slightly larger map than Tokyo. However, all solvers take a noticeable amount of time to tell us that Colorado has only 136 configurations with optimal supplies. Then, when asked about Tokyo, all solvers will quickly report that there are 790 viable configurations for the optimal number of supplies. Some maps are more challenging than others but the challenge may not be directly related to the number of configurations that are possible to generate.
 
@@ -411,7 +415,7 @@ I then included this implementation in the **[`MatchmakerGUI.cpp`](/dancing-link
 
 While I think Knuth's dancing links are well suited to Perfect Matching and All Perfect Matchings, I don't think they are the best fit for the Weighted Matchings Problem, at least not as I have currently implemented the solution. To see why, try the DLX solver and Rothberg's solver on the `MaxWeightStress` file. The dancing links solver for that problem is just a creative, efficient approach to a brute-force recursive algorithm. Rothberg's solution, on the other hand, is extremely fast. I will try to explore ways to speed things up.
 
-## Bonus: Pokémon Type Coverage 
+## Bonus: Pokémon Type Coverage
 
 Completing these implementations inspired me to find a more original application of the Dancing Links solver and solve a problem that I found interesting. It turns out that the video game Pokémon and its type coverage can be reduced to an exact and overlapping cover problem. If you want to see this reduction and application, please see my dedicated repository to the project. In addition to solving a version of Pokémon's type coverage problem, I also extend the functionality of the Dancing Links solver I use, justifying its existence as a class over a more traditional functional based approach. I encourage you to take a look.
 
