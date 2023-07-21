@@ -8,8 +8,8 @@ Taicang(10, 3): Shanghai
 Suzhou(5, 2): Shanghai
 Shanghai(10, 4): Yangshan Gang, Jiaxing, Huzhou
 Yangshan Gang(13, 5):
-Jiaxing (7, 6): Hangzhou
+Jiaxing (7, 6): Hangzhou, Shanghai
 Huzhou(4, 6): Hangzhou
-Hangzhou(5, 7): Shaoxing
-Shaoxing(7, 7):
+Hangzhou(5, 7): Jiaxing, Shaoxing
+Shaoxing(7, 7): Hangzhou
 Ningbo(10, 8): Hangzhou
