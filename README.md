@@ -1,5 +1,7 @@
 # Dancing Links
 
+![graph-preview](/images/graph-preview.png)
+
 ## Navigation
 
 - Dancing Links Functions
