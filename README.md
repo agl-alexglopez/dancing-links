@@ -18,7 +18,7 @@
 
 ## Disclaimer
 
-This repository contains **no code** that I wrote or submitted as part of the Disaster Planning or Matchmaker assignments at Stanford University for CS106B. It is not possible to implement a working solution to any Stanford assignment from this code directly as it uses completely different data structures, algorithms, and interfaces to those usually used in a Stanford assignment. If you beleive otherwise please contact me. This is an exploration of applying an interesting technique, Dancing Links, to interesting problems. Enjoy!
+This repository contains **no code** that I wrote or submitted as part of the Disaster Planning or Matchmaker assignments at Stanford University for CS106B. It is not possible to implement a working solution to any Stanford assignment from this code as it uses completely different data structures, algorithms, and interfaces to those used in any Stanford assignment that I know exists. If you beleive otherwise please contact me and I will gladly make this private. This is an exploration of applying an interesting technique, Dancing Links, to interesting problems. Enjoy!
 
 ## Build Note
 
